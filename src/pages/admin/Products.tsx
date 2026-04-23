@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, FileText, Upload, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,9 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { products as initialProducts, formatIqd, Product, categories } from "@/data/mockData";
 import { StockBadge } from "@/components/admin/StatusBadge";
+import { ImageCropper } from "@/components/admin/ImageCropper";
 import { toast } from "sonner";
 
 const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"] as const;
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=400&q=80";
 
 export default function Products() {
   const { t, lang } = useLanguage();
@@ -22,6 +24,10 @@ export default function Products() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [datasheet, setDatasheet] = useState<{ url: string; name: string } | null>(null);
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const [rawImage, setRawImage] = useState<string>("");
+  const [cropOpen, setCropOpen] = useState(false);
+  const imgInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -30,6 +36,8 @@ export default function Products() {
           ? { url: editing.datasheetUrl, name: editing.datasheetName ?? "datasheet.pdf" }
           : null,
       );
+      setImageSrc(editing?.image ?? "");
+      setRawImage("");
     }
   }, [open, editing]);
 
@@ -49,11 +57,32 @@ export default function Products() {
     setDatasheet({ url, name: file.name });
   };
 
+  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("image_invalid"));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t("image_too_large"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const data = String(reader.result || "");
+      setRawImage(data);
+      setCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const filtered = useMemo(
     () =>
       list.filter((p) => {
         const q = search.toLowerCase();
-        const matches = !q || p.nameAr.includes(search) || p.nameEn.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+        const matches = !q || p.nameAr.includes(search) || p.nameEn.toLowerCase().includes(q);
         return matches && (brand === "all" || p.brand === brand) && (cat === "all" || p.category === cat);
       }),
     [list, search, brand, cat],
@@ -68,15 +97,17 @@ export default function Products() {
     const f = new FormData(e.currentTarget);
     const data: Product = {
       id: editing?.id ?? `p${Date.now()}`,
-      sku: String(f.get("sku") || ""),
+      sku: editing?.sku ?? `SKU-${Date.now().toString(36).toUpperCase()}`,
       nameAr: String(f.get("nameAr") || ""),
       nameEn: String(f.get("nameEn") || ""),
+      descAr: String(f.get("descAr") || ""),
+      descEn: String(f.get("descEn") || ""),
       brand: String(f.get("brand") || "MikroTik") as Product["brand"],
       category: String(f.get("category") || "networking") as Product["category"],
       subcategory: String(f.get("subcategory") || ""),
       priceIqd: Number(f.get("priceIqd") || 0),
       stock: Number(f.get("stock") || 0),
-      image: String(f.get("image") || "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=400&q=80"),
+      image: imageSrc || FALLBACK_IMG,
       datasheetUrl: datasheet?.url,
       datasheetName: datasheet?.name,
     };
@@ -140,7 +171,6 @@ export default function Products() {
                   <td className="px-4 py-3"><img src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" /></td>
                   <td className="px-4 py-3">
                     <div className="font-medium">{lang === "ar" ? p.nameAr : p.nameEn}</div>
-                    <div className="font-mono text-[11px] text-muted-foreground">{p.sku}</div>
                   </td>
                   <td className="px-4 py-3">{p.brand}</td>
                   <td className="px-4 py-3 text-muted-foreground">{p.subcategory}</td>
@@ -164,7 +194,7 @@ export default function Products() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? t("edit_product") : t("new_product")}</DialogTitle>
           </DialogHeader>
@@ -179,7 +209,11 @@ export default function Products() {
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="descAr">{t("description_ar")}</Label>
-              <Textarea id="descAr" name="descAr" rows={2} />
+              <Textarea id="descAr" name="descAr" rows={2} defaultValue={editing?.descAr} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="descEn">{t("description_en")}</Label>
+              <Textarea id="descEn" name="descEn" rows={2} defaultValue={editing?.descEn} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="brand">{t("product_brand")}</Label>
@@ -194,10 +228,6 @@ export default function Products() {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sku">{t("sku")}</Label>
-              <Input id="sku" name="sku" defaultValue={editing?.sku} required />
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="subcategory">{t("subcategories")}</Label>
               <Input id="subcategory" name="subcategory" defaultValue={editing?.subcategory} />
             </div>
@@ -209,10 +239,42 @@ export default function Products() {
               <Label htmlFor="stock">{t("product_stock")}</Label>
               <Input id="stock" name="stock" type="number" defaultValue={editing?.stock ?? 0} required />
             </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <Label htmlFor="image">{t("image_url")}</Label>
-              <Input id="image" name="image" defaultValue={editing?.image} />
+
+            <div className="space-y-2 md:col-span-2">
+              <Label>{t("product_image_label")}</Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-secondary">
+                  {imageSrc ? (
+                    <img src={imageSrc} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => imgInputRef.current?.click()} className="gap-2">
+                      <Upload className="h-4 w-4" />
+                      {imageSrc ? t("change_image") : t("upload_image")}
+                    </Button>
+                    {imageSrc && rawImage && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => setCropOpen(true)} className="gap-2">
+                        <CropIcon className="h-4 w-4" />
+                        {t("crop_image")}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t("image_preview_hint")}</p>
+                </div>
+              </div>
+              <input
+                ref={imgInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onPickImage}
+              />
             </div>
+
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="datasheet">{t("datasheet")}</Label>
               {datasheet ? (
@@ -261,6 +323,13 @@ export default function Products() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImageCropper
+        open={cropOpen}
+        src={rawImage || imageSrc}
+        onClose={() => setCropOpen(false)}
+        onCropped={(url) => setImageSrc(url)}
+      />
     </div>
   );
 }
