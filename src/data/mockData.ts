@@ -6,6 +6,8 @@ export interface Product {
   sku: string;
   nameAr: string;
   nameEn: string;
+  descAr?: string;
+  descEn?: string;
   brand: Brand;
   category: CategoryKey;
   subcategory: string;
