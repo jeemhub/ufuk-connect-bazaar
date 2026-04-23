@@ -12,6 +12,8 @@ export interface Product {
   priceIqd: number;
   stock: number;
   image: string;
+  datasheetUrl?: string;
+  datasheetName?: string;
 }
 
 export const categories: { key: CategoryKey; ar: string; en: string; subs: { ar: string; en: string }[] }[] = [

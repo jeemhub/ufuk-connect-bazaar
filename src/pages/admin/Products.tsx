@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Pencil, Trash2, FileText, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +21,33 @@ export default function Products() {
   const [cat, setCat] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [datasheet, setDatasheet] = useState<{ url: string; name: string } | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setDatasheet(
+        editing?.datasheetUrl
+          ? { url: editing.datasheetUrl, name: editing.datasheetName ?? "datasheet.pdf" }
+          : null,
+      );
+    }
+  }, [open, editing]);
+
+  const onPickDatasheet = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error(t("datasheet_invalid"));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(t("datasheet_too_large"));
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setDatasheet({ url, name: file.name });
+  };
 
   const filtered = useMemo(
     () =>
@@ -50,6 +77,8 @@ export default function Products() {
       priceIqd: Number(f.get("priceIqd") || 0),
       stock: Number(f.get("stock") || 0),
       image: String(f.get("image") || "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=400&q=80"),
+      datasheetUrl: datasheet?.url,
+      datasheetName: datasheet?.name,
     };
     setList((p) => (editing ? p.map((x) => (x.id === editing.id ? data : x)) : [data, ...p]));
     setOpen(false);
@@ -183,6 +212,47 @@ export default function Products() {
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="image">{t("image_url")}</Label>
               <Input id="image" name="image" defaultValue={editing?.image} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="datasheet">{t("datasheet")}</Label>
+              {datasheet ? (
+                <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2">
+                  <a
+                    href={datasheet.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex min-w-0 items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{datasheet.name}</span>
+                  </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDatasheet(null)}
+                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={t("datasheet_remove")}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="datasheet"
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-input bg-background px-3 py-3 text-sm text-muted-foreground transition hover:border-primary hover:text-primary"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>{t("datasheet_optional")}</span>
+                </label>
+              )}
+              <input
+                id="datasheet"
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={onPickDatasheet}
+              />
             </div>
             <DialogFooter className="md:col-span-2">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t("cancel")}</Button>
