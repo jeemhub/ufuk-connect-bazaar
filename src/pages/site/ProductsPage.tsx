@@ -4,8 +4,9 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { categories, products } from "@/data/mockData";
+import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
+import { useProducts } from "@/hooks/useProducts";
 
 const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"];
 
