@@ -23,7 +23,7 @@ export function AdminSidebar() {
     { to: "/admin/products", icon: Package, label: t("nav_products") },
     { to: "/admin/categories", icon: FolderTree, label: t("nav_categories") },
     { to: "/admin/orders", icon: ShoppingCart, label: t("nav_orders") },
-    { to: "/admin/customers", icon: Users, label: t("nav_customers") },
+    { to: "/admin/users", icon: Users, label: t("users_title") },
     { to: "/admin/quotes", icon: MessageSquareQuote, label: t("nav_quotes") },
     { to: "/admin/security", icon: ShieldCheck, label: t("nav_security") },
     { to: "/admin/settings", icon: Settings, label: t("nav_settings") },

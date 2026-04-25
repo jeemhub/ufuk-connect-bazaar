@@ -13,6 +13,8 @@ export interface DbProductRow {
   category_id: string | null;
   subcategory: string | null;
   price_iqd: number;
+  price_wholesale_iqd?: number | null;
+  price_dealer_iqd?: number | null;
   stock: number;
   image_url: string | null;
   datasheet_url: string | null;
@@ -24,7 +26,7 @@ export interface DbProductRow {
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=800&q=80";
 
-export function dbToProduct(r: DbProductRow): Product {
+export function dbToProduct(r: DbProductRow, categoryKey?: string): Product {
   return {
     id: r.id,
     sku: r.sku ?? "",
@@ -33,7 +35,7 @@ export function dbToProduct(r: DbProductRow): Product {
     descAr: r.desc_ar ?? undefined,
     descEn: r.desc_en ?? undefined,
     brand: (r.brand as Brand) ?? "MikroTik",
-    category: ((r.categories?.key as CategoryKey) ?? "networking"),
+    category: ((r.categories?.key ?? categoryKey) as CategoryKey) ?? "networking",
     subcategory: r.subcategory ?? "",
     priceIqd: Number(r.price_iqd ?? 0),
     stock: r.stock ?? 0,
@@ -43,6 +45,17 @@ export function dbToProduct(r: DbProductRow): Product {
   };
 }
 
+async function fetchCategoryKeyMap(): Promise<Record<string, string>> {
+  const { data } = await supabase.from("categories").select("id,key");
+  const m: Record<string, string> = {};
+  (data ?? []).forEach((c: { id: string; key: string }) => { m[c.id] = c.key; });
+  return m;
+}
+
+/**
+ * Customer-facing product list: reads from products_public view
+ * which only exposes ONE price (the one the user is allowed to see).
+ */
 export function useProducts(opts?: { activeOnly?: boolean }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,14 +63,15 @@ export function useProducts(opts?: { activeOnly?: boolean }) {
 
   const refetch = async () => {
     setLoading(true);
-    let q = supabase
-      .from("products")
-      .select("*, categories(key)")
-      .order("created_at", { ascending: false });
-    if (opts?.activeOnly) q = q.eq("is_active", true);
-    const { data, error } = await q;
+    const [{ data, error }, catMap] = await Promise.all([
+      supabase.from("products_public" as never).select("*").order("created_at", { ascending: false }),
+      fetchCategoryKeyMap(),
+    ]);
     if (error) setError(error.message);
-    else setProducts((data as unknown as DbProductRow[]).map(dbToProduct));
+    else {
+      const rows = (data as unknown as DbProductRow[]) ?? [];
+      setProducts(rows.map((r) => dbToProduct(r, r.category_id ? catMap[r.category_id] : undefined)));
+    }
     setLoading(false);
   };
 
@@ -77,15 +91,41 @@ export function useProduct(id: string | undefined) {
     if (!id) { setLoading(false); return; }
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("products")
-        .select("*, categories(key)")
-        .eq("id", id)
-        .maybeSingle();
-      setProduct(data ? dbToProduct(data as unknown as DbProductRow) : null);
+      const [{ data }, catMap] = await Promise.all([
+        supabase.from("products_public" as never).select("*").eq("id", id).maybeSingle(),
+        fetchCategoryKeyMap(),
+      ]);
+      const row = data as unknown as DbProductRow | null;
+      setProduct(row ? dbToProduct(row, row.category_id ? catMap[row.category_id] : undefined) : null);
       setLoading(false);
     })();
   }, [id]);
 
   return { product, loading };
+}
+
+/**
+ * Admin product list: reads the underlying table with all 3 prices.
+ */
+export interface AdminProductRow extends DbProductRow {
+  price_wholesale_iqd: number;
+  price_dealer_iqd: number;
+}
+
+export function useAdminProducts() {
+  const [rows, setRows] = useState<AdminProductRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("products")
+      .select("*, categories(key)")
+      .order("created_at", { ascending: false });
+    setRows((data as unknown as AdminProductRow[]) ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { refetch(); }, []);
+  return { rows, loading, refetch };
 }

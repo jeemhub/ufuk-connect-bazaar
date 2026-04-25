@@ -11,17 +11,30 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { formatIqd, categories, Product } from "@/data/mockData";
 import { StockBadge } from "@/components/admin/StatusBadge";
 import { ImageCropper } from "@/components/admin/ImageCropper";
-import { useProducts } from "@/hooks/useProducts";
+import { useAdminProducts, dbToProduct, type AdminProductRow } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"] as const;
 
-type EditState = (Product & { is_active?: boolean }) | null;
+type EditState = (Product & {
+  is_active?: boolean;
+  priceWholesale?: number;
+  priceDealer?: number;
+}) | null;
 
 export default function Products() {
   const { t, lang } = useLanguage();
-  const { products: list, loading, refetch } = useProducts();
+  const { rows, loading, refetch } = useAdminProducts();
+  const list = useMemo(
+    () => rows.map((r) => ({
+      ...dbToProduct(r),
+      is_active: r.is_active,
+      priceWholesale: Number(r.price_wholesale_iqd ?? 0),
+      priceDealer: Number(r.price_dealer_iqd ?? 0),
+    })),
+    [rows]
+  );
   const [catMap, setCatMap] = useState<Record<string, string>>({}); // key -> uuid
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState<string>("all");
@@ -118,6 +131,8 @@ export default function Products() {
       category_id: catMap[categoryKey] ?? null,
       subcategory: String(f.get("subcategory") || "") || null,
       price_iqd: Number(f.get("priceIqd") || 0),
+      price_wholesale_iqd: Number(f.get("priceWholesale") || 0),
+      price_dealer_iqd: Number(f.get("priceDealer") || 0),
       stock: Number(f.get("stock") || 0),
       image_url: finalImage,
       datasheet_url: datasheet?.url ?? null,
@@ -247,12 +262,20 @@ export default function Products() {
               <Input id="subcategory" name="subcategory" defaultValue={editing?.subcategory} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="priceIqd">{t("product_price")} ({t("currency_iqd")})</Label>
-              <Input id="priceIqd" name="priceIqd" type="number" defaultValue={editing?.priceIqd ?? 0} required />
+              <Label htmlFor="priceIqd">{t("price_retail")} ({t("currency_iqd")})</Label>
+              <Input id="priceIqd" name="priceIqd" type="number" min="0" defaultValue={editing?.priceIqd ?? 0} required />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="stock">{t("product_stock")}</Label>
-              <Input id="stock" name="stock" type="number" defaultValue={editing?.stock ?? 0} required />
+              <Input id="stock" name="stock" type="number" min="0" defaultValue={editing?.stock ?? 0} required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="priceWholesale">{t("price_wholesale")} ({t("currency_iqd")})</Label>
+              <Input id="priceWholesale" name="priceWholesale" type="number" min="0" defaultValue={editing?.priceWholesale ?? 0} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="priceDealer">{t("price_dealer")} ({t("currency_iqd")})</Label>
+              <Input id="priceDealer" name="priceDealer" type="number" min="0" defaultValue={editing?.priceDealer ?? 0} />
             </div>
             <div className="flex items-center justify-between rounded-md border border-border p-3 md:col-span-2">
               <Label htmlFor="is_active" className="cursor-pointer">Active / مفعّل</Label>

@@ -20,7 +20,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
 import Categories from "./pages/admin/Categories";
 import Orders from "./pages/admin/Orders";
-import Customers from "./pages/admin/Customers";
+import Users from "./pages/admin/Users";
 import Settings from "./pages/admin/Settings";
 import Security from "./pages/admin/Security";
 import Quotes from "./pages/admin/Quotes";
@@ -55,7 +55,7 @@ const App = () => (
                 <Route path="products" element={<Products />} />
                 <Route path="categories" element={<Categories />} />
                 <Route path="orders" element={<Orders />} />
-                <Route path="customers" element={<Customers />} />
+                <Route path="users" element={<Users />} />
                 <Route path="quotes" element={<Quotes />} />
                 <Route path="security" element={<Security />} />
                 <Route path="settings" element={<Settings />} />

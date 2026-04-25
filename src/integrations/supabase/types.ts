@@ -117,6 +117,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orders: {
@@ -175,7 +182,9 @@ export type Database = {
           is_active: boolean
           name_ar: string
           name_en: string
+          price_dealer_iqd: number
           price_iqd: number
+          price_wholesale_iqd: number
           sku: string | null
           stock: number
           subcategory: string | null
@@ -194,7 +203,9 @@ export type Database = {
           is_active?: boolean
           name_ar: string
           name_en: string
+          price_dealer_iqd?: number
           price_iqd?: number
+          price_wholesale_iqd?: number
           sku?: string | null
           stock?: number
           subcategory?: string | null
@@ -213,7 +224,9 @@ export type Database = {
           is_active?: boolean
           name_ar?: string
           name_en?: string
+          price_dealer_iqd?: number
           price_iqd?: number
+          price_wholesale_iqd?: number
           sku?: string | null
           stock?: number
           subcategory?: string | null
@@ -347,9 +360,98 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      products_public: {
+        Row: {
+          brand: string | null
+          category_id: string | null
+          created_at: string | null
+          datasheet_name: string | null
+          datasheet_url: string | null
+          desc_ar: string | null
+          desc_en: string | null
+          id: string | null
+          image_url: string | null
+          is_active: boolean | null
+          name_ar: string | null
+          name_en: string | null
+          price_iqd: number | null
+          sku: string | null
+          stock: number | null
+          subcategory: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          datasheet_name?: string | null
+          datasheet_url?: string | null
+          desc_ar?: string | null
+          desc_en?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name_ar?: string | null
+          name_en?: string | null
+          price_iqd?: never
+          sku?: string | null
+          stock?: number | null
+          subcategory?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          datasheet_name?: string | null
+          datasheet_url?: string | null
+          desc_ar?: string | null
+          desc_en?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name_ar?: string | null
+          name_en?: string | null
+          price_iqd?: never
+          sku?: string | null
+          stock?: number | null
+          subcategory?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      admin_list_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          quote_count: number
+          roles: string[]
+        }[]
+      }
+      admin_set_pricing_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: undefined
+      }
+      get_visible_price: {
+        Args: {
+          _dealer: number
+          _retail: number
+          _user_id: string
+          _wholesale: number
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -359,7 +461,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "customer"
+      app_role: "admin" | "customer" | "wholesale" | "dealer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -487,7 +589,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "customer"],
+      app_role: ["admin", "customer", "wholesale", "dealer"],
     },
   },
 } as const
