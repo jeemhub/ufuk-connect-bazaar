@@ -76,7 +76,9 @@ export default function ProductsPage() {
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="surface-card p-12 text-center text-muted-foreground">…</div>
+      ) : filtered.length === 0 ? (
         <div className="surface-card p-12 text-center text-muted-foreground">{t("no_products")}</div>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
