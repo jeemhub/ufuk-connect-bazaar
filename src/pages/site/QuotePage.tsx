@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { products } from "@/data/mockData";
+import { useProduct } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,7 +23,7 @@ export default function QuotePage() {
   const { t, lang } = useLanguage();
   const [params] = useSearchParams();
   const productId = params.get("product");
-  const product = products.find((p) => p.id === productId);
+  const { product } = useProduct(productId ?? undefined);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 

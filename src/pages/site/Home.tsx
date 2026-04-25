@@ -2,13 +2,15 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Cable, ShieldCheck, Sun, Truck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { categories, products } from "@/data/mockData";
+import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useEffect } from "react";
+import { useProducts } from "@/hooks/useProducts";
 
 const Home = () => {
   const { t, lang } = useLanguage();
   const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
+  const { products } = useProducts({ activeOnly: true });
   const featured = products.slice(0, 8);
 
   useEffect(() => {

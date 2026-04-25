@@ -4,18 +4,21 @@ import { Download, ShieldCheck, Truck, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { products, formatIqd } from "@/data/mockData";
+import { formatIqd } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
+import { useProduct, useProducts } from "@/hooks/useProducts";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { t, lang } = useLanguage();
-  const product = products.find((p) => p.id === id);
+  const { product, loading } = useProduct(id);
+  const { products } = useProducts({ activeOnly: true });
 
   useEffect(() => {
     if (product) document.title = `${lang === "ar" ? product.nameAr : product.nameEn} · ${t("brand")}`;
   }, [product, t, lang]);
 
+  if (loading) return <div className="mx-auto max-w-7xl px-4 py-20 text-center text-muted-foreground">…</div>;
   if (!product) return <Navigate to="/products" replace />;
 
   const name = lang === "ar" ? product.nameAr : product.nameEn;

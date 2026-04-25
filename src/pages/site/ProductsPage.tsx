@@ -4,8 +4,9 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { categories, products } from "@/data/mockData";
+import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
+import { useProducts } from "@/hooks/useProducts";
 
 const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"];
 
@@ -16,6 +17,7 @@ export default function ProductsPage() {
   const [brand, setBrand] = useState("all");
   const [sort, setSort] = useState("newest");
   const category = params.get("category") || "all";
+  const { products, loading } = useProducts({ activeOnly: true });
 
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
 
@@ -32,7 +34,7 @@ export default function ProductsPage() {
     if (sort === "price_low") list = [...list].sort((a, b) => a.priceIqd - b.priceIqd);
     if (sort === "price_high") list = [...list].sort((a, b) => b.priceIqd - a.priceIqd);
     return list;
-  }, [search, brand, category, sort]);
+  }, [search, brand, category, sort, products]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
@@ -74,7 +76,9 @@ export default function ProductsPage() {
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="surface-card p-12 text-center text-muted-foreground">…</div>
+      ) : filtered.length === 0 ? (
         <div className="surface-card p-12 text-center text-muted-foreground">{t("no_products")}</div>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
