@@ -427,6 +427,22 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          quote_count: number
+          roles: string[]
+        }[]
+      }
+      admin_set_pricing_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: undefined
+      }
       get_visible_price: {
         Args: {
           _dealer: number
