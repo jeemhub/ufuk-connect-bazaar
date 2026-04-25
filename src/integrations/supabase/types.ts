@@ -175,7 +175,9 @@ export type Database = {
           is_active: boolean
           name_ar: string
           name_en: string
+          price_dealer_iqd: number
           price_iqd: number
+          price_wholesale_iqd: number
           sku: string | null
           stock: number
           subcategory: string | null
@@ -194,7 +196,9 @@ export type Database = {
           is_active?: boolean
           name_ar: string
           name_en: string
+          price_dealer_iqd?: number
           price_iqd?: number
+          price_wholesale_iqd?: number
           sku?: string | null
           stock?: number
           subcategory?: string | null
@@ -213,7 +217,9 @@ export type Database = {
           is_active?: boolean
           name_ar?: string
           name_en?: string
+          price_dealer_iqd?: number
           price_iqd?: number
+          price_wholesale_iqd?: number
           sku?: string | null
           stock?: number
           subcategory?: string | null
@@ -359,7 +365,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "customer"
+      app_role: "admin" | "customer" | "wholesale" | "dealer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -487,7 +493,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "customer"],
+      app_role: ["admin", "customer", "wholesale", "dealer"],
     },
   },
 } as const
