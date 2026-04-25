@@ -17,6 +17,7 @@ export default function ProductsPage() {
   const [brand, setBrand] = useState("all");
   const [sort, setSort] = useState("newest");
   const category = params.get("category") || "all";
+  const { products, loading } = useProducts({ activeOnly: true });
 
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
 
