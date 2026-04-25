@@ -117,6 +117,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orders: {
@@ -353,9 +360,82 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      products_public: {
+        Row: {
+          brand: string | null
+          category_id: string | null
+          created_at: string | null
+          datasheet_name: string | null
+          datasheet_url: string | null
+          desc_ar: string | null
+          desc_en: string | null
+          id: string | null
+          image_url: string | null
+          is_active: boolean | null
+          name_ar: string | null
+          name_en: string | null
+          price_iqd: number | null
+          sku: string | null
+          stock: number | null
+          subcategory: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          datasheet_name?: string | null
+          datasheet_url?: string | null
+          desc_ar?: string | null
+          desc_en?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name_ar?: string | null
+          name_en?: string | null
+          price_iqd?: never
+          sku?: string | null
+          stock?: number | null
+          subcategory?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          datasheet_name?: string | null
+          datasheet_url?: string | null
+          desc_ar?: string | null
+          desc_en?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name_ar?: string | null
+          name_en?: string | null
+          price_iqd?: never
+          sku?: string | null
+          stock?: number | null
+          subcategory?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_visible_price: {
+        Args: {
+          _dealer: number
+          _retail: number
+          _user_id: string
+          _wholesale: number
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
