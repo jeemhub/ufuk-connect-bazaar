@@ -34,7 +34,7 @@ export default function ProductsPage() {
     if (sort === "price_low") list = [...list].sort((a, b) => a.priceIqd - b.priceIqd);
     if (sort === "price_high") list = [...list].sort((a, b) => b.priceIqd - a.priceIqd);
     return list;
-  }, [search, brand, category, sort]);
+  }, [search, brand, category, sort, products]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
