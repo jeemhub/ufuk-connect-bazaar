@@ -20,7 +20,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
 import Categories from "./pages/admin/Categories";
 import Orders from "./pages/admin/Orders";
-import Customers from "./pages/admin/Customers";
+import Users from "./pages/admin/Users";
 import Settings from "./pages/admin/Settings";
 import Security from "./pages/admin/Security";
 import Quotes from "./pages/admin/Quotes";
