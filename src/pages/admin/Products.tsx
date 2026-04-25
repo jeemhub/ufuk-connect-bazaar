@@ -56,8 +56,7 @@ export default function Products() {
     if (!file) return;
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { toast.error(t("datasheet_invalid")); return; }
     if (file.size > 10 * 1024 * 1024) { toast.error(t("datasheet_too_large")); return; }
-    setDatasheet({ url: URL.createObjectURL(file), name: file.name, ...(file && { _file: file } as never) });
-    (window as unknown as { __pendingDs: File }).__pendingDs = file;
+    setDatasheet({ url: URL.createObjectURL(file), name: file.name });
   };
 
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
