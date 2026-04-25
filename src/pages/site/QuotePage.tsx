@@ -23,7 +23,7 @@ export default function QuotePage() {
   const { t, lang } = useLanguage();
   const [params] = useSearchParams();
   const productId = params.get("product");
-  const product = products.find((p) => p.id === productId);
+  const { product } = useProduct(productId ?? undefined);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
