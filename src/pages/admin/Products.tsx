@@ -131,6 +131,8 @@ export default function Products() {
       category_id: catMap[categoryKey] ?? null,
       subcategory: String(f.get("subcategory") || "") || null,
       price_iqd: Number(f.get("priceIqd") || 0),
+      price_wholesale_iqd: Number(f.get("priceWholesale") || 0),
+      price_dealer_iqd: Number(f.get("priceDealer") || 0),
       stock: Number(f.get("stock") || 0),
       image_url: finalImage,
       datasheet_url: datasheet?.url ?? null,
