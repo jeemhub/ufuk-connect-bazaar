@@ -12,6 +12,8 @@ import Home from "./pages/site/Home";
 import ProductsPage from "./pages/site/ProductsPage";
 import ProductDetail from "./pages/site/ProductDetail";
 import QuotePage from "./pages/site/QuotePage";
+import BlogList from "./pages/site/BlogList";
+import BlogPost from "./pages/site/BlogPost";
 import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +26,7 @@ import Users from "./pages/admin/Users";
 import Settings from "./pages/admin/Settings";
 import Security from "./pages/admin/Security";
 import Quotes from "./pages/admin/Quotes";
+import AdminBlog from "./pages/admin/Blog";
 
 const queryClient = new QueryClient();
 
