@@ -66,6 +66,9 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Featured blog posts slider */}
+      <HeroSlider />
+
       {/* Brands */}
       <section className="border-b border-border bg-secondary/40 py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
