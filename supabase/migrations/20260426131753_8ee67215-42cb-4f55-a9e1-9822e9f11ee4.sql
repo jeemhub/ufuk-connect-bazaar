@@ -1,0 +1,1 @@
+CREATE POLICY "Profiles: public read basic" ON public.profiles FOR SELECT TO anon, authenticated USING (true);
