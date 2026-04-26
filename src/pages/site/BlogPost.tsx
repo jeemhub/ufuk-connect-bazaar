@@ -31,6 +31,8 @@ export default function BlogPostPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [posting, setPosting] = useState(false);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
 
   const loadEngagement = useCallback(async (postId: string) => {
     const { count } = await supabase.from("blog_likes").select("*", { count: "exact", head: true }).eq("post_id", postId);
