@@ -14,9 +14,14 @@ export default function ProductsPage() {
   const { t, lang } = useLanguage();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [brand, setBrand] = useState("all");
   const [sort, setSort] = useState("newest");
   const category = params.get("category") || "all";
+  const brand = params.get("brand") || "all";
+  const setBrand = (v: string) => {
+    const next = new URLSearchParams(params);
+    if (v === "all") next.delete("brand"); else next.set("brand", v);
+    setParams(next, { replace: true });
+  };
   const { products, loading } = useProducts({ activeOnly: true });
 
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
