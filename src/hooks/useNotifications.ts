@@ -54,32 +54,6 @@ export function useNotifications() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Play notification sound
-  const playSound = useCallback(() => {
-    try {
-      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.type = "sine"; o.frequency.value = 880;
-      g.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
-      o.start(); o.stop(ctx.currentTime + 0.55);
-      setTimeout(() => {
-        const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
-        o2.connect(g2); g2.connect(ctx.destination);
-        o2.type = "sine"; o2.frequency.value = 1175;
-        g2.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g2.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-        g2.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
-        o2.start(); o2.stop(ctx.currentTime + 0.55);
-      }, 180);
-    } catch {}
-  }, []);
-
   // Realtime
   useEffect(() => {
     if (!user) return;
@@ -90,7 +64,7 @@ export function useNotifications() {
         schema: "public",
         table: "notifications",
         filter: `user_id=eq.${user.id}`,
-      }, () => { playSound(); refresh(); })
+      }, () => { playNotificationSound(); refresh(); })
       .on("postgres_changes", {
         event: "UPDATE",
         schema: "public",
@@ -99,9 +73,8 @@ export function useNotifications() {
       }, () => refresh())
       .subscribe();
 
-    // Also listen to service worker push messages for sound when tab is open
     const onSwMsg = (e: MessageEvent) => {
-      if (e.data?.type === "PUSH_RECEIVED") playSound();
+      if (e.data?.type === "PUSH_RECEIVED") playNotificationSound();
     };
     navigator.serviceWorker?.addEventListener("message", onSwMsg);
 
@@ -109,7 +82,7 @@ export function useNotifications() {
       supabase.removeChannel(channel);
       navigator.serviceWorker?.removeEventListener("message", onSwMsg);
     };
-  }, [user, refresh, playSound]);
+  }, [user, refresh]);
 
   const unreadCount = items.filter(n => !n.is_read).length;
 
