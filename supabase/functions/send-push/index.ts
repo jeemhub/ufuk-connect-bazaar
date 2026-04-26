@@ -1,8 +1,9 @@
 // Edge function: send-push
 // Sends a Web Push notification to all subscriptions of a given user (or list of users).
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
-import webpush from "npm:web-push@3.6.7";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import webpush from "https://esm.sh/web-push@3.6.7";
+
+declare const Deno: any;
 
 const VAPID_PUBLIC = "BGMK-tXOiEvz3KPkScSzeV24hv6P61UMdzKmQxggQ44wJBKbqkjrbo9KeZ7QmWgkO6dtw6cQVKP0sr1Gj5TpkMI";
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
@@ -15,7 +16,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
