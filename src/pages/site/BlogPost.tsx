@@ -130,6 +130,8 @@ export default function BlogPostPage() {
     roots.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
     return { roots, repliesByParent };
   }, [comments]);
+
+  if (loading) {
     return <div className="mx-auto max-w-3xl px-4 py-10"><Skeleton className="h-96 w-full" /></div>;
   }
   if (!post) {
