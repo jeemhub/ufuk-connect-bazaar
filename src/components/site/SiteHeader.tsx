@@ -6,6 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/auth/AuthProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/site/NotificationBell";
+import logo from "@/assets/logo.png";
 
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
@@ -23,9 +24,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand shadow-glow">
-            <span className="font-bold text-primary-foreground">U</span>
-          </div>
+          <img src={logo} alt={t("brand")} className="h-11 w-11 object-contain" />
           <div className="hidden sm:block">
             <div className="text-sm font-bold leading-tight">{t("brand")}</div>
             <div className="text-[10px] text-muted-foreground">IT · Networking · Solar</div>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import logo from "@/assets/logo.png";
 
 export function SiteFooter() {
   const { t } = useLanguage();
@@ -10,7 +11,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4 md:px-6">
         <div className="md:col-span-2">
           <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand"><span className="font-bold text-primary-foreground">U</span></div>
+            <img src={logo} alt={t("brand")} className="h-11 w-11 object-contain" />
             <span className="font-bold">{t("brand")}</span>
           </div>
           <p className="max-w-md text-sm text-muted-foreground">{t("footer_about")}</p>
