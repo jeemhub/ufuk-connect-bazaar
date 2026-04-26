@@ -21,6 +21,23 @@ const signupSchema = loginSchema.extend({
   confirm: z.string(),
 }).refine((d) => d.password === d.confirm, { path: ["confirm"], message: "mismatch" });
 
+function getPasswordStrength(pw: string): { score: 0 | 1 | 2 | 3 | 4; labelAr: string; labelEn: string; color: string } {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;
+  const s = Math.min(score, 4) as 0 | 1 | 2 | 3 | 4;
+  const map = {
+    0: { labelAr: "ضعيفة جداً", labelEn: "Very weak", color: "bg-destructive" },
+    1: { labelAr: "ضعيفة", labelEn: "Weak", color: "bg-destructive" },
+    2: { labelAr: "متوسطة", labelEn: "Fair", color: "bg-yellow-500" },
+    3: { labelAr: "جيدة", labelEn: "Good", color: "bg-yellow-500" },
+    4: { labelAr: "قوية", labelEn: "Strong", color: "bg-green-500" },
+  } as const;
+  return { score: s, ...map[s] };
+}
+
 export default function AuthPage() {
   const { t, lang, toggle } = useLanguage();
   const { session, loading } = useAuth();
@@ -147,6 +164,24 @@ export default function AuthPage() {
             <div>
               <Label htmlFor="password">{t("auth_password")}</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} maxLength={72} autoComplete={mode === "login" ? "current-password" : "new-password"} />
+              {mode === "signup" && password.length > 0 && (() => {
+                const s = getPasswordStrength(password);
+                return (
+                  <div className="mt-2">
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 flex-1 rounded-full transition-colors ${i < s.score ? s.color : "bg-muted"}`}
+                        />
+                      ))}
+                    </div>
+                    <p className={`mt-1 text-xs ${s.score >= 4 ? "text-green-600" : s.score >= 2 ? "text-yellow-600" : "text-destructive"}`}>
+                      {lang === "ar" ? s.labelAr : s.labelEn}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
             {mode === "signup" && (
               <div>
