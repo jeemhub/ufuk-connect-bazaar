@@ -6,6 +6,7 @@ import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
+import { HeroSlider } from "@/components/site/HeroSlider";
 
 const Home = () => {
   const { t, lang } = useLanguage();
