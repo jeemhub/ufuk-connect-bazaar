@@ -6,6 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/auth/AuthProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/site/NotificationBell";
+import { PushToggleButton } from "@/components/site/PushToggleButton";
 import logo from "@/assets/logo.png";
 
 export function SiteHeader() {
@@ -47,7 +48,7 @@ export function SiteHeader() {
             <span className="hidden sm:inline">{lang === "ar" ? "EN" : "ع"}</span>
           </Button>
 
-          {user && <NotificationBell />}
+          {user ? <NotificationBell /> : <PushToggleButton />}
 
           {user ? (
             <DropdownMenu>
