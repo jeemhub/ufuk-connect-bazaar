@@ -13,6 +13,27 @@ export type Notification = {
   created_at: string;
 };
 
+function playNotificationSound() {
+  try {
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const beep = (freq: number, delay: number) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = "sine"; o.frequency.value = freq;
+      const start = ctx.currentTime + delay;
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.45);
+      o.start(start); o.stop(start + 0.5);
+    };
+    beep(880, 0);
+    beep(1175, 0.18);
+  } catch {}
+}
+
 export function useNotifications() {
   const { user } = useAuth();
   const [items, setItems] = useState<Notification[]>([]);
