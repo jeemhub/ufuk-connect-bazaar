@@ -68,14 +68,29 @@ export default function AdminBlog() {
     setOpen(true);
   };
 
-  const onUpload = async (file: File) => {
+  const onPickFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadDataUrl = async (dataUrl: string) => {
     setUploading(true);
-    const path = `${user?.id ?? "admin"}/${Date.now()}-${file.name.replace(/[^a-z0-9.\-_]/gi, "_")}`;
-    const { error } = await supabase.storage.from("blog-images").upload(path, file, { upsert: true });
-    if (error) { toast.error(error.message); setUploading(false); return; }
-    const { data } = supabase.storage.from("blog-images").getPublicUrl(path);
-    setForm((f) => ({ ...f, cover_url: data.publicUrl }));
-    setUploading(false);
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const path = `${user?.id ?? "admin"}/${Date.now()}-cover.jpg`;
+      const { error } = await supabase.storage
+        .from("blog-images")
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (error) { toast.error(error.message); return; }
+      const { data } = supabase.storage.from("blog-images").getPublicUrl(path);
+      setForm((f) => ({ ...f, cover_url: data.publicUrl }));
+    } finally {
+      setUploading(false);
+    }
   };
 
   const save = async () => {
