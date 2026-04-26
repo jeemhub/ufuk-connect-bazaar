@@ -58,26 +58,17 @@ export function HeroSlider() {
               >
                 <div className="grid md:grid-cols-12 gap-0 items-stretch min-h-[460px]">
                   {/* Image side */}
-                  <div className="relative md:col-span-7 overflow-hidden">
+                  <div className="relative md:col-span-7 overflow-hidden rounded-2xl md:m-3">
                     {p.cover_url ? (
-                      <>
-                        <img
-                          src={p.cover_url}
-                          alt={title}
-                          className={`h-72 md:h-full w-full object-cover transition-transform duration-[8000ms] ease-out ${
-                            active ? "scale-105" : "scale-100"
-                          }`}
-                        />
-                        {/* Gradient overlay for text legibility on small screens / blends into content side */}
-                        <div
-                          aria-hidden
-                          className={`absolute inset-0 bg-gradient-to-t md:bg-gradient-to-${
-                            isRtl ? "l" : "r"
-                          } from-card via-card/40 md:via-card/10 to-transparent`}
-                        />
-                      </>
+                      <img
+                        src={p.cover_url}
+                        alt={title}
+                        className={`h-72 md:h-full w-full object-cover rounded-2xl transition-transform duration-[8000ms] ease-out ${
+                          active ? "scale-105" : "scale-100"
+                        }`}
+                      />
                     ) : (
-                      <div className="h-72 md:h-full w-full bg-gradient-hero" />
+                      <div className="h-72 md:h-full w-full rounded-2xl bg-gradient-hero" />
                     )}
                   </div>
 
