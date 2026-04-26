@@ -1,0 +1,68 @@
+import { Bell, Check } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { formatDistanceToNow } from "date-fns";
+
+export function NotificationBell() {
+  const { t } = useLanguage();
+  const { items, unreadCount, markAllRead, markRead } = useNotifications();
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative" aria-label={t("notif_title")}>
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full px-1 text-[10px] bg-destructive text-destructive-foreground">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between border-b p-3">
+          <div className="font-semibold text-sm">{t("notif_title")}</div>
+          {unreadCount > 0 && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={markAllRead}>
+              <Check className="h-3 w-3" />{t("notif_mark_all_read")}
+            </Button>
+          )}
+        </div>
+        <ScrollArea className="max-h-96">
+          {items.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">{t("notif_empty")}</div>
+          ) : (
+            <div className="divide-y">
+              {items.map((n) => {
+                const content = (
+                  <div className={`p-3 hover:bg-accent transition-colors ${!n.is_read ? "bg-primary/5" : ""}`}>
+                    <div className="flex items-start gap-2">
+                      {!n.is_read && <span className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{n.title}</div>
+                        {n.body && <div className="text-xs text-muted-foreground line-clamp-2">{n.body}</div>}
+                        <div className="text-[10px] text-muted-foreground mt-1">
+                          {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+                return n.link ? (
+                  <Link key={n.id} to={n.link} onClick={() => markRead(n.id)}>{content}</Link>
+                ) : (
+                  <div key={n.id} onClick={() => markRead(n.id)} className="cursor-pointer">{content}</div>
+                );
+              })}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  );
+}
