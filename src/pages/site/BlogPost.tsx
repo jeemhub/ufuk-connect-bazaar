@@ -50,7 +50,23 @@ export default function BlogPostPage() {
       .select("id, body, user_id, created_at, parent_id")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
-    setComments((cs ?? []) as Comment[]);
+    const list = (cs ?? []) as Comment[];
+    setComments(list);
+
+    const userIds = Array.from(new Set(list.map((c) => c.user_id)));
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+      const map: Record<string, Profile> = {};
+      (profs ?? []).forEach((p: any) => {
+        map[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+      });
+      setProfiles(map);
+    } else {
+      setProfiles({});
+    }
   }, [user]);
 
   useEffect(() => {
