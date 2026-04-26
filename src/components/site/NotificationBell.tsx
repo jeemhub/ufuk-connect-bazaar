@@ -11,10 +11,11 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
-export function NotificationBell() {
+function NotificationPushSwitch() {
   const { t } = useLanguage();
-  const { items, unreadCount, markAllRead, markRead } = useNotifications();
   const { supported, enabled, loading, enable, disable, permission } = usePushSubscription();
+
+  if (!supported) return null;
 
   const handleToggle = async (checked: boolean) => {
     if (checked) {
@@ -26,6 +27,21 @@ export function NotificationBell() {
       await disable();
     }
   };
+
+  return (
+    <div className="flex items-center justify-between gap-3 border-b p-3 bg-muted/30">
+      <div className="flex items-center gap-2 min-w-0">
+        {enabled ? <Bell className="h-4 w-4 text-primary shrink-0" /> : <BellOff className="h-4 w-4 text-muted-foreground shrink-0" />}
+        <div className="text-xs font-medium truncate">{t("notif_enable_push")}</div>
+      </div>
+      <Switch checked={enabled} onCheckedChange={handleToggle} disabled={loading || permission === "denied"} />
+    </div>
+  );
+}
+
+export function NotificationBell() {
+  const { t } = useLanguage();
+  const { items, unreadCount, markAllRead, markRead } = useNotifications();
 
   return (
     <Popover>
@@ -48,15 +64,7 @@ export function NotificationBell() {
             </Button>
           )}
         </div>
-        {supported && (
-          <div className="flex items-center justify-between gap-3 border-b p-3 bg-muted/30">
-            <div className="flex items-center gap-2 min-w-0">
-              {enabled ? <Bell className="h-4 w-4 text-primary shrink-0" /> : <BellOff className="h-4 w-4 text-muted-foreground shrink-0" />}
-              <div className="text-xs font-medium truncate">{t("notif_enable_push")}</div>
-            </div>
-            <Switch checked={enabled} onCheckedChange={handleToggle} disabled={loading || permission === "denied"} />
-          </div>
-        )}
+        <NotificationPushSwitch />
         <ScrollArea className="max-h-96">
           {items.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">{t("notif_empty")}</div>
