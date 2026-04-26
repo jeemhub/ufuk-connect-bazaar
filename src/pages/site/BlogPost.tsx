@@ -213,8 +213,21 @@ export default function BlogPostPage() {
             return (
               <div key={c.id} className="surface-card p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profiles[c.user_id]?.avatar_url ?? undefined} alt={profiles[c.user_id]?.full_name ?? ""} />
+                      <AvatarFallback className="text-xs">
+                        {(profiles[c.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        {profiles[c.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                      </div>
+                    </div>
                   </div>
                   {(user?.id === c.user_id || isAdmin) && (
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteComment(c.id)} aria-label={t("blog_delete")}>
@@ -222,7 +235,7 @@ export default function BlogPostPage() {
                     </Button>
                   )}
                 </div>
-                <div className="mt-2 whitespace-pre-wrap text-sm">{c.body}</div>
+                <div className="mt-3 whitespace-pre-wrap text-sm">{c.body}</div>
 
                 <div className="mt-3 flex items-center gap-2">
                   {user && (
