@@ -38,6 +38,8 @@ export default function AdminBlog() {
   const [form, setForm] = useState({ ...blank });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
 
   useEffect(() => {
     document.title = `${t("admin_blog_title")} — ${t("admin_panel")}`;
