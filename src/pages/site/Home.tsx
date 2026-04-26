@@ -75,7 +75,13 @@ const Home = () => {
           <div className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("trusted_brands")}</div>
           <div className="mt-4 grid grid-cols-3 gap-6 md:grid-cols-5">
             {["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"].map((b) => (
-              <div key={b} className="text-center text-lg font-extrabold tracking-tight text-foreground/60 md:text-xl">{b}</div>
+              <Link
+                key={b}
+                to={`/products?brand=${encodeURIComponent(b)}`}
+                className="text-center text-lg font-extrabold tracking-tight text-foreground/60 transition-colors hover:text-primary md:text-xl"
+              >
+                {b}
+              </Link>
             ))}
           </div>
         </div>
