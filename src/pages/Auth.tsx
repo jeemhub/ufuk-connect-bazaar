@@ -21,6 +21,23 @@ const signupSchema = loginSchema.extend({
   confirm: z.string(),
 }).refine((d) => d.password === d.confirm, { path: ["confirm"], message: "mismatch" });
 
+function getPasswordStrength(pw: string): { score: 0 | 1 | 2 | 3 | 4; labelAr: string; labelEn: string; color: string } {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;
+  const s = Math.min(score, 4) as 0 | 1 | 2 | 3 | 4;
+  const map = {
+    0: { labelAr: "ضعيفة جداً", labelEn: "Very weak", color: "bg-destructive" },
+    1: { labelAr: "ضعيفة", labelEn: "Weak", color: "bg-destructive" },
+    2: { labelAr: "متوسطة", labelEn: "Fair", color: "bg-yellow-500" },
+    3: { labelAr: "جيدة", labelEn: "Good", color: "bg-yellow-500" },
+    4: { labelAr: "قوية", labelEn: "Strong", color: "bg-green-500" },
+  } as const;
+  return { score: s, ...map[s] };
+}
+
 export default function AuthPage() {
   const { t, lang, toggle } = useLanguage();
   const { session, loading } = useAuth();
