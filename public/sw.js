@@ -22,9 +22,18 @@ self.addEventListener('push', (event) => {
     badge: data.badge || '/favicon.png',
     data: { url: data.link || data.url || '/' },
     tag: data.tag || undefined,
+    requireInteraction: true,
+    renotify: true,
+    vibrate: [200, 100, 200, 100, 200],
+    silent: false,
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil((async () => {
+    await self.registration.showNotification(title, options);
+    // Notify open clients to play a sound
+    const clientsArr = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clientsArr.forEach((c) => c.postMessage({ type: 'PUSH_RECEIVED', title, body: options.body }));
+  })());
 });
 
 self.addEventListener('notificationclick', (event) => {
