@@ -64,7 +64,20 @@ export default function AuthPage() {
             data: { full_name: fullName, phone },
           },
         });
-        if (error) throw error;
+        if (error) {
+          if ((error as any).code === "weak_password" || /weak|pwned/i.test(error.message)) {
+            toast.error(lang === "ar"
+              ? "كلمة المرور ضعيفة أو مسرّبة سابقاً. اختر كلمة أقوى تحتوي على أحرف كبيرة وصغيرة وأرقام ورموز."
+              : "Password is too weak or has been leaked. Choose a stronger one with upper/lowercase, numbers, and symbols.");
+            return;
+          }
+          if (/registered|exists|already/i.test(error.message)) {
+            toast.error(lang === "ar" ? "هذا البريد مسجّل مسبقاً." : "This email is already registered.");
+            return;
+          }
+          toast.error(error.message);
+          return;
+        }
         toast.success(t("auth_signup_success"));
         setMode("login");
       } else {
