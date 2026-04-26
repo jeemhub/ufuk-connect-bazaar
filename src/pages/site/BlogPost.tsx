@@ -8,8 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+
+type Profile = { full_name: string | null; avatar_url: string | null };
 
 type Comment = {
   id: string;
@@ -17,7 +20,6 @@ type Comment = {
   user_id: string;
   created_at: string;
   parent_id: string | null;
-  profile?: { full_name: string | null } | null;
 };
 
 export default function BlogPostPage() {
