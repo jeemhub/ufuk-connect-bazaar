@@ -8,8 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+
+type Profile = { full_name: string | null; avatar_url: string | null };
 
 type Comment = {
   id: string;
@@ -17,7 +20,6 @@ type Comment = {
   user_id: string;
   created_at: string;
   parent_id: string | null;
-  profile?: { full_name: string | null } | null;
 };
 
 export default function BlogPostPage() {
@@ -29,6 +31,7 @@ export default function BlogPostPage() {
   const [likes, setLikes] = useState(0);
   const [liked, setLiked] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [commentText, setCommentText] = useState("");
   const [posting, setPosting] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -47,7 +50,23 @@ export default function BlogPostPage() {
       .select("id, body, user_id, created_at, parent_id")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
-    setComments((cs ?? []) as Comment[]);
+    const list = (cs ?? []) as Comment[];
+    setComments(list);
+
+    const userIds = Array.from(new Set(list.map((c) => c.user_id)));
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+      const map: Record<string, Profile> = {};
+      (profs ?? []).forEach((p: any) => {
+        map[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+      });
+      setProfiles(map);
+    } else {
+      setProfiles({});
+    }
   }, [user]);
 
   useEffect(() => {
@@ -194,8 +213,21 @@ export default function BlogPostPage() {
             return (
               <div key={c.id} className="surface-card p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profiles[c.user_id]?.avatar_url ?? undefined} alt={profiles[c.user_id]?.full_name ?? ""} />
+                      <AvatarFallback className="text-xs">
+                        {(profiles[c.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        {profiles[c.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                      </div>
+                    </div>
                   </div>
                   {(user?.id === c.user_id || isAdmin) && (
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteComment(c.id)} aria-label={t("blog_delete")}>
@@ -203,7 +235,7 @@ export default function BlogPostPage() {
                     </Button>
                   )}
                 </div>
-                <div className="mt-2 whitespace-pre-wrap text-sm">{c.body}</div>
+                <div className="mt-3 whitespace-pre-wrap text-sm">{c.body}</div>
 
                 <div className="mt-3 flex items-center gap-2">
                   {user && (
@@ -244,8 +276,21 @@ export default function BlogPostPage() {
                     {replies.map((r) => (
                       <div key={r.id} className="rounded-lg bg-muted/40 p-3">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={profiles[r.user_id]?.avatar_url ?? undefined} alt={profiles[r.user_id]?.full_name ?? ""} />
+                              <AvatarFallback className="text-[10px]">
+                                {(profiles[r.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium truncate">
+                                {profiles[r.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                              </div>
+                            </div>
                           </div>
                           {(user?.id === r.user_id || isAdmin) && (
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteComment(r.id)} aria-label={t("blog_delete")}>
@@ -253,7 +298,7 @@ export default function BlogPostPage() {
                             </Button>
                           )}
                         </div>
-                        <div className="mt-1.5 whitespace-pre-wrap text-sm">{r.body}</div>
+                        <div className="mt-2 whitespace-pre-wrap text-sm">{r.body}</div>
                       </div>
                     ))}
                   </div>
