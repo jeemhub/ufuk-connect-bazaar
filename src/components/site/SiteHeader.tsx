@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/auth/AuthProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/site/NotificationBell";
 
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
@@ -14,6 +15,7 @@ export function SiteHeader() {
   const links = [
     { to: "/", label: t("nav_home"), end: true },
     { to: "/products", label: t("nav_shop") },
+    { to: "/blog", label: t("nav_blog") },
     { to: "/quote", label: t("request_quote") },
   ];
 
@@ -45,6 +47,8 @@ export function SiteHeader() {
             <Languages className="h-4 w-4" />
             <span className="hidden sm:inline">{lang === "ar" ? "EN" : "ع"}</span>
           </Button>
+
+          {user && <NotificationBell />}
 
           {user ? (
             <DropdownMenu>

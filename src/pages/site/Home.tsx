@@ -6,6 +6,7 @@ import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
+import { HeroSlider } from "@/components/site/HeroSlider";
 
 const Home = () => {
   const { t, lang } = useLanguage();
@@ -64,6 +65,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured blog posts slider */}
+      <HeroSlider />
 
       {/* Brands */}
       <section className="border-b border-border bg-secondary/40 py-8">

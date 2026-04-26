@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote, Newspaper } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLanguage } from "@/i18n/LanguageContext";
 import {
@@ -22,6 +22,7 @@ export function AdminSidebar() {
     { to: "/admin", end: true, icon: LayoutDashboard, label: t("nav_dashboard") },
     { to: "/admin/products", icon: Package, label: t("nav_products") },
     { to: "/admin/categories", icon: FolderTree, label: t("nav_categories") },
+    { to: "/admin/blog", icon: Newspaper, label: t("admin_blog") },
     { to: "/admin/orders", icon: ShoppingCart, label: t("nav_orders") },
     { to: "/admin/users", icon: Users, label: t("users_title") },
     { to: "/admin/quotes", icon: MessageSquareQuote, label: t("nav_quotes") },

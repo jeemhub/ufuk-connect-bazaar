@@ -12,6 +12,8 @@ import Home from "./pages/site/Home";
 import ProductsPage from "./pages/site/ProductsPage";
 import ProductDetail from "./pages/site/ProductDetail";
 import QuotePage from "./pages/site/QuotePage";
+import BlogList from "./pages/site/BlogList";
+import BlogPost from "./pages/site/BlogPost";
 import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +26,7 @@ import Users from "./pages/admin/Users";
 import Settings from "./pages/admin/Settings";
 import Security from "./pages/admin/Security";
 import Quotes from "./pages/admin/Quotes";
+import AdminBlog from "./pages/admin/Blog";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +44,8 @@ const App = () => (
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/quote" element={<QuotePage />} />
+                <Route path="/blog" element={<BlogList />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
               </Route>
               <Route path="/auth" element={<AuthPage />} />
               <Route
@@ -54,6 +59,7 @@ const App = () => (
                 <Route index element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
                 <Route path="categories" element={<Categories />} />
+                <Route path="blog" element={<AdminBlog />} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="users" element={<Users />} />
                 <Route path="quotes" element={<Quotes />} />
