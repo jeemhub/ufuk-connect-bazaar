@@ -276,8 +276,21 @@ export default function BlogPostPage() {
                     {replies.map((r) => (
                       <div key={r.id} className="rounded-lg bg-muted/40 p-3">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={profiles[r.user_id]?.avatar_url ?? undefined} alt={profiles[r.user_id]?.full_name ?? ""} />
+                              <AvatarFallback className="text-[10px]">
+                                {(profiles[r.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium truncate">
+                                {profiles[r.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                              </div>
+                            </div>
                           </div>
                           {(user?.id === r.user_id || isAdmin) && (
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteComment(r.id)} aria-label={t("blog_delete")}>
@@ -285,7 +298,7 @@ export default function BlogPostPage() {
                             </Button>
                           )}
                         </div>
-                        <div className="mt-1.5 whitespace-pre-wrap text-sm">{r.body}</div>
+                        <div className="mt-2 whitespace-pre-wrap text-sm">{r.body}</div>
                       </div>
                     ))}
                   </div>
