@@ -164,6 +164,24 @@ export default function AuthPage() {
             <div>
               <Label htmlFor="password">{t("auth_password")}</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} maxLength={72} autoComplete={mode === "login" ? "current-password" : "new-password"} />
+              {mode === "signup" && password.length > 0 && (() => {
+                const s = getPasswordStrength(password);
+                return (
+                  <div className="mt-2">
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 flex-1 rounded-full transition-colors ${i < s.score ? s.color : "bg-muted"}`}
+                        />
+                      ))}
+                    </div>
+                    <p className={`mt-1 text-xs ${s.score >= 4 ? "text-green-600" : s.score >= 2 ? "text-yellow-600" : "text-destructive"}`}>
+                      {lang === "ar" ? s.labelAr : s.labelEn}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
             {mode === "signup" && (
               <div>
