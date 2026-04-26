@@ -33,8 +33,8 @@ export function SiteFooter() {
           <h4 className="mb-3 text-sm font-bold">{t("footer_contact")}</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {t("footer_address")}</li>
-            <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> +964 770 000 0000</li>
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> sales@ufuk-basra.iq</li>
+            <li className="flex items-start gap-2"><Phone className="h-4 w-4 mt-1" /> <span className="whitespace-pre-line">+964 771 699 2955{"\n\n"}</span></li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> sales@ufukbasra.com.iq</li>
           </ul>
         </div>
       </div>
