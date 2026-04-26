@@ -85,10 +85,27 @@ export default function BlogPostPage() {
       post_id: post.id,
       user_id: user.id,
       body: commentText.trim(),
+      parent_id: null,
     });
     setPosting(false);
     if (error) return toast.error(error.message);
     setCommentText("");
+    loadEngagement(post.id);
+  };
+
+  const submitReply = async (parentId: string) => {
+    if (!user || !post || !replyText.trim()) return;
+    setPosting(true);
+    const { error } = await supabase.from("blog_comments").insert({
+      post_id: post.id,
+      user_id: user.id,
+      body: replyText.trim(),
+      parent_id: parentId,
+    });
+    setPosting(false);
+    if (error) return toast.error(error.message);
+    setReplyText("");
+    setReplyTo(null);
     loadEngagement(post.id);
   };
 
@@ -97,7 +114,22 @@ export default function BlogPostPage() {
     if (post) loadEngagement(post.id);
   };
 
-  if (loading) {
+  const { roots, repliesByParent } = useMemo(() => {
+    const roots: Comment[] = [];
+    const repliesByParent = new Map<string, Comment[]>();
+    for (const c of comments) {
+      if (c.parent_id) {
+        const arr = repliesByParent.get(c.parent_id) ?? [];
+        arr.push(c);
+        repliesByParent.set(c.parent_id, arr);
+      } else {
+        roots.push(c);
+      }
+    }
+    // newest roots first
+    roots.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+    return { roots, repliesByParent };
+  }, [comments]);
     return <div className="mx-auto max-w-3xl px-4 py-10"><Skeleton className="h-96 w-full" /></div>;
   }
   if (!post) {
