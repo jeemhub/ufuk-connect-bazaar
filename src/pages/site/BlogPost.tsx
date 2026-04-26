@@ -16,6 +16,7 @@ type Comment = {
   body: string;
   user_id: string;
   created_at: string;
+  parent_id: string | null;
   profile?: { full_name: string | null } | null;
 };
 
