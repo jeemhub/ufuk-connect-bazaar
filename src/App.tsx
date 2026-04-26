@@ -15,6 +15,7 @@ import QuotePage from "./pages/site/QuotePage";
 import BlogList from "./pages/site/BlogList";
 import BlogPost from "./pages/site/BlogPost";
 import AuthPage from "./pages/Auth";
+import AccountPage from "./pages/site/Account";
 import NotFound from "./pages/NotFound";
 
 import AdminLayout from "./components/admin/AdminLayout";
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/quote" element={<QuotePage />} />
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
+                <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
               </Route>
               <Route path="/auth" element={<AuthPage />} />
               <Route
