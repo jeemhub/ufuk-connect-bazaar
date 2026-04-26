@@ -31,6 +31,7 @@ export default function BlogPostPage() {
   const [likes, setLikes] = useState(0);
   const [liked, setLiked] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [commentText, setCommentText] = useState("");
   const [posting, setPosting] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
