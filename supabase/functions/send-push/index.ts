@@ -1,7 +1,7 @@
 // Edge function: send-push
 // Sends a Web Push notification to all subscriptions of a given user (or list of users).
-import { createClient } from "npm:@supabase/supabase-js@2.45.0";
-import webpush from "npm:web-push@3.6.7";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import webpush from "https://esm.sh/web-push@3.6.7";
 
 declare const Deno: any;
 
