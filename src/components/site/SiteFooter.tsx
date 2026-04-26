@@ -10,9 +10,9 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-border bg-secondary/40">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4 md:px-6">
         <div className="md:col-span-2">
-          <div className="mb-3 flex items-center gap-2">
-            <img src={logo} alt={t("brand")} className="h-11 w-11 object-contain" />
-            <span className="font-bold">{t("brand")}</span>
+          <div className="mb-3 flex items-center gap-3">
+            <img src={logo} alt={t("brand")} className="h-20 w-20 object-contain" />
+            <span className="text-lg font-bold">{t("brand")}</span>
           </div>
           <p className="max-w-md text-sm text-muted-foreground">{t("footer_about")}</p>
           <div className="mt-4 flex flex-wrap gap-3">
