@@ -44,9 +44,9 @@ export default function BlogPostPage() {
 
     const { data: cs } = await supabase
       .from("blog_comments")
-      .select("id, body, user_id, created_at")
+      .select("id, body, user_id, created_at, parent_id")
       .eq("post_id", postId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
     setComments((cs ?? []) as Comment[]);
   }, [user]);
 
