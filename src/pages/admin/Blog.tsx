@@ -329,6 +329,16 @@ export default function AdminBlog() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {cropSrc && (
+        <ImageCropper
+          open={cropOpen}
+          src={cropSrc}
+          aspect={16 / 10}
+          onClose={() => setCropOpen(false)}
+          onCropped={(url) => uploadDataUrl(url)}
+        />
+      )}
     </div>
   );
 }
