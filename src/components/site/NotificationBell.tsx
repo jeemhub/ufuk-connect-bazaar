@@ -1,16 +1,31 @@
-import { Bell, Check } from "lucide-react";
+import { Bell, BellOff, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useNotifications } from "@/hooks/useNotifications";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 export function NotificationBell() {
   const { t } = useLanguage();
   const { items, unreadCount, markAllRead, markRead } = useNotifications();
+  const { supported, enabled, loading, enable, disable, permission } = usePushSubscription();
+
+  const handleToggle = async (checked: boolean) => {
+    if (checked) {
+      const res = await enable();
+      if (res.ok) toast.success(t("notif_push_enabled"));
+      else if (res.reason === "denied") toast.error(t("notif_push_denied"));
+      else toast.error(t("notif_push_denied"));
+    } else {
+      await disable();
+    }
+  };
 
   return (
     <Popover>
