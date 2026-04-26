@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, Share2, Trash2, Reply, X } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { usePost } from "@/hooks/useBlog";
 import { useAuth } from "@/auth/AuthProvider";
