@@ -12,7 +12,7 @@ import logo from "@/assets/logo.png";
 
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
-  const { user, isAdmin, pricingTier, avatarUrl, fullName, signOut } = useAuth();
+  const { user, isAdmin, pricingTier, avatarUrl, fullName, isVerified, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
   const links = [
