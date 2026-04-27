@@ -291,12 +291,13 @@ export default function BlogPostPage() {
                       <div key={r.id} className="rounded-lg bg-muted/40 p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={profiles[r.user_id]?.avatar_url ?? undefined} alt={profiles[r.user_id]?.full_name ?? ""} />
-                              <AvatarFallback className="text-[10px]">
-                                {(profiles[r.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
-                              </AvatarFallback>
-                            </Avatar>
+                            <TierAvatar
+                              src={profiles[r.user_id]?.avatar_url}
+                              name={profiles[r.user_id]?.full_name}
+                              tier={profiles[r.user_id]?.tier}
+                              verified={profiles[r.user_id]?.is_verified}
+                              size="sm"
+                            />
                             <div className="min-w-0">
                               <div className="text-xs font-medium truncate">
                                 {profiles[r.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
