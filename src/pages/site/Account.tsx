@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle } from "lucide-react";
+import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle, BadgeCheck } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
