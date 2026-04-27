@@ -163,6 +163,7 @@ const Home = () => {
                 <span className="relative mt-auto text-sm font-semibold text-primary group-hover:underline">{t("view_all")} →</span>
               </Link>
             );
+          })}
         </div>
       </section>
 
