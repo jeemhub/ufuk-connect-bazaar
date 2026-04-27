@@ -28,6 +28,7 @@ import { useBrands, type Brand } from "@/hooks/useBrands";
 import { ImageCropper } from "@/components/admin/ImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dropzone } from "@/components/ui/dropzone";
 
 function slugify(input: string) {
   return input
