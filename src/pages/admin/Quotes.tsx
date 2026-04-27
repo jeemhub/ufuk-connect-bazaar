@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Mail, Phone, Building2, Loader2 } from "lucide-react";
+import { Mail, Phone, Building2, Loader2, Paperclip } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ interface Quote {
   message: string | null;
   status: string;
   created_at: string;
+  attachments: string[] | null;
 }
 
 export default function Quotes() {
