@@ -16,6 +16,7 @@ import BlogList from "./pages/site/BlogList";
 import BlogPost from "./pages/site/BlogPost";
 import AuthPage from "./pages/Auth";
 import AccountPage from "./pages/site/Account";
+import BrandsPage from "./pages/site/BrandsPage";
 import NotFound from "./pages/NotFound";
 
 import AdminLayout from "./components/admin/AdminLayout";
@@ -28,6 +29,7 @@ import Settings from "./pages/admin/Settings";
 import Security from "./pages/admin/Security";
 import Quotes from "./pages/admin/Quotes";
 import AdminBlog from "./pages/admin/Blog";
+import AdminBrands from "./pages/admin/Brands";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,7 @@ const App = () => (
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+                <Route path="/brands" element={<BrandsPage />} />
               </Route>
               <Route path="/auth" element={<AuthPage />} />
               <Route
@@ -61,6 +64,7 @@ const App = () => (
                 <Route index element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
                 <Route path="categories" element={<Categories />} />
+                <Route path="brands" element={<AdminBrands />} />
                 <Route path="blog" element={<AdminBlog />} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="users" element={<Users />} />
