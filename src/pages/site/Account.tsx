@@ -212,9 +212,9 @@ export default function AccountPage() {
   const initials = (fullName || email || "U").trim().slice(0, 2).toUpperCase();
 
   const tierMeta: Record<string, { label: string; ringColor: string; badgeStyle: React.CSSProperties }> = {
-    retail:    { label: lang === "ar" ? "مفرد"  : "Retail",     ringColor: "hsl(142 71% 45%)", badgeStyle: { backgroundColor: "hsl(142 71% 45% / 0.12)", color: "hsl(142 71% 35%)", borderColor: "hsl(142 71% 45% / 0.4)" } },
-    wholesale: { label: lang === "ar" ? "جملة"  : "Wholesale",  ringColor: "hsl(45 100% 51%)", badgeStyle: { backgroundColor: "hsl(45 100% 51% / 0.15)", color: "hsl(38 92% 40%)",  borderColor: "hsl(45 100% 51% / 0.5)" } },
-    dealer:    { label: lang === "ar" ? "وكالة" : "Agency",     ringColor: "hsl(0 84% 55%)",   badgeStyle: { backgroundColor: "hsl(0 84% 55% / 0.12)",   color: "hsl(0 84% 45%)",   borderColor: "hsl(0 84% 55% / 0.4)" } },
+    retail:    { label: lang === "ar" ? "زبون"  : "Customer",   ringColor: "hsl(142 71% 45%)", badgeStyle: { backgroundColor: "hsl(142 71% 45% / 0.12)", color: "hsl(142 71% 35%)", borderColor: "hsl(142 71% 45% / 0.4)" } },
+    wholesale: { label: lang === "ar" ? "مكتب"  : "Office",     ringColor: "hsl(45 100% 51%)", badgeStyle: { backgroundColor: "hsl(45 100% 51% / 0.15)", color: "hsl(38 92% 40%)",  borderColor: "hsl(45 100% 51% / 0.5)" } },
+    dealer:    { label: lang === "ar" ? "وكيل"  : "Dealer",     ringColor: "hsl(0 84% 55%)",   badgeStyle: { backgroundColor: "hsl(0 84% 55% / 0.12)",   color: "hsl(0 84% 45%)",   borderColor: "hsl(0 84% 55% / 0.4)" } },
   };
   const tier = tierMeta[pricingTier] ?? tierMeta.retail;
 
