@@ -12,6 +12,8 @@ export interface Product {
   category: CategoryKey;
   subcategory: string;
   priceIqd: number;
+  priceWholesaleIqd?: number | null;
+  priceDealerIqd?: number | null;
   stock: number;
   image: string;
   datasheetUrl?: string;
