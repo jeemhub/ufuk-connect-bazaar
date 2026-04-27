@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pricingTier, setPricingTier] = useState<PricingTier>("retail");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndRoles = useCallback(async (userId: string) => {
