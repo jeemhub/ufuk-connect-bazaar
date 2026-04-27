@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingBag, CheckCircle2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, CheckCircle2, FileDown } from "lucide-react";
 import { useCart } from "@/cart/CartContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/auth/AuthProvider";
 import { formatIqd } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { generateInvoicePdf, type InvoiceData } from "@/lib/invoice";
 
 type Step = "cart" | "checkout" | "done";
 
@@ -24,6 +25,7 @@ export function CartDrawer() {
   const [step, setStep] = useState<Step>("cart");
   const [submitting, setSubmitting] = useState(false);
   const [orderNo, setOrderNo] = useState<string>("");
+  const [lastInvoice, setLastInvoice] = useState<InvoiceData | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -74,8 +76,30 @@ export function CartDrawer() {
       const { error: itemsErr } = await supabase.from("order_items").insert(itemsPayload);
       if (itemsErr) throw itemsErr;
 
+      const invoice: InvoiceData = {
+        orderNo: order.order_no,
+        createdAt: new Date(),
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        customerCity: city.trim() || null,
+        customerAddress: address.trim(),
+        notes: notes.trim() || null,
+        items: items.map((i) => ({
+          name: i.name,
+          quantity: i.quantity,
+          unitPriceIqd: i.priceIqd,
+        })),
+        totalIqd,
+      };
+      setLastInvoice(invoice);
       setOrderNo(order.order_no);
       setStep("done");
+      // Auto-download invoice PDF
+      try {
+        await generateInvoicePdf(invoice);
+      } catch (pdfErr) {
+        console.error("PDF generation failed", pdfErr);
+      }
       clear();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -90,6 +114,7 @@ export function CartDrawer() {
     setTimeout(() => {
       setStep("cart");
       setOrderNo("");
+      setLastInvoice(null);
     }, 300);
   };
 
