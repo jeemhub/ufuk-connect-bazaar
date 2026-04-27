@@ -501,6 +501,7 @@ export type Database = {
       }
       quote_requests: {
         Row: {
+          attachments: string[]
           company: string | null
           created_at: string
           email: string | null
@@ -513,6 +514,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          attachments?: string[]
           company?: string | null
           created_at?: string
           email?: string | null
@@ -525,6 +527,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          attachments?: string[]
           company?: string | null
           created_at?: string
           email?: string | null
