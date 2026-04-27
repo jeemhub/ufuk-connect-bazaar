@@ -64,13 +64,13 @@ export function BrandStrip() {
           <span className="mt-3 block h-1 w-20 rounded-full bg-gradient-to-r from-primary via-primary/60 to-transparent" />
         </div>
 
-        {/* Brand grid */}
+        {/* Brand marquees */}
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
+          <div className="flex gap-4 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-32 animate-pulse rounded-2xl border border-border/60 bg-card/60"
+                className="h-28 w-48 shrink-0 animate-pulse rounded-2xl border border-border/60 bg-card/60"
                 style={{ animationDelay: `${i * 80}ms` }}
               />
             ))}
@@ -80,36 +80,54 @@ export function BrandStrip() {
             —
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {list.slice(0, 10).map((b, i) => (
-              <Link
-                key={b.id}
-                to={`/products?brand=${encodeURIComponent(b.name)}`}
-                aria-label={b.name}
-                style={{ animationDelay: `${i * 70}ms` }}
-                className="group/card relative flex h-32 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm transition-all duration-500 animate-fade-in hover:-translate-y-1.5 hover:border-primary/50 hover:bg-card hover:shadow-elegant"
-              >
-                {/* Animated gradient sweep */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover/card:translate-x-full rtl:translate-x-full rtl:group-hover/card:-translate-x-full"
-                />
-                {/* Soft top glow line */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-4 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent transition-transform duration-500 group-hover/card:scale-x-100"
-                />
-                {/* Bottom accent bar */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-gradient-to-r from-primary via-primary/70 to-transparent transition-transform duration-500 group-hover/card:scale-x-100 rtl:origin-right"
-                />
-                <BrandVisual name={b.name} url={b.logo_url} />
-                <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-all duration-500 group-hover/card:text-primary group-hover/card:translate-y-0.5">
-                  {b.name}
-                </span>
-              </Link>
-            ))}
+          <div className="relative space-y-5">
+            {/* Edge fade masks */}
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-background via-background/80 to-transparent md:w-40" />
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background via-background/80 to-transparent md:w-40" />
+
+            {/* Row 1: scroll left */}
+            <div className="group/marquee overflow-hidden">
+              <div className="flex w-max gap-4 animate-marquee [animation-duration:38s] group-hover/marquee:[animation-play-state:paused]">
+                {[...list, ...list].map((b, i) => (
+                  <Link
+                    key={`r1-${b.id}-${i}`}
+                    to={`/products?brand=${encodeURIComponent(b.name)}`}
+                    aria-label={b.name}
+                    className="group/card relative flex h-28 w-52 shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:bg-card hover:shadow-elegant"
+                  >
+                    <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover/card:translate-x-full" />
+                    <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-gradient-to-r from-primary via-primary/70 to-transparent transition-transform duration-500 group-hover/card:scale-x-100" />
+                    <BrandVisual name={b.name} url={b.logo_url} />
+                    <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-colors group-hover/card:text-primary">
+                      {b.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 2: scroll right (opposite) */}
+            {list.length > 4 && (
+              <div className="group/marquee overflow-hidden">
+                <div className="flex w-max gap-4 animate-marquee-rtl [animation-duration:46s] group-hover/marquee:[animation-play-state:paused]">
+                  {[...list.slice().reverse(), ...list.slice().reverse()].map((b, i) => (
+                    <Link
+                      key={`r2-${b.id}-${i}`}
+                      to={`/products?brand=${encodeURIComponent(b.name)}`}
+                      aria-label={b.name}
+                      className="group/card relative flex h-28 w-52 shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:bg-card hover:shadow-elegant"
+                    >
+                      <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover/card:translate-x-full" />
+                      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-right scale-x-0 bg-gradient-to-r from-transparent via-primary/70 to-primary transition-transform duration-500 group-hover/card:scale-x-100" />
+                      <BrandVisual name={b.name} url={b.logo_url} />
+                      <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-colors group-hover/card:text-primary">
+                        {b.name}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
