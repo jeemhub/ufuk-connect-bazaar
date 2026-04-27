@@ -63,7 +63,7 @@ function parseUA(ua: string | null): { browser: string; os: string } {
 
 export default function AccountPage() {
   const { t, lang } = useLanguage();
-  const { user, loading, signOut, isVerified, pricingTier } = useAuth();
+  const { user, loading, signOut, isVerified, isAdmin, pricingTier } = useAuth();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState("");
@@ -217,7 +217,15 @@ export default function AccountPage() {
     wholesale: { label: lang === "ar" ? "مكتب"  : "Office",     ringColor: "hsl(45 100% 51%)", badgeStyle: { backgroundColor: "hsl(45 100% 51% / 0.15)", color: "hsl(38 92% 40%)",  borderColor: "hsl(45 100% 51% / 0.5)" } },
     dealer:    { label: lang === "ar" ? "وكيل"  : "Dealer",     ringColor: "hsl(0 84% 55%)",   badgeStyle: { backgroundColor: "hsl(0 84% 55% / 0.12)",   color: "hsl(0 84% 45%)",   borderColor: "hsl(0 84% 55% / 0.4)" } },
   };
-  const tier = tierMeta[pricingTier] ?? tierMeta.retail;
+  const adminMeta = {
+    label: "Admin",
+    badgeStyle: {
+      background: "linear-gradient(135deg, hsl(45 95% 65%), hsl(40 100% 50%))",
+      color: "hsl(0 0% 10%)",
+      borderColor: "hsl(40 80% 35%)",
+    } as React.CSSProperties,
+  };
+  const tier = isAdmin ? { label: adminMeta.label, ringColor: "hsl(45 95% 55%)", badgeStyle: adminMeta.badgeStyle } : (tierMeta[pricingTier] ?? tierMeta.retail);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
@@ -228,18 +236,38 @@ export default function AccountPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.25),transparent_60%)]" />
           <div className="relative flex flex-col items-center gap-4 px-6 pb-6 pt-10 text-center sm:pt-14">
             <div className="relative">
-              <Avatar
-                className="h-28 w-28 md:h-32 md:w-32 ring-4 ring-offset-4 ring-offset-card shadow-xl"
-                style={{ ["--tw-ring-color" as any]: tier.ringColor }}
-              >
-                {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
-                <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
-              </Avatar>
-              {isVerified && (
+              {isAdmin ? (
+                <div
+                  className="rounded-full p-[5px] shadow-xl"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, hsl(45 95% 65%), hsl(40 100% 50%), hsl(35 90% 45%), hsl(50 100% 70%), hsl(40 100% 50%), hsl(45 95% 65%))",
+                    boxShadow: "0 0 0 4px hsl(var(--card)), 0 0 24px hsl(45 95% 55% / 0.55)",
+                  }}
+                >
+                  <Avatar className="h-28 w-28 md:h-32 md:w-32">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+                    <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
+                  </Avatar>
+                </div>
+              ) : (
+                <Avatar
+                  className="h-28 w-28 md:h-32 md:w-32 ring-4 ring-offset-4 ring-offset-card shadow-xl"
+                  style={{ ["--tw-ring-color" as any]: tier.ringColor }}
+                >
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+                  <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
+                </Avatar>
+              )}
+              {(isVerified || isAdmin) && (
                 <span className="absolute -bottom-1 -end-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-md">
                   <BadgeCheck
                     className="h-9 w-9"
-                    style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }}
+                    style={{
+                      color: isAdmin ? "hsl(45 95% 50%)" : "hsl(210 100% 50%)",
+                      fill: isAdmin ? "hsl(45 95% 50%)" : "hsl(210 100% 50%)",
+                      stroke: "hsl(0 0% 100%)",
+                    }}
                   />
                 </span>
               )}
