@@ -278,9 +278,19 @@ export function CartDrawer() {
               {ar ? "رقم الطلب" : "Order number"}: <span className="font-mono font-bold text-foreground">{orderNo}</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              {ar ? "سنتواصل معك قريبًا لتأكيد الطلب." : "We'll contact you shortly to confirm."}
+              {ar ? "تم تنزيل فاتورة PDF تلقائيًا. سنتواصل معك قريبًا." : "Your PDF invoice was downloaded. We'll contact you shortly."}
             </p>
-            <Button className="mt-4 w-full bg-gradient-brand font-bold" onClick={close}>
+            {lastInvoice && (
+              <Button
+                variant="outline"
+                className="mt-2 w-full gap-2 font-bold"
+                onClick={() => generateInvoicePdf(lastInvoice)}
+              >
+                <FileDown className="h-4 w-4" />
+                {ar ? "تنزيل الفاتورة (PDF)" : "Download invoice (PDF)"}
+              </Button>
+            )}
+            <Button className="mt-2 w-full bg-gradient-brand font-bold" onClick={close}>
               {ar ? "تم" : "Done"}
             </Button>
           </div>
