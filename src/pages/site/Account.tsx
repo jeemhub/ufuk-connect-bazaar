@@ -211,38 +211,55 @@ export default function AccountPage() {
 
   const initials = (fullName || email || "U").trim().slice(0, 2).toUpperCase();
 
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-8 md:py-12">
-      <div className="mb-8 flex flex-col items-center gap-4 text-center">
-        <div className="relative">
-          <Avatar className="h-28 w-28 md:h-32 md:w-32 ring-2 ring-primary/20">
-            {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
-            <AvatarFallback className="bg-gradient-brand text-primary-foreground font-bold text-2xl">{initials}</AvatarFallback>
-          </Avatar>
-          {isVerified && (
-            <span className="absolute -bottom-1 -end-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-background">
-              <BadgeCheck
-                className="h-8 w-8"
-                style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }}
-              />
-            </span>
-          )}
-        </div>
-        <div>
-          <div className="text-base font-semibold">{fullName || (lang === "ar" ? "بدون اسم" : "No name")}</div>
-          <div className="text-xs text-muted-foreground">{email}</div>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold md:text-3xl">{t("account_title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("account_sub")}</p>
-        </div>
-      </div>
+  const tierMeta: Record<string, { label: string; ringClass: string; badgeClass: string }> = {
+    retail:    { label: lang === "ar" ? "مفرد"  : "Retail",     ringClass: "ring-emerald-500/60",  badgeClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
+    wholesale: { label: lang === "ar" ? "جملة"  : "Wholesale",  ringClass: "ring-amber-500/70",    badgeClass: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
+    agency:    { label: lang === "ar" ? "وكالة" : "Agency",     ringClass: "ring-violet-500/70",   badgeClass: "bg-violet-500/10 text-violet-600 border-violet-500/30" },
+  };
+  const tier = tierMeta[pricingTier] ?? tierMeta.retail;
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:w-auto md:inline-flex">
-          <TabsTrigger value="profile" className="gap-2"><UserIcon className="h-4 w-4" />{t("account_tab_profile")}</TabsTrigger>
-          <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" />{t("account_tab_security")}</TabsTrigger>
-        </TabsList>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
+      <div className="mx-auto max-w-5xl px-4 py-8 md:py-12">
+        {/* Hero header */}
+        <div className="relative mb-8 overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-brand opacity-90" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.25),transparent_60%)]" />
+          <div className="relative flex flex-col items-center gap-4 px-6 pb-6 pt-10 text-center sm:pt-14">
+            <div className="relative">
+              <Avatar className={`h-28 w-28 md:h-32 md:w-32 ring-4 ring-offset-4 ring-offset-card ${tier.ringClass} shadow-xl`}>
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+                <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
+              </Avatar>
+              {isVerified && (
+                <span className="absolute -bottom-1 -end-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-md">
+                  <BadgeCheck
+                    className="h-9 w-9"
+                    style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }}
+                  />
+                </span>
+              )}
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <h2 className="text-xl font-bold md:text-2xl">{fullName || (lang === "ar" ? "بدون اسم" : "No name")}</h2>
+                <Badge variant="outline" className={`border ${tier.badgeClass}`}>{tier.label}</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">{email}</p>
+            </div>
+            <Separator className="my-1 w-24 opacity-60" />
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight md:text-xl">{t("account_title")}</h1>
+              <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">{t("account_sub")}</p>
+            </div>
+          </div>
+        </div>
+
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/60 p-1 md:w-auto md:inline-flex">
+            <TabsTrigger value="profile" className="gap-2 rounded-full data-[state=active]:bg-background data-[state=active]:shadow"><UserIcon className="h-4 w-4" />{t("account_tab_profile")}</TabsTrigger>
+            <TabsTrigger value="security" className="gap-2 rounded-full data-[state=active]:bg-background data-[state=active]:shadow"><Shield className="h-4 w-4" />{t("account_tab_security")}</TabsTrigger>
+          </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
           {/* Avatar Card */}
