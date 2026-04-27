@@ -8,11 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { TierAvatar } from "@/components/site/TierAvatar";
 
-type Profile = { full_name: string | null; avatar_url: string | null };
+type Tier = "dealer" | "wholesale" | "retail";
+type Profile = { full_name: string | null; avatar_url: string | null; is_verified: boolean; tier: Tier };
 
 type Comment = {
   id: string;
@@ -55,13 +56,25 @@ export default function BlogPostPage() {
 
     const userIds = Array.from(new Set(list.map((c) => c.user_id)));
     if (userIds.length > 0) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url")
-        .in("id", userIds);
+      const [{ data: profs }, { data: roles }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, avatar_url, is_verified").in("id", userIds),
+        supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
+      ]);
+      const tierByUser: Record<string, Tier> = {};
+      (roles ?? []).forEach((r: any) => {
+        const cur = tierByUser[r.user_id];
+        if (r.role === "dealer") tierByUser[r.user_id] = "dealer";
+        else if (r.role === "wholesale" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
+        else if (!cur) tierByUser[r.user_id] = "retail";
+      });
       const map: Record<string, Profile> = {};
       (profs ?? []).forEach((p: any) => {
-        map[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+        map[p.id] = {
+          full_name: p.full_name,
+          avatar_url: p.avatar_url,
+          is_verified: Boolean(p.is_verified),
+          tier: tierByUser[p.id] ?? "retail",
+        };
       });
       setProfiles(map);
     } else {
@@ -214,12 +227,13 @@ export default function BlogPostPage() {
               <div key={c.id} className="surface-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={profiles[c.user_id]?.avatar_url ?? undefined} alt={profiles[c.user_id]?.full_name ?? ""} />
-                      <AvatarFallback className="text-xs">
-                        {(profiles[c.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <TierAvatar
+                      src={profiles[c.user_id]?.avatar_url}
+                      name={profiles[c.user_id]?.full_name}
+                      tier={profiles[c.user_id]?.tier}
+                      verified={profiles[c.user_id]?.is_verified}
+                      size="md"
+                    />
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">
                         {profiles[c.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
@@ -277,12 +291,13 @@ export default function BlogPostPage() {
                       <div key={r.id} className="rounded-lg bg-muted/40 p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={profiles[r.user_id]?.avatar_url ?? undefined} alt={profiles[r.user_id]?.full_name ?? ""} />
-                              <AvatarFallback className="text-[10px]">
-                                {(profiles[r.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
-                              </AvatarFallback>
-                            </Avatar>
+                            <TierAvatar
+                              src={profiles[r.user_id]?.avatar_url}
+                              name={profiles[r.user_id]?.full_name}
+                              tier={profiles[r.user_id]?.tier}
+                              verified={profiles[r.user_id]?.is_verified}
+                              size="sm"
+                            />
                             <div className="min-w-0">
                               <div className="text-xs font-medium truncate">
                                 {profiles[r.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
