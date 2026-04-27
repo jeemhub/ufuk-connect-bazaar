@@ -153,15 +153,15 @@
   }
   .story-link:hover::after { transform: scaleX(1); transform-origin: left; }
 
-  /* Marquee mask */
-  .marquee-mask {
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-            mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  /* Marquee / conveyor mask */
+  .marquee-mask, .brand-conveyor {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
-  .animate-marquee, .animate-marquee-rtl, .animate-float, .animate-float-slow, .animate-spin-slow, .animate-blob, .text-gradient-brand { animation: none !important; }
+  .animate-marquee, .animate-marquee-rtl, .animate-conveyor, .animate-conveyor-rtl, .animate-float, .animate-float-slow, .animate-spin-slow, .animate-blob, .text-gradient-brand { animation: none !important; }
 }
 
