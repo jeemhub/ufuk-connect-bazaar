@@ -1,4 +1,5 @@
 import { ArrowUpRight, DollarSign, Users, ShoppingBag, AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { formatIqd, orders, products, salesSeries } from "@/data/mockData";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -12,10 +13,10 @@ export default function Dashboard() {
   const lowStock = products.filter((p) => p.stock < 5).length;
 
   const stats = [
-    { label: t("stat_revenue"), value: `${formatIqd(totalRevenue)} ${t("currency_iqd")}`, change: "+12.4%", icon: DollarSign, color: "text-primary", bg: "bg-primary/10" },
-    { label: t("stat_visitors"), value: "1,284", change: "+8.1%", icon: Users, color: "text-primary", bg: "bg-primary/10" },
-    { label: t("stat_pending"), value: String(pendingOrders), change: "+3", icon: ShoppingBag, color: "text-warning", bg: "bg-warning/10" },
-    { label: t("stat_low_stock"), value: String(lowStock), change: "!", icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
+    { label: t("stat_revenue"), value: `${formatIqd(totalRevenue)} ${t("currency_iqd")}`, change: "+12.4%", icon: DollarSign, color: "text-primary", bg: "bg-primary/10", href: "/admin/orders" },
+    { label: t("stat_visitors"), value: "1,284", change: "+8.1%", icon: Users, color: "text-primary", bg: "bg-primary/10", href: "/admin/users" },
+    { label: t("stat_pending"), value: String(pendingOrders), change: "+3", icon: ShoppingBag, color: "text-warning", bg: "bg-warning/10", href: "/admin/orders?status=pending" },
+    { label: t("stat_low_stock"), value: String(lowStock), change: "!", icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10", href: "/admin/products?filter=low_stock" },
   ];
 
   const chartData = salesSeries.map((s) => ({ name: lang === "ar" ? s.day : s.en, value: s.value }));
@@ -29,20 +30,24 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="stat-tile">
+          <Link
+            key={s.label}
+            to={s.href}
+            className="stat-tile group block transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-elegant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className="flex items-start justify-between">
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${s.bg}`}>
                 <s.icon className={`h-5 w-5 ${s.color}`} />
               </div>
               <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-success">
-                {s.change} <ArrowUpRight className="h-3 w-3" />
+                {s.change} <ArrowUpRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </span>
             </div>
             <div className="mt-4">
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{s.label}</div>
               <div className="mt-1 text-2xl font-bold">{s.value}</div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

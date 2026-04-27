@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +13,15 @@ const statuses: OrderStatus[] = ["pending", "processing", "shipped", "delivered"
 
 export default function Orders() {
   const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [list, setList] = useState<Order[]>(initial);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>(() => searchParams.get("status") ?? "all");
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const s = searchParams.get("status");
+    if (s) setFilter(s);
+  }, [searchParams]);
 
   const filtered = useMemo(
     () => list.filter((o) =>
