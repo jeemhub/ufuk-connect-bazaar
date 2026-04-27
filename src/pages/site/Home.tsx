@@ -66,7 +66,7 @@ const Home = () => {
                 COMPANY
               </h1>
             )}
-            <p className="mt-5 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg rounded-md text-primary-foreground whitespace-pre-line">
+            <p className="mt-5 mb-8 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg rounded-md text-primary-foreground whitespace-pre-line">
               {t("hero_sub")}
             </p>
 
