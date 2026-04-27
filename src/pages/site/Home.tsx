@@ -58,12 +58,14 @@ const Home = () => {
               {lang === "ar" ? (
                 <span className="text-gradient-brand">شركة افق البصرة</span>
               ) : (
-                <>
-                  Reliable infrastructure for <br />
-                  <span className="text-gradient-brand">Networks &amp; Solar power</span>
-                </>
+                <span className="text-gradient-brand">UFUK AL-BASRA&nbsp;</span>
               )}
             </h1>
+            {lang !== "ar" && (
+              <h1 className="animate-fade-in-up [animation-delay:120ms] -mt-4 text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
+                COMPANY
+              </h1>
+            )}
             <p className="mt-5 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg rounded-md text-primary-foreground whitespace-pre-line">
               {t("hero_sub")}
             </p>
