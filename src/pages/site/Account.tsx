@@ -15,6 +15,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dropzone } from "@/components/ui/dropzone";
 
 interface LoginRow {
   id: string;
