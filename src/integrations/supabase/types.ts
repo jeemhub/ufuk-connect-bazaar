@@ -631,7 +631,7 @@ export type Database = {
           name_ar?: string | null
           name_en?: string | null
           price_dealer_iqd?: never
-          price_iqd?: never
+          price_iqd?: number | null
           price_wholesale_iqd?: never
           sku?: string | null
           stock?: number | null
@@ -651,7 +651,7 @@ export type Database = {
           name_ar?: string | null
           name_en?: string | null
           price_dealer_iqd?: never
-          price_iqd?: never
+          price_iqd?: number | null
           price_wholesale_iqd?: never
           sku?: string | null
           stock?: number | null
