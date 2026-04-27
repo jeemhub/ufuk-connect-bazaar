@@ -7,10 +7,12 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { formatIqd } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useProduct, useProducts } from "@/hooks/useProducts";
+import { useAuth } from "@/auth/AuthProvider";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { t, lang } = useLanguage();
+  const { pricingTier } = useAuth();
   const { product, loading } = useProduct(id);
   const { products } = useProducts({ activeOnly: true });
 
