@@ -98,12 +98,19 @@ export function CartDrawer() {
       <SheetContent side={ar ? "left" : "right"} className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
         <SheetHeader className="border-b border-border px-5 py-4">
           <SheetTitle className="flex items-center gap-2 text-lg">
-            <ShoppingBag className="h-5 w-5 text-primary" />
-            {step === "checkout"
-              ? ar ? "إكمال الطلب" : "Checkout"
-              : step === "done"
-              ? ar ? "تم استلام طلبك" : "Order received"
-              : ar ? `سلة المشتريات (${count})` : `Cart (${count})`}
+            <ShoppingBag className="h-5 w-5 shrink-0 text-primary" />
+            <span>
+              {step === "checkout"
+                ? ar ? "إكمال الطلب" : "Checkout"
+                : step === "done"
+                ? ar ? "تم استلام طلبك" : "Order received"
+                : ar ? "سلة المشتريات" : "Cart"}
+            </span>
+            {step === "cart" && (
+              <span className="text-sm font-semibold text-muted-foreground">
+                {count}
+              </span>
+            )}
           </SheetTitle>
         </SheetHeader>
 
