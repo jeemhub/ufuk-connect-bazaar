@@ -383,8 +383,8 @@ export const translations = {
     my_account: "My account",
 
     hero_eyebrow: "Professional IT solutions for businesses & individuals",
-    hero_title: "Reliable infrastructure for networking & solar energy",
-    hero_sub: "Authorized distributor of leading global brands in Iraq — nationwide delivery and cash on delivery.",
+    hero_title: "UFUK AL-BASRA COMPANY",
+    hero_sub: "Information technology, networking solutions, electronics, and solar energy.",
     hero_cta_shop: "Browse products",
     hero_cta_quote: "Request a quote",
     trusted_brands: "Trusted brands",
