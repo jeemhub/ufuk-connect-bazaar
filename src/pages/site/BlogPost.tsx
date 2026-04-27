@@ -56,13 +56,25 @@ export default function BlogPostPage() {
 
     const userIds = Array.from(new Set(list.map((c) => c.user_id)));
     if (userIds.length > 0) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url")
-        .in("id", userIds);
+      const [{ data: profs }, { data: roles }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, avatar_url, is_verified").in("id", userIds),
+        supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
+      ]);
+      const tierByUser: Record<string, Tier> = {};
+      (roles ?? []).forEach((r: any) => {
+        const cur = tierByUser[r.user_id];
+        if (r.role === "dealer") tierByUser[r.user_id] = "dealer";
+        else if (r.role === "wholesale" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
+        else if (!cur) tierByUser[r.user_id] = "retail";
+      });
       const map: Record<string, Profile> = {};
       (profs ?? []).forEach((p: any) => {
-        map[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+        map[p.id] = {
+          full_name: p.full_name,
+          avatar_url: p.avatar_url,
+          is_verified: Boolean(p.is_verified),
+          tier: tierByUser[p.id] ?? "retail",
+        };
       });
       setProfiles(map);
     } else {
