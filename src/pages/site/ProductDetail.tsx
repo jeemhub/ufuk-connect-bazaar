@@ -9,6 +9,7 @@ import { formatIqd } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useProduct, useProducts } from "@/hooks/useProducts";
 import { useAuth } from "@/auth/AuthProvider";
+import { AddToCartButton } from "@/components/site/AddToCartButton";
 
 export default function ProductDetail() {
   const { id } = useParams();
