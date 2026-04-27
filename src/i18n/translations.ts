@@ -203,6 +203,11 @@ export const translations = {
     users_history_for: "سجل الطلبات لـ",
     users_history_empty: "لا توجد طلبات سابقة",
     users_role_updated: "تم تحديث المستوى",
+    users_verify: "توثيق",
+    users_unverify: "إلغاء التوثيق",
+    users_verified: "موثّق",
+    users_verified_on: "تم توثيق الحساب",
+    users_verified_off: "تم إلغاء توثيق الحساب",
     users_empty: "لا يوجد مستخدمون",
     quote_general: "استفسار عام",
 
