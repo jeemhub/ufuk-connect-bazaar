@@ -57,7 +57,15 @@ export function SiteHeader() {
                 <button
                   type="button"
                   aria-label={user.email ?? "account"}
-                  className={`tier-ring tier-ring-${pricingTier} relative inline-flex h-12 w-12 items-center justify-center rounded-full p-1 transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+                  style={{
+                    backgroundColor:
+                      pricingTier === "dealer"
+                        ? "hsl(0 84% 55%)"
+                        : pricingTier === "wholesale"
+                        ? "hsl(45 100% 51%)"
+                        : "hsl(142 71% 45%)",
+                  }}
+                  className="relative inline-flex h-12 w-12 items-center justify-center rounded-full p-1 transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <Avatar className="h-10 w-10">
                     {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? user.email ?? ""} /> : null}
