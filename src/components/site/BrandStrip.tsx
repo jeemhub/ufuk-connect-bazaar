@@ -106,28 +106,6 @@ export function BrandStrip() {
               </div>
             </div>
 
-            {/* Row 2: scroll right (opposite) */}
-            {list.length > 4 && (
-              <div className="group/marquee overflow-hidden">
-                <div className="flex w-max gap-4 animate-marquee-rtl [animation-duration:85s] group-hover/marquee:[animation-play-state:paused]">
-                  {[...list.slice().reverse(), ...list.slice().reverse()].map((b, i) => (
-                    <Link
-                      key={`r2-${b.id}-${i}`}
-                      to={`/products?brand=${encodeURIComponent(b.name)}`}
-                      aria-label={b.name}
-                      className="group/card relative flex h-28 w-52 shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:bg-card hover:shadow-elegant"
-                    >
-                      <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover/card:translate-x-full" />
-                      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-right scale-x-0 bg-gradient-to-r from-transparent via-primary/70 to-primary transition-transform duration-500 group-hover/card:scale-x-100" />
-                      <BrandVisual name={b.name} url={b.logo_url} />
-                      <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-colors group-hover/card:text-primary">
-                        {b.name}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
