@@ -213,30 +213,28 @@ export default function AccountPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 md:py-12">
-      <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col items-center gap-4 text-center">
+        <div className="relative">
+          <Avatar className="h-28 w-28 md:h-32 md:w-32 ring-2 ring-primary/20">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+            <AvatarFallback className="bg-gradient-brand text-primary-foreground font-bold text-2xl">{initials}</AvatarFallback>
+          </Avatar>
+          {isVerified && (
+            <span className="absolute -bottom-1 -end-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-background">
+              <BadgeCheck
+                className="h-8 w-8"
+                style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }}
+              />
+            </span>
+          )}
+        </div>
+        <div>
+          <div className="text-base font-semibold">{fullName || (lang === "ar" ? "بدون اسم" : "No name")}</div>
+          <div className="text-xs text-muted-foreground">{email}</div>
+        </div>
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">{t("account_title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("account_sub")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Avatar className="h-20 w-20 md:h-24 md:w-24 ring-2 ring-primary/20">
-              {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
-              <AvatarFallback className="bg-gradient-brand text-primary-foreground font-bold text-xl">{initials}</AvatarFallback>
-            </Avatar>
-            {isVerified && (
-              <span className="absolute -bottom-1 -end-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-background">
-                <BadgeCheck
-                  className="h-7 w-7"
-                  style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }}
-                />
-              </span>
-            )}
-          </div>
-          <div className="hidden text-end sm:block">
-            <div className="text-sm font-semibold">{fullName || (lang === "ar" ? "بدون اسم" : "No name")}</div>
-            <div className="text-xs text-muted-foreground">{email}</div>
-          </div>
         </div>
       </div>
 
