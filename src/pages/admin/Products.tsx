@@ -100,11 +100,17 @@ export default function Products() {
     return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
   }
 
+  const [searchParams] = useSearchParams();
+  const lowStockOnly = searchParams.get("filter") === "low_stock";
+
   const filtered = useMemo(() => list.filter((p) => {
     const q = search.toLowerCase();
     const matches = !q || p.nameAr.includes(search) || p.nameEn.toLowerCase().includes(q);
-    return matches && (brand === "all" || p.brand === brand) && (cat === "all" || p.category === cat);
-  }), [list, search, brand, cat]);
+    return matches
+      && (brand === "all" || p.brand === brand)
+      && (cat === "all" || p.category === cat)
+      && (!lowStockOnly || p.stock < 5);
+  }), [list, search, brand, cat, lowStockOnly]);
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
