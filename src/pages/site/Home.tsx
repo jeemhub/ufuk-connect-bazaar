@@ -140,10 +140,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 3. Featured blog posts slider */}
-      <HeroSlider />
-
-      {/* 4. Categories */}
+      {/* 3. Categories — directly under hero */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
         <div className="mb-8 flex items-end justify-between">
           <div>
@@ -169,6 +166,9 @@ const Home = () => {
           })}
         </div>
       </section>
+
+      {/* 4. Featured blog posts slider */}
+      <HeroSlider />
 
       {/* 5. Featured */}
       <section className="bg-secondary/30 py-16">
