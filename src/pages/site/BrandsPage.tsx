@@ -53,17 +53,32 @@ export default function BrandsPage() {
                 className="group surface-card relative flex h-44 flex-col items-center justify-between overflow-hidden p-6 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-elegant"
                 style={{ animation: `fade-in-up 0.5s ease-out ${i * 60}ms both` }}
               >
-                <div aria-hidden className="absolute -end-10 -top-10 h-32 w-32 rounded-full bg-primary/5 transition-all duration-700 group-hover:scale-[2.5] group-hover:bg-primary/10" />
+                {/* Animated gradient sweep */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover:translate-x-full rtl:translate-x-full rtl:group-hover:-translate-x-full"
+                />
+                {/* Soft top glow line */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-6 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent transition-transform duration-500 group-hover:scale-x-100"
+                />
+                {/* Bottom accent bar */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-gradient-to-r from-primary via-primary/70 to-transparent transition-transform duration-500 group-hover:scale-x-100 rtl:origin-right"
+                />
+
                 <div className="relative flex h-20 w-full items-center justify-center">
                   {b.logo_url ? (
-                    <img src={b.logo_url} alt={b.name} loading="lazy" className="max-h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-110" />
+                    <img src={b.logo_url} alt={b.name} loading="lazy" className="max-h-16 w-auto object-contain transition-all duration-500 group-hover:scale-110 group-hover:-rotate-2" />
                   ) : (
-                    <span className="text-2xl font-extrabold tracking-tight text-foreground/80">{b.name}</span>
+                    <span className="text-2xl font-extrabold tracking-tight text-foreground/80 transition-colors duration-500 group-hover:text-primary">{b.name}</span>
                   )}
                 </div>
                 <div className="relative flex w-full items-center justify-between">
-                  <span className="text-sm font-bold">{b.name}</span>
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="text-sm font-bold transition-transform duration-500 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5">{b.name}</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 -translate-x-2 transition-all duration-500 group-hover:opacity-100 group-hover:translate-x-0 rtl:translate-x-2 rtl:group-hover:translate-x-0">
                     {t("view_products")}
                     <Arrow className="h-3 w-3" />
                   </span>
