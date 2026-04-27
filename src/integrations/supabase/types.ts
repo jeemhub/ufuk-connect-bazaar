@@ -610,7 +610,9 @@ export type Database = {
           is_active: boolean | null
           name_ar: string | null
           name_en: string | null
+          price_dealer_iqd: number | null
           price_iqd: number | null
+          price_wholesale_iqd: number | null
           sku: string | null
           stock: number | null
           subcategory: string | null
@@ -628,7 +630,9 @@ export type Database = {
           is_active?: boolean | null
           name_ar?: string | null
           name_en?: string | null
+          price_dealer_iqd?: never
           price_iqd?: never
+          price_wholesale_iqd?: never
           sku?: string | null
           stock?: number | null
           subcategory?: string | null
@@ -646,7 +650,9 @@ export type Database = {
           is_active?: boolean | null
           name_ar?: string | null
           name_en?: string | null
+          price_dealer_iqd?: never
           price_iqd?: never
+          price_wholesale_iqd?: never
           sku?: string | null
           stock?: number | null
           subcategory?: string | null
