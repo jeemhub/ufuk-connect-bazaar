@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type PricingTier = "dealer" | "wholesale" | "customer";
+export type PricingTier = "dealer" | "wholesale" | "retail";
 
 type Ctx = {
   session: Session | null;
@@ -21,7 +21,7 @@ const AuthContext = createContext<Ctx | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [pricingTier, setPricingTier] = useState<PricingTier>("customer");
+  const [pricingTier, setPricingTier] = useState<PricingTier>("retail");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,11 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase.from("profiles").select("avatar_url, full_name").eq("id", userId).maybeSingle(),
     ]);
-    const roleNames = (roles ?? []).map((r) => r.role);
+    const roleNames = (roles ?? []).map((r) => String(r.role));
     setIsAdmin(roleNames.includes("admin"));
     if (roleNames.includes("dealer")) setPricingTier("dealer");
     else if (roleNames.includes("wholesale")) setPricingTier("wholesale");
-    else setPricingTier("customer");
+    else setPricingTier("retail");
     setAvatarUrl(profile?.avatar_url ?? null);
     setFullName(profile?.full_name ?? null);
   }, []);
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => fetchProfileAndRoles(s.user.id), 0);
       } else {
         setIsAdmin(false);
-        setPricingTier("customer");
+        setPricingTier("retail");
         setAvatarUrl(null);
         setFullName(null);
       }
