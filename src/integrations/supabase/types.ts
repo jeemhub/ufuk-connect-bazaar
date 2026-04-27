@@ -329,6 +329,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          customer_address: string | null
           customer_city: string | null
           customer_name: string
           customer_phone: string
@@ -342,6 +343,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_address?: string | null
           customer_city?: string | null
           customer_name: string
           customer_phone: string
@@ -355,6 +357,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_address?: string | null
           customer_city?: string | null
           customer_name?: string
           customer_phone?: string

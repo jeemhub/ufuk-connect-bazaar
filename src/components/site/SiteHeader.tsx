@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
-import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck } from "lucide-react";
+import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck, ShoppingCart } from "lucide-react";
+import { useCart } from "@/cart/CartContext";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +14,7 @@ import logo from "@/assets/logo.png";
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
   const { user, isAdmin, pricingTier, avatarUrl, fullName, isVerified, signOut } = useAuth();
+  const { count: cartCount, setOpen: setCartOpen } = useCart();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -88,6 +90,21 @@ export function SiteHeader() {
             <Button variant="ghost" size="sm" onClick={toggle} className="h-9 gap-1 rounded-full hover:bg-white/60">
               <Languages className="h-4 w-4" />
               <span className="hidden sm:inline text-xs font-semibold">{lang === "ar" ? "EN" : "ع"}</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCartOpen(true)}
+              aria-label="cart"
+              className="relative h-9 w-9 rounded-full hover:bg-white/60"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -end-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
             </Button>
 
             {user ? <NotificationBell /> : <PushToggleButton />}
