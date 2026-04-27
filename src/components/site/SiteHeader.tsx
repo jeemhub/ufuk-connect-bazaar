@@ -73,6 +73,14 @@ export function SiteHeader() {
                       {(fullName || user.email || "U").trim().slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
+                  {isVerified && (
+                    <span
+                      aria-label="verified"
+                      className="absolute -bottom-0.5 -end-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-background"
+                    >
+                      <BadgeCheck className="h-5 w-5" style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }} />
+                    </span>
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
