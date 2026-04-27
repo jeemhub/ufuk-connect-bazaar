@@ -115,51 +115,55 @@ export function SiteHeader() {
                   <button
                     type="button"
                     aria-label={user.email ?? "account"}
-                    style={
-                      isAdmin
-                        ? {
-                            background:
-                              "conic-gradient(from 0deg, hsl(45 95% 65%), hsl(40 100% 50%), hsl(35 90% 45%), hsl(50 100% 70%), hsl(40 100% 50%), hsl(45 95% 65%))",
-                            boxShadow: "0 0 10px hsl(45 95% 55% / 0.55)",
-                          }
-                        : {
-                            backgroundColor:
-                              pricingTier === "dealer"
-                                ? "hsl(0 84% 55%)"
-                                : pricingTier === "wholesale"
-                                ? "hsl(45 100% 51%)"
-                                : "hsl(142 71% 45%)",
-                          }
-                    }
-                    className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full p-[2px] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${isAdmin ? "mb-2.5" : ""}`}
+                    className="group inline-flex items-center gap-1.5 rounded-full p-0.5 transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
-                    <Avatar className="h-9 w-9">
-                      {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? user.email ?? ""} /> : null}
-                      <AvatarFallback className="bg-gradient-brand text-[10px] font-bold text-primary-foreground">
-                        {(fullName || user.email || "U").trim().slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    {(isVerified || isAdmin) && (
-                      <span
-                        aria-label="verified"
-                        className="absolute -bottom-0.5 -end-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-background"
-                      >
-                        <BadgeCheck
-                          className="h-4 w-4"
-                          style={{
-                            color: isAdmin ? "hsl(45 95% 50%)" : "hsl(210 100% 50%)",
-                            fill: isAdmin ? "hsl(45 95% 50%)" : "hsl(210 100% 50%)",
-                            stroke: "hsl(0 0% 100%)",
-                          }}
-                        />
-                      </span>
-                    )}
+                    <span
+                      style={
+                        isAdmin
+                          ? {
+                              background:
+                                "conic-gradient(from 0deg, hsl(45 95% 65%), hsl(40 100% 50%), hsl(35 90% 45%), hsl(50 100% 70%), hsl(40 100% 50%), hsl(45 95% 65%))",
+                              boxShadow: "0 0 10px hsl(45 95% 55% / 0.55)",
+                            }
+                          : {
+                              backgroundColor:
+                                pricingTier === "dealer"
+                                  ? "hsl(0 84% 55%)"
+                                  : pricingTier === "wholesale"
+                                  ? "hsl(45 100% 51%)"
+                                  : "hsl(142 71% 45%)",
+                            }
+                      }
+                      className="relative inline-flex h-10 w-10 items-center justify-center rounded-full p-[2px]"
+                    >
+                      <Avatar className="h-9 w-9">
+                        {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? user.email ?? ""} /> : null}
+                        <AvatarFallback className="bg-gradient-brand text-[10px] font-bold text-primary-foreground">
+                          {(fullName || user.email || "U").trim().slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      {(isVerified || isAdmin) && (
+                        <span
+                          aria-label="verified"
+                          className="absolute -bottom-0.5 -end-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-background"
+                        >
+                          <BadgeCheck
+                            className="h-4 w-4"
+                            style={{
+                              color: isAdmin ? "hsl(45 95% 50%)" : "hsl(210 100% 50%)",
+                              fill: isAdmin ? "hsl(45 95% 50%)" : "hsl(210 100% 50%)",
+                              stroke: "hsl(0 0% 100%)",
+                            }}
+                          />
+                        </span>
+                      )}
+                    </span>
                     {isAdmin && (
                       <span
-                        className="absolute left-1/2 -bottom-2 -translate-x-1/2 rounded-full px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-wider text-black whitespace-nowrap"
+                        className="hidden sm:inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black"
                         style={{
                           background: "linear-gradient(135deg, hsl(45 95% 65%), hsl(40 100% 50%))",
-                          boxShadow: "0 1px 4px hsl(40 80% 30% / 0.5)",
+                          boxShadow: "0 1px 4px hsl(40 80% 30% / 0.4)",
                         }}
                       >
                         Admin
