@@ -40,43 +40,46 @@ const App = () => (
     <LanguageProvider>
       <BrowserRouter>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route element={<SiteLayout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/quote" element={<QuotePage />} />
-                <Route path="/blog" element={<BlogList />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-                <Route path="/brands" element={<BrandsPage />} />
-              </Route>
-              <Route path="/auth" element={<AuthPage />} />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="products" element={<Products />} />
-                <Route path="categories" element={<Categories />} />
-                <Route path="brands" element={<AdminBrands />} />
-                <Route path="blog" element={<AdminBlog />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="users" element={<Users />} />
-                <Route path="quotes" element={<Quotes />} />
-                <Route path="security" element={<Security />} />
-                <Route path="settings" element={<Settings />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </TooltipProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <CartDrawer />
+              <Routes>
+                <Route element={<SiteLayout />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
+                  <Route path="/quote" element={<QuotePage />} />
+                  <Route path="/blog" element={<BlogList />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
+                  <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+                  <Route path="/brands" element={<BrandsPage />} />
+                </Route>
+                <Route path="/auth" element={<AuthPage />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="products" element={<Products />} />
+                  <Route path="categories" element={<Categories />} />
+                  <Route path="brands" element={<AdminBrands />} />
+                  <Route path="blog" element={<AdminBlog />} />
+                  <Route path="orders" element={<Orders />} />
+                  <Route path="users" element={<Users />} />
+                  <Route path="quotes" element={<Quotes />} />
+                  <Route path="security" element={<Security />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </TooltipProvider>
+          </CartProvider>
         </AuthProvider>
       </BrowserRouter>
     </LanguageProvider>
