@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { ProtectedRoute } from "@/auth/ProtectedRoute";
+import { CartProvider } from "@/cart/CartContext";
+import { CartDrawer } from "@/components/site/CartDrawer";
 
 import SiteLayout from "@/components/site/SiteLayout";
 import Home from "./pages/site/Home";
