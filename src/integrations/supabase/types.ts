@@ -676,6 +676,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_verified: boolean
           phone: string
           quote_count: number
           roles: string[]
