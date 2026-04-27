@@ -227,12 +227,13 @@ export default function BlogPostPage() {
               <div key={c.id} className="surface-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={profiles[c.user_id]?.avatar_url ?? undefined} alt={profiles[c.user_id]?.full_name ?? ""} />
-                      <AvatarFallback className="text-xs">
-                        {(profiles[c.user_id]?.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <TierAvatar
+                      src={profiles[c.user_id]?.avatar_url}
+                      name={profiles[c.user_id]?.full_name}
+                      tier={profiles[c.user_id]?.tier}
+                      verified={profiles[c.user_id]?.is_verified}
+                      size="md"
+                    />
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">
                         {profiles[c.user_id]?.full_name?.trim() || (lang === "ar" ? "مستخدم" : "User")}
