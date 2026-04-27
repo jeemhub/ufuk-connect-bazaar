@@ -8,6 +8,7 @@ type Ctx = {
   session: Session | null;
   user: User | null;
   isAdmin: boolean;
+  isBlocked: boolean;
   pricingTier: PricingTier;
   avatarUrl: string | null;
   fullName: string | null;
@@ -22,6 +23,7 @@ const AuthContext = createContext<Ctx | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [pricingTier, setPricingTier] = useState<PricingTier>("retail");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
@@ -31,17 +33,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfileAndRoles = useCallback(async (userId: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("profiles").select("avatar_url, full_name, is_verified" as "*").eq("id", userId).maybeSingle(),
+      supabase.from("profiles").select("avatar_url, full_name, is_verified, is_blocked" as "*").eq("id", userId).maybeSingle(),
     ]);
     const roleNames = (roles ?? []).map((r) => String(r.role));
     setIsAdmin(roleNames.includes("admin"));
     if (roleNames.includes("dealer")) setPricingTier("dealer");
     else if (roleNames.includes("wholesale")) setPricingTier("wholesale");
     else setPricingTier("retail");
-    const p = profile as unknown as { avatar_url?: string | null; full_name?: string | null; is_verified?: boolean } | null;
+    const p = profile as unknown as { avatar_url?: string | null; full_name?: string | null; is_verified?: boolean; is_blocked?: boolean } | null;
     setAvatarUrl(p?.avatar_url ?? null);
     setFullName(p?.full_name ?? null);
     setIsVerified(Boolean(p?.is_verified));
+    setIsBlocked(Boolean(p?.is_blocked));
   }, []);
 
   useEffect(() => {
@@ -53,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => fetchProfileAndRoles(s.user.id), 0);
       } else {
         setIsAdmin(false);
+        setIsBlocked(false);
         setPricingTier("retail");
         setAvatarUrl(null);
         setFullName(null);
