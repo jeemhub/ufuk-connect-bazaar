@@ -218,18 +218,44 @@ export default function Users() {
                     </td>
                     <td className="px-4 py-3 font-semibold">{u.quote_count}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 flex-wrap">
                         <Button
                           variant={u.is_verified ? "default" : "outline"}
                           size="sm"
                           className="gap-1"
-                          disabled={updating === u.id}
+                          disabled={updating === u.id || u.is_blocked}
                           onClick={() => toggleVerified(u.id, u.is_verified)}
                           style={u.is_verified ? { backgroundColor: "hsl(210 100% 50%)", color: "white" } : undefined}
                         >
                           <BadgeCheck className="h-4 w-4" />
                           {u.is_verified ? t("users_verified") : t("users_verify")}
                         </Button>
+                        {u.is_blocked && (
+                          <Badge variant="destructive" className="gap-1"><Ban className="h-3 w-3" />محظور</Badge>
+                        )}
+                        {!isAdmin && (
+                          <Button
+                            variant={u.is_blocked ? "outline" : "destructive"}
+                            size="sm"
+                            className="gap-1"
+                            disabled={updating === u.id}
+                            onClick={() => toggleBlocked(u.id, !!u.is_blocked)}
+                          >
+                            {u.is_blocked ? <ShieldOff className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                            {u.is_blocked ? "فك الحظر" : "حظر"}
+                          </Button>
+                        )}
+                        {!isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 text-destructive hover:text-destructive"
+                            disabled={updating === u.id}
+                            onClick={() => setConfirmDelete(u)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => openHistory(u)}>
                           <History className="h-4 w-4" /> {t("users_view_history")}
                         </Button>
@@ -270,6 +296,26 @@ export default function Users() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الحساب نهائياً؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف حساب {confirmDelete?.full_name || confirmDelete?.email} وكافة بياناته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => confirmDelete && deleteUser(confirmDelete)}
+            >
+              حذف نهائي
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
