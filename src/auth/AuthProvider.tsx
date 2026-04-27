@@ -11,6 +11,7 @@ type Ctx = {
   pricingTier: PricingTier;
   avatarUrl: string | null;
   fullName: string | null;
+  isVerified: boolean;
   loading: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
