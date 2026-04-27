@@ -163,9 +163,11 @@ const Home = () => {
                 <span className="relative mt-auto text-sm font-semibold text-primary group-hover:underline">{t("view_all")} →</span>
               </Link>
             );
-          })}
         </div>
       </section>
+
+      {/* 4. Featured blog posts slider */}
+      <HeroSlider />
 
       {/* 5. Featured */}
       <section className="bg-secondary/30 py-16">
