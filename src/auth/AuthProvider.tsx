@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfileAndRoles = useCallback(async (userId: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("profiles").select("avatar_url, full_name").eq("id", userId).maybeSingle(),
+      supabase.from("profiles").select("avatar_url, full_name, is_verified").eq("id", userId).maybeSingle(),
     ]);
     const roleNames = (roles ?? []).map((r) => String(r.role));
     setIsAdmin(roleNames.includes("admin"));
@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else setPricingTier("retail");
     setAvatarUrl(profile?.avatar_url ?? null);
     setFullName(profile?.full_name ?? null);
+    setIsVerified(Boolean((profile as { is_verified?: boolean } | null)?.is_verified));
   }, []);
 
   useEffect(() => {
