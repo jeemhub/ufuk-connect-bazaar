@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle } from "lucide-react";
+import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle, BadgeCheck } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +62,7 @@ function parseUA(ua: string | null): { browser: string; os: string } {
 
 export default function AccountPage() {
   const { t, lang } = useLanguage();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isVerified } = useAuth();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState("");
@@ -219,10 +219,20 @@ export default function AccountPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("account_sub")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Avatar className="h-14 w-14 ring-2 ring-primary/20">
-            {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
-            <AvatarFallback className="bg-gradient-brand text-primary-foreground font-bold">{initials}</AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-20 w-20 md:h-24 md:w-24 ring-2 ring-primary/20">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+              <AvatarFallback className="bg-gradient-brand text-primary-foreground font-bold text-xl">{initials}</AvatarFallback>
+            </Avatar>
+            {isVerified && (
+              <span className="absolute -bottom-1 -end-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-background">
+                <BadgeCheck
+                  className="h-7 w-7"
+                  style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }}
+                />
+              </span>
+            )}
+          </div>
           <div className="hidden text-end sm:block">
             <div className="text-sm font-semibold">{fullName || (lang === "ar" ? "بدون اسم" : "No name")}</div>
             <div className="text-xs text-muted-foreground">{email}</div>
