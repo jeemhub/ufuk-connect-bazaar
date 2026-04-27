@@ -8,11 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { TierAvatar } from "@/components/site/TierAvatar";
 
-type Profile = { full_name: string | null; avatar_url: string | null };
+type Tier = "dealer" | "wholesale" | "retail";
+type Profile = { full_name: string | null; avatar_url: string | null; is_verified: boolean; tier: Tier };
 
 type Comment = {
   id: string;
