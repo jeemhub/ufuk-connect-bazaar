@@ -572,6 +572,11 @@ export const translations = {
     users_history_for: "Request history for",
     users_history_empty: "No previous requests",
     users_role_updated: "Tier updated",
+    users_verify: "Verify",
+    users_unverify: "Unverify",
+    users_verified: "Verified",
+    users_verified_on: "Account verified",
+    users_verified_off: "Account unverified",
     users_empty: "No users",
     quote_general: "General inquiry",
 
