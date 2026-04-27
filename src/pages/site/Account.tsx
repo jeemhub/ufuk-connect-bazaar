@@ -476,6 +476,7 @@ export default function AccountPage() {
           aspect={1}
         />
       )}
+      </div>
     </div>
   );
 }
