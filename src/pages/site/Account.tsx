@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle, BadgeCheck } from "lucide-react";
+import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle, BadgeCheck, Package } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dropzone } from "@/components/ui/dropzone";
+import { MyOrders } from "@/components/site/MyOrders";
 
 interface LoginRow {
   id: string;
@@ -259,8 +260,9 @@ export default function AccountPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/60 p-1 md:w-auto md:inline-flex">
+          <TabsList className="grid w-full grid-cols-3 rounded-full bg-muted/60 p-1 md:w-auto md:inline-flex">
             <TabsTrigger value="profile" className="gap-2 rounded-full data-[state=active]:bg-background data-[state=active]:shadow"><UserIcon className="h-4 w-4" />{t("account_tab_profile")}</TabsTrigger>
+            <TabsTrigger value="orders" className="gap-2 rounded-full data-[state=active]:bg-background data-[state=active]:shadow"><Package className="h-4 w-4" />{lang === "ar" ? "طلباتي" : "Orders"}</TabsTrigger>
             <TabsTrigger value="security" className="gap-2 rounded-full data-[state=active]:bg-background data-[state=active]:shadow"><Shield className="h-4 w-4" />{t("account_tab_security")}</TabsTrigger>
           </TabsList>
 
@@ -372,6 +374,10 @@ export default function AccountPage() {
               </form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="orders" className="space-y-6">
+          <MyOrders />
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
