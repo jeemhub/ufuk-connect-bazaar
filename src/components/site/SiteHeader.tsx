@@ -2,8 +2,9 @@ import { Link, NavLink } from "react-router-dom";
 import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useAuth } from "@/auth/AuthProvider";
+import { useAuth, type PricingTier } from "@/auth/AuthProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/site/NotificationBell";
 import { PushToggleButton } from "@/components/site/PushToggleButton";
@@ -11,7 +12,7 @@ import logo from "@/assets/logo.png";
 
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, pricingTier, avatarUrl, fullName, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
   const links = [
@@ -53,10 +54,18 @@ export function SiteHeader() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <UserIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline max-w-[120px] truncate">{user.email}</span>
-                </Button>
+                <button
+                  type="button"
+                  aria-label={user.email ?? "account"}
+                  className={`tier-ring tier-ring-${pricingTier} relative rounded-full p-[2px] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+                >
+                  <Avatar className="h-9 w-9 ring-2 ring-background">
+                    {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? user.email ?? ""} /> : null}
+                    <AvatarFallback className="bg-gradient-brand text-xs font-bold text-primary-foreground">
+                      {(fullName || user.email || "U").trim().slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>

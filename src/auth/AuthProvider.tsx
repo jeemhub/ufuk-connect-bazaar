@@ -1,12 +1,18 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+
+export type PricingTier = "dealer" | "wholesale" | "customer";
 
 type Ctx = {
   session: Session | null;
   user: User | null;
   isAdmin: boolean;
+  pricingTier: PricingTier;
+  avatarUrl: string | null;
+  fullName: string | null;
   loading: boolean;
+  refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -15,36 +21,52 @@ const AuthContext = createContext<Ctx | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pricingTier, setPricingTier] = useState<PricingTier>("customer");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchProfileAndRoles = useCallback(async (userId: string) => {
+    const [{ data: roles }, { data: profile }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.from("profiles").select("avatar_url, full_name").eq("id", userId).maybeSingle(),
+    ]);
+    const roleNames = (roles ?? []).map((r) => r.role);
+    setIsAdmin(roleNames.includes("admin"));
+    if (roleNames.includes("dealer")) setPricingTier("dealer");
+    else if (roleNames.includes("wholesale")) setPricingTier("wholesale");
+    else setPricingTier("customer");
+    setAvatarUrl(profile?.avatar_url ?? null);
+    setFullName(profile?.full_name ?? null);
+  }, []);
 
   useEffect(() => {
     // Listener FIRST (then getSession) to avoid missed events.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
-        // defer role lookup to avoid deadlocks inside the callback
-        setTimeout(() => fetchRole(s.user.id), 0);
+        // defer lookup to avoid deadlocks inside the callback
+        setTimeout(() => fetchProfileAndRoles(s.user.id), 0);
       } else {
         setIsAdmin(false);
+        setPricingTier("customer");
+        setAvatarUrl(null);
+        setFullName(null);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
-      if (s?.user) fetchRole(s.user.id).finally(() => setLoading(false));
+      if (s?.user) fetchProfileAndRoles(s.user.id).finally(() => setLoading(false));
       else setLoading(false);
     });
 
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [fetchProfileAndRoles]);
 
-  async function fetchRole(userId: string) {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    setIsAdmin(!!data?.some((r) => r.role === "admin"));
-  }
+  const refreshProfile = useCallback(async () => {
+    if (session?.user) await fetchProfileAndRoles(session.user.id);
+  }, [session, fetchProfileAndRoles]);
 
   async function signOut() {
     if (session?.user) {
@@ -60,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, isAdmin, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, isAdmin, pricingTier, avatarUrl, fullName, loading, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );
