@@ -14,6 +14,7 @@ import { ImageCropper } from "@/components/admin/ImageCropper";
 import { useAdminProducts, dbToProduct, type AdminProductRow } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dropzone } from "@/components/ui/dropzone";
 
 const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"] as const;
 
@@ -64,22 +65,26 @@ export default function Products() {
     }
   }, [open, editing]);
 
-  const onPickDatasheet = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; e.target.value = "";
-    if (!file) return;
+  const handleDatasheetFile = (file: File) => {
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { toast.error(t("datasheet_invalid")); return; }
     if (file.size > 10 * 1024 * 1024) { toast.error(t("datasheet_too_large")); return; }
     setDatasheet({ url: URL.createObjectURL(file), name: file.name });
   };
-
-  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPickDatasheet = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; e.target.value = "";
-    if (!file) return;
+    if (file) handleDatasheetFile(file);
+  };
+
+  const handleImageFile = (file: File) => {
     if (!file.type.startsWith("image/")) { toast.error(t("image_invalid")); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error(t("image_too_large")); return; }
     const reader = new FileReader();
     reader.onload = () => { setRawImage(String(reader.result || "")); setCropOpen(true); };
     reader.readAsDataURL(file);
+  };
+  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; e.target.value = "";
+    if (file) handleImageFile(file);
   };
 
   async function uploadCroppedImage(dataUrl: string): Promise<string | null> {
@@ -284,24 +289,31 @@ export default function Products() {
 
             <div className="space-y-2 md:col-span-2">
               <Label>{t("product_image_label")}</Label>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-secondary">
-                  {imageSrc ? <img src={imageSrc} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-8 w-8 text-muted-foreground" />}
-                </div>
-                <div className="flex flex-1 flex-col gap-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => imgInputRef.current?.click()} className="gap-2">
-                      <Upload className="h-4 w-4" />{imageSrc ? t("change_image") : t("upload_image")}
-                    </Button>
-                    {imageSrc && rawImage && (
-                      <Button type="button" variant="outline" size="sm" onClick={() => setCropOpen(true)} className="gap-2">
-                        <CropIcon className="h-4 w-4" />{t("crop_image")}
-                      </Button>
-                    )}
+              <Dropzone
+                accept="image/*"
+                onFiles={(files) => handleImageFile(files[0])}
+                overlayLabel={t("drop_to_upload")}
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start rounded-md border border-dashed border-input p-3">
+                  <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-secondary">
+                    {imageSrc ? <img src={imageSrc} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-8 w-8 text-muted-foreground" />}
                   </div>
-                  <p className="text-xs text-muted-foreground">{t("image_preview_hint")}</p>
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => imgInputRef.current?.click()} className="gap-2">
+                        <Upload className="h-4 w-4" />{imageSrc ? t("change_image") : t("upload_image")}
+                      </Button>
+                      {imageSrc && rawImage && (
+                        <Button type="button" variant="outline" size="sm" onClick={() => setCropOpen(true)} className="gap-2">
+                          <CropIcon className="h-4 w-4" />{t("crop_image")}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t("drop_file_here")}</p>
+                    <p className="text-xs text-muted-foreground">{t("image_preview_hint")}</p>
+                  </div>
                 </div>
-              </div>
+              </Dropzone>
               <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
             </div>
 
@@ -317,9 +329,15 @@ export default function Products() {
                   </Button>
                 </div>
               ) : (
-                <label htmlFor="datasheet" className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-input bg-background px-3 py-3 text-sm text-muted-foreground transition hover:border-primary hover:text-primary">
-                  <Upload className="h-4 w-4" /><span>{t("datasheet_optional")}</span>
-                </label>
+                <Dropzone
+                  accept="application/pdf,.pdf"
+                  onFiles={(files) => handleDatasheetFile(files[0])}
+                  overlayLabel={t("drop_to_upload")}
+                >
+                  <label htmlFor="datasheet" className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-input bg-background px-3 py-3 text-sm text-muted-foreground transition hover:border-primary hover:text-primary">
+                    <Upload className="h-4 w-4" /><span>{t("datasheet_optional")}</span>
+                  </label>
+                </Dropzone>
               )}
               <input id="datasheet" type="file" accept="application/pdf,.pdf" className="hidden" onChange={onPickDatasheet} />
             </div>

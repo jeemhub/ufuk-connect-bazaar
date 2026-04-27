@@ -358,6 +358,8 @@ export const translations = {
     sort_order: "ترتيب العرض",
     saved: "تم الحفظ",
     error_generic: "حدث خطأ، حاول مرة أخرى.",
+    drop_to_upload: "أفلت الصورة هنا للرفع",
+    drop_file_here: "اسحب وأفلت أو انقر للرفع",
     no_logo: "لا يوجد شعار",
 
     currency_iqd: "د.ع",
@@ -712,6 +714,8 @@ export const translations = {
     saved: "Saved",
     error_generic: "Something went wrong, please try again.",
     no_logo: "No logo",
+    drop_to_upload: "Drop image here to upload",
+    drop_file_here: "Drag & drop or click to upload",
 
     currency_iqd: "IQD",
     backend_note: "",

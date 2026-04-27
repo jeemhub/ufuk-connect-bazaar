@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
 import { ImageCropper } from "@/components/admin/ImageCropper";
+import { Dropzone } from "@/components/ui/dropzone";
+import { Upload } from "lucide-react";
 
 const blank = {
   slug: "",
@@ -228,34 +230,45 @@ export default function AdminBlog() {
 
             <div className="space-y-3">
               <Label>{t("admin_blog_cover")}</Label>
-              <div className="flex flex-wrap items-center gap-3">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploading}
-                  className="max-w-xs"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) onPickFile(f);
-                    e.target.value = "";
-                  }}
-                />
-                {form.cover_url && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => { setCropSrc(form.cover_url); setCropOpen(true); }}
-                  >
-                    <Crop className="h-4 w-4" />
-                    {t("crop_image")}
-                  </Button>
-                )}
-                {uploading && (
-                  <span className="text-xs text-muted-foreground">…</span>
-                )}
-              </div>
+              <Dropzone
+                accept="image/*"
+                onFiles={(files) => onPickFile(files[0])}
+                disabled={uploading}
+                overlayLabel={t("drop_to_upload")}
+              >
+                <div className="flex flex-col gap-3 rounded-md border border-dashed border-input p-3 sm:flex-row sm:items-center sm:flex-wrap">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Upload className="h-4 w-4" />
+                    <span>{t("drop_file_here")}</span>
+                  </div>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    className="max-w-xs"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onPickFile(f);
+                      e.target.value = "";
+                    }}
+                  />
+                  {form.cover_url && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => { setCropSrc(form.cover_url); setCropOpen(true); }}
+                    >
+                      <Crop className="h-4 w-4" />
+                      {t("crop_image")}
+                    </Button>
+                  )}
+                  {uploading && (
+                    <span className="text-xs text-muted-foreground">…</span>
+                  )}
+                </div>
+              </Dropzone>
 
               {/* Live preview — how the post will appear on the homepage hero */}
               {form.cover_url && (

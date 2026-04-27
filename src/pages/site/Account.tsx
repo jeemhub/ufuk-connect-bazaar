@@ -15,6 +15,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dropzone } from "@/components/ui/dropzone";
 
 interface LoginRow {
   id: string;
@@ -154,14 +155,18 @@ export default function AccountPage() {
 
   function pickFile() { fileInput.current?.click(); }
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function handleFile(file: File) {
     if (file.size > 5 * 1024 * 1024) { toast.error(lang === "ar" ? "الحجم أكبر من 5MB" : "File exceeds 5MB"); return; }
+    if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = () => setCropSrc(reader.result as string);
     reader.readAsDataURL(file);
+  }
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
     e.target.value = "";
+    if (file) handleFile(file);
   }
 
   async function onCropped(dataUrl: string) {
@@ -239,39 +244,47 @@ export default function AccountPage() {
               <CardDescription>{t("account_avatar_desc")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-                <div className="relative">
-                  <Avatar className="h-28 w-28 ring-4 ring-primary/10">
-                    {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
-                    <AvatarFallback className="bg-gradient-brand text-2xl font-bold text-primary-foreground">{initials}</AvatarFallback>
-                  </Avatar>
-                  <button
-                    type="button"
-                    onClick={pickFile}
-                    disabled={uploading}
-                    className="absolute -bottom-1 -end-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition hover:scale-105 disabled:opacity-50"
-                    aria-label={t("account_change_avatar")}
-                  >
-                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                  </button>
-                </div>
-                <div className="flex-1 space-y-2 text-center sm:text-start">
-                  <p className="text-sm text-muted-foreground">
-                    {lang === "ar" ? "الصور المدعومة: JPG، PNG. الحد الأقصى 5MB." : "Supported: JPG, PNG. Max 5MB."}
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-                    <Button type="button" variant="outline" size="sm" onClick={pickFile} disabled={uploading}>
-                      {t("account_upload")}
-                    </Button>
-                    {avatarUrl && (
-                      <Button type="button" variant="ghost" size="sm" onClick={removeAvatar} disabled={uploading}>
-                        {t("account_remove")}
-                      </Button>
-                    )}
+              <Dropzone
+                accept="image/*"
+                onFiles={(files) => handleFile(files[0])}
+                disabled={uploading}
+                overlayLabel={t("drop_to_upload")}
+              >
+                <div className="flex flex-col items-center gap-6 rounded-md border border-dashed border-input p-4 sm:flex-row sm:items-start">
+                  <div className="relative">
+                    <Avatar className="h-28 w-28 ring-4 ring-primary/10">
+                      {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+                      <AvatarFallback className="bg-gradient-brand text-2xl font-bold text-primary-foreground">{initials}</AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={pickFile}
+                      disabled={uploading}
+                      className="absolute -bottom-1 -end-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition hover:scale-105 disabled:opacity-50"
+                      aria-label={t("account_change_avatar")}
+                    >
+                      {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                    </button>
                   </div>
+                  <div className="flex-1 space-y-2 text-center sm:text-start">
+                    <p className="text-sm text-muted-foreground">
+                      {lang === "ar" ? "الصور المدعومة: JPG، PNG. الحد الأقصى 5MB." : "Supported: JPG, PNG. Max 5MB."}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{t("drop_file_here")}</p>
+                    <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                      <Button type="button" variant="outline" size="sm" onClick={pickFile} disabled={uploading}>
+                        {t("account_upload")}
+                      </Button>
+                      {avatarUrl && (
+                        <Button type="button" variant="ghost" size="sm" onClick={removeAvatar} disabled={uploading}>
+                          {t("account_remove")}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={onFile} />
                 </div>
-                <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={onFile} />
-              </div>
+              </Dropzone>
             </CardContent>
           </Card>
 
