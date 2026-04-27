@@ -61,6 +61,22 @@ export default function Quotes() {
                 {q.company && <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-muted-foreground" /> {q.company}</div>}
                 {q.product_name && <div className="rounded-md bg-secondary/60 p-2 text-xs"><span className="font-semibold">{t("nav_products")}:</span> {q.product_name}</div>}
                 {q.message && <p className="rounded-md border border-border p-3 text-sm text-foreground/80">{q.message}</p>}
+                {q.attachments && q.attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {q.attachments.map((url, i) => (
+                      <a
+                        key={i}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-md border bg-secondary/40 px-2 py-1 text-xs hover:bg-secondary"
+                      >
+                        <Paperclip className="h-3 w-3" />
+                        {`#${i + 1}`}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
