@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History } from "lucide-react";
+import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ type Row = {
   created_at: string;
   roles: string[];
   quote_count: number;
+  is_verified: boolean;
 };
 
 type QuoteRow = {
@@ -60,6 +61,22 @@ export default function Users() {
     if (error) { toast.error(error.message); return; }
     toast.success(t("users_role_updated"));
     load();
+  }
+
+  async function toggleVerified(userId: string, current: boolean) {
+    setUpdating(userId);
+    // RPC type isn't in generated types yet — cast to unknown.
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_set_verified", {
+      _user_id: userId,
+      _verified: !current,
+    });
+    setUpdating(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success(!current ? t("users_verified_on") : t("users_verified_off"));
+    setRows((rs) => rs.map((r) => (r.id === userId ? { ...r, is_verified: !current } : r)));
   }
 
   async function openHistory(u: Row) {
@@ -112,7 +129,12 @@ export default function Users() {
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-primary-foreground">
                           {(u.full_name || u.email).charAt(0).toUpperCase()}
                         </div>
-                        <div className="font-medium">{u.full_name || "—"}</div>
+                        <div className="flex items-center gap-1 font-medium">
+                          {u.full_name || "—"}
+                          {u.is_verified && (
+                            <BadgeCheck className="h-4 w-4" style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }} />
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
@@ -147,7 +169,18 @@ export default function Users() {
                     </td>
                     <td className="px-4 py-3 font-semibold">{u.quote_count}</td>
                     <td className="px-4 py-3">
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant={u.is_verified ? "default" : "outline"}
+                          size="sm"
+                          className="gap-1"
+                          disabled={updating === u.id}
+                          onClick={() => toggleVerified(u.id, u.is_verified)}
+                          style={u.is_verified ? { backgroundColor: "hsl(210 100% 50%)", color: "white" } : undefined}
+                        >
+                          <BadgeCheck className="h-4 w-4" />
+                          {u.is_verified ? t("users_verified") : t("users_verify")}
+                        </Button>
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => openHistory(u)}>
                           <History className="h-4 w-4" /> {t("users_view_history")}
                         </Button>

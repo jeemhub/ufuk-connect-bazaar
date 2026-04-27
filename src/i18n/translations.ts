@@ -203,6 +203,11 @@ export const translations = {
     users_history_for: "سجل الطلبات لـ",
     users_history_empty: "لا توجد طلبات سابقة",
     users_role_updated: "تم تحديث المستوى",
+    users_verify: "توثيق",
+    users_unverify: "إلغاء التوثيق",
+    users_verified: "موثّق",
+    users_verified_on: "تم توثيق الحساب",
+    users_verified_off: "تم إلغاء توثيق الحساب",
     users_empty: "لا يوجد مستخدمون",
     quote_general: "استفسار عام",
 
@@ -567,6 +572,11 @@ export const translations = {
     users_history_for: "Request history for",
     users_history_empty: "No previous requests",
     users_role_updated: "Tier updated",
+    users_verify: "Verify",
+    users_unverify: "Unverify",
+    users_verified: "Verified",
+    users_verified_on: "Account verified",
+    users_verified_off: "Account unverified",
     users_empty: "No users",
     quote_general: "General inquiry",
 

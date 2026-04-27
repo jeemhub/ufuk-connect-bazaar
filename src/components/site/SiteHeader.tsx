@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X } from "lucide-react";
+import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,7 +12,7 @@ import logo from "@/assets/logo.png";
 
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
-  const { user, isAdmin, pricingTier, avatarUrl, fullName, signOut } = useAuth();
+  const { user, isAdmin, pricingTier, avatarUrl, fullName, isVerified, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
   const links = [
@@ -73,6 +73,14 @@ export function SiteHeader() {
                       {(fullName || user.email || "U").trim().slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
+                  {isVerified && (
+                    <span
+                      aria-label="verified"
+                      className="absolute -bottom-0.5 -end-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-background"
+                    >
+                      <BadgeCheck className="h-5 w-5" style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }} />
+                    </span>
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

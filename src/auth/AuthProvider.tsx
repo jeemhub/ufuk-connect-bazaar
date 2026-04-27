@@ -11,6 +11,7 @@ type Ctx = {
   pricingTier: PricingTier;
   avatarUrl: string | null;
   fullName: string | null;
+  isVerified: boolean;
   loading: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -24,20 +25,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pricingTier, setPricingTier] = useState<PricingTier>("retail");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndRoles = useCallback(async (userId: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("profiles").select("avatar_url, full_name").eq("id", userId).maybeSingle(),
+      supabase.from("profiles").select("avatar_url, full_name, is_verified" as "*").eq("id", userId).maybeSingle(),
     ]);
     const roleNames = (roles ?? []).map((r) => String(r.role));
     setIsAdmin(roleNames.includes("admin"));
     if (roleNames.includes("dealer")) setPricingTier("dealer");
     else if (roleNames.includes("wholesale")) setPricingTier("wholesale");
     else setPricingTier("retail");
-    setAvatarUrl(profile?.avatar_url ?? null);
-    setFullName(profile?.full_name ?? null);
+    const p = profile as unknown as { avatar_url?: string | null; full_name?: string | null; is_verified?: boolean } | null;
+    setAvatarUrl(p?.avatar_url ?? null);
+    setFullName(p?.full_name ?? null);
+    setIsVerified(Boolean(p?.is_verified));
   }, []);
 
   useEffect(() => {
@@ -52,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPricingTier("retail");
         setAvatarUrl(null);
         setFullName(null);
+        setIsVerified(false);
       }
     });
 
@@ -82,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, isAdmin, pricingTier, avatarUrl, fullName, loading, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, isAdmin, pricingTier, avatarUrl, fullName, isVerified, loading, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );
