@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { TierAvatar } from "@/components/site/TierAvatar";
 
-type Tier = "dealer" | "wholesale" | "retail";
+type Tier = "admin" | "dealer" | "wholesale" | "retail";
 type Profile = { full_name: string | null; avatar_url: string | null; is_verified: boolean; tier: Tier };
 
 type Comment = {
@@ -63,8 +63,9 @@ export default function BlogPostPage() {
       const tierByUser: Record<string, Tier> = {};
       (roles ?? []).forEach((r: any) => {
         const cur = tierByUser[r.user_id];
-        if (r.role === "dealer") tierByUser[r.user_id] = "dealer";
-        else if (r.role === "wholesale" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
+        if (r.role === "admin") tierByUser[r.user_id] = "admin";
+        else if (r.role === "dealer" && cur !== "admin") tierByUser[r.user_id] = "dealer";
+        else if (r.role === "wholesale" && cur !== "admin" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
         else if (!cur) tierByUser[r.user_id] = "retail";
       });
       const map: Record<string, Profile> = {};
