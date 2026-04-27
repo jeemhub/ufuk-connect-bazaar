@@ -63,6 +63,22 @@ export default function Users() {
     load();
   }
 
+  async function toggleVerified(userId: string, current: boolean) {
+    setUpdating(userId);
+    // RPC type isn't in generated types yet — cast to unknown.
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_set_verified", {
+      _user_id: userId,
+      _verified: !current,
+    });
+    setUpdating(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success(!current ? t("users_verified_on") : t("users_verified_off"));
+    setRows((rs) => rs.map((r) => (r.id === userId ? { ...r, is_verified: !current } : r)));
+  }
+
   async function openHistory(u: Row) {
     setHistoryUser(u);
     setHistoryLoading(true);
