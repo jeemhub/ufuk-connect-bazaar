@@ -121,7 +121,7 @@ export function CartDrawer() {
   return (
     <Sheet open={isOpen} onOpenChange={(v) => (v ? setOpen(true) : close())}>
       <SheetContent side={ar ? "left" : "right"} className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
-        <SheetHeader className="border-b border-border px-5 py-4">
+        <SheetHeader className="border-b border-border px-5 py-4 pe-14">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <ShoppingBag className="h-5 w-5 shrink-0 text-primary" />
             <span>
