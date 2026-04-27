@@ -39,65 +39,75 @@ const Home = () => {
 
   return (
     <>
-      {/* 1. Hero */}
-      <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
-        {/* Animated blobs */}
-        <div aria-hidden className="absolute -top-32 -start-32 h-96 w-96 rounded-full bg-primary-glow/30 blur-3xl animate-blob" />
-        <div aria-hidden className="absolute -bottom-32 -end-32 h-96 w-96 rounded-full bg-destructive/20 blur-3xl animate-blob [animation-delay:3s]" />
+      {/* 1. Hero — light mode */}
+      <section className="relative overflow-hidden bg-background text-foreground">
+        {/* Soft animated blobs */}
+        <div aria-hidden className="absolute -top-32 -start-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl animate-blob" />
+        <div aria-hidden className="absolute -bottom-32 -end-32 h-96 w-96 rounded-full bg-destructive/10 blur-3xl animate-blob [animation-delay:3s]" />
         {/* Subtle grid */}
-        <div aria-hidden className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.5]"
+          style={{
+            backgroundImage:
+              "linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
+            WebkitMaskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
+          }}
+        />
 
         <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 py-16 text-center md:px-6 md:py-24 lg:py-28">
-          <div className="mb-5 inline-flex animate-fade-in-up items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-1.5 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+          <div className="mb-5 inline-flex animate-fade-in-up items-center gap-2 rounded-full border border-border bg-card/70 px-4 py-1.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" />
             {t("hero_eyebrow")}
           </div>
           <h1 className="animate-fade-in-up [animation-delay:120ms] text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
             {lang === "ar" ? (
-              <span className="text-gradient-brand">شركة افق البصرة</span>
+              <span className="bg-gradient-brand bg-clip-text text-transparent">شركة افق البصرة</span>
             ) : (
-              <span className="text-gradient-brand">UFUK AL-BASRA&nbsp;</span>
+              <span className="bg-gradient-brand bg-clip-text text-transparent">UFUK AL-BASRA&nbsp;</span>
             )}
           </h1>
           {lang !== "ar" && (
-            <h1 className="animate-fade-in-up [animation-delay:120ms] mt-2 text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
+            <h1 className="animate-fade-in-up [animation-delay:120ms] mt-2 text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px] text-foreground">
               COMPANY
             </h1>
           )}
-          <p className="mt-5 mb-8 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg rounded-md text-primary-foreground whitespace-pre-line">
+          <p className="mt-5 mb-8 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg text-muted-foreground whitespace-pre-line">
             {t("hero_sub")}
           </p>
 
           <div className="mt-2 flex animate-fade-in-up [animation-delay:360ms] flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="group gap-2 bg-primary-foreground text-primary shadow-elegant transition-transform hover:scale-[1.03] hover:bg-primary-foreground/90">
+            <Button asChild size="lg" className="group gap-2 bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-[1.03] hover:bg-primary/90">
               <Link to="/products">
                 {t("hero_cta_shop")}
                 <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground">
+            <Button asChild size="lg" variant="outline" className="gap-2 border-border bg-card text-foreground transition-colors hover:bg-accent">
               <Link to="/quote">{t("hero_cta_quote")}</Link>
             </Button>
           </div>
 
           {/* Inline rating / trust */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 animate-fade-in-up [animation-delay:480ms] text-sm text-primary-foreground/85">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 animate-fade-in-up [animation-delay:480ms] text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" style={{ animation: `fade-in 0.4s ease-out ${500 + i * 80}ms both` }} />
               ))}
-              <span className="ms-1 font-semibold">4.9/5</span>
+              <span className="ms-1 font-semibold text-foreground">4.9/5</span>
             </div>
-            <div className="h-4 w-px bg-primary-foreground/20" />
+            <div className="h-4 w-px bg-border" />
             <div>{lang === "ar" ? "+5,000 عميل سعيد" : "5,000+ happy customers"}</div>
-            <div className="h-4 w-px bg-primary-foreground/20" />
+            <div className="h-4 w-px bg-border" />
             <div>{lang === "ar" ? "+10 سنوات خبرة" : "10+ years experience"}</div>
           </div>
         </div>
 
         {/* Trust bar */}
-        <div className="relative border-t border-primary-foreground/10 bg-primary-foreground/5 backdrop-blur-md">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px overflow-hidden md:grid-cols-4">
+        <div className="relative border-t border-border bg-card/50 backdrop-blur-md">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px overflow-hidden md:grid-cols-4 bg-border">
             {[
               { icon: ShieldCheck, label: lang === "ar" ? "ضمان رسمي" : "Official warranty" },
               { icon: Truck, label: lang === "ar" ? "توصيل لكل العراق" : "Nationwide delivery" },
@@ -106,11 +116,11 @@ const Home = () => {
             ].map((f, i) => (
               <div
                 key={i}
-                className="group flex items-center gap-3 bg-gradient-hero px-5 py-4 transition-colors hover:bg-primary-foreground/10"
+                className="group flex items-center gap-3 bg-card px-5 py-4 transition-colors hover:bg-accent"
                 style={{ animation: `fade-in 0.5s ease-out ${600 + i * 120}ms both` }}
               >
-                <f.icon className="h-5 w-5 text-primary-foreground/80 transition-transform group-hover:scale-110" />
-                <div className="text-sm font-semibold">{f.label}</div>
+                <f.icon className="h-5 w-5 text-primary transition-transform group-hover:scale-110" />
+                <div className="text-sm font-semibold text-foreground">{f.label}</div>
               </div>
             ))}
           </div>
