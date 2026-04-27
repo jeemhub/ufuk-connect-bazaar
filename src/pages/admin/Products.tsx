@@ -64,22 +64,26 @@ export default function Products() {
     }
   }, [open, editing]);
 
-  const onPickDatasheet = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; e.target.value = "";
-    if (!file) return;
+  const handleDatasheetFile = (file: File) => {
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { toast.error(t("datasheet_invalid")); return; }
     if (file.size > 10 * 1024 * 1024) { toast.error(t("datasheet_too_large")); return; }
     setDatasheet({ url: URL.createObjectURL(file), name: file.name });
   };
-
-  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPickDatasheet = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; e.target.value = "";
-    if (!file) return;
+    if (file) handleDatasheetFile(file);
+  };
+
+  const handleImageFile = (file: File) => {
     if (!file.type.startsWith("image/")) { toast.error(t("image_invalid")); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error(t("image_too_large")); return; }
     const reader = new FileReader();
     reader.onload = () => { setRawImage(String(reader.result || "")); setCropOpen(true); };
     reader.readAsDataURL(file);
+  };
+  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; e.target.value = "";
+    if (file) handleImageFile(file);
   };
 
   async function uploadCroppedImage(dataUrl: string): Promise<string | null> {
