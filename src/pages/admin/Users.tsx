@@ -15,6 +15,7 @@ type Row = {
   created_at: string;
   roles: string[];
   quote_count: number;
+  is_verified: boolean;
 };
 
 type QuoteRow = {
