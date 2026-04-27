@@ -358,6 +358,8 @@ export const translations = {
     sort_order: "ترتيب العرض",
     saved: "تم الحفظ",
     error_generic: "حدث خطأ، حاول مرة أخرى.",
+    drop_to_upload: "أفلت الصورة هنا للرفع",
+    drop_file_here: "اسحب وأفلت أو انقر للرفع",
     no_logo: "لا يوجد شعار",
 
     currency_iqd: "د.ع",
