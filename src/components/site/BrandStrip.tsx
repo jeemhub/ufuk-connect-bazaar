@@ -89,18 +89,23 @@ export function BrandStrip() {
                 style={{ animationDelay: `${i * 70}ms` }}
                 className="group/card relative flex h-32 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm transition-all duration-500 animate-fade-in hover:-translate-y-1.5 hover:border-primary/50 hover:bg-card hover:shadow-elegant"
               >
-                {/* Corner accent */}
+                {/* Animated gradient sweep */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute -top-px -end-px h-8 w-8 rounded-bl-2xl bg-gradient-to-br from-primary/30 to-transparent opacity-0 transition-opacity duration-500 group-hover/card:opacity-100"
+                  className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover/card:translate-x-full rtl:translate-x-full rtl:group-hover/card:-translate-x-full"
                 />
-                {/* Glow */}
+                {/* Soft top glow line */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,hsl(var(--primary)/0.18),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover/card:opacity-100"
+                  className="pointer-events-none absolute inset-x-4 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent transition-transform duration-500 group-hover/card:scale-x-100"
+                />
+                {/* Bottom accent bar */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-gradient-to-r from-primary via-primary/70 to-transparent transition-transform duration-500 group-hover/card:scale-x-100 rtl:origin-right"
                 />
                 <BrandVisual name={b.name} url={b.logo_url} />
-                <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-colors group-hover/card:text-primary">
+                <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-all duration-500 group-hover/card:text-primary group-hover/card:translate-y-0.5">
                   {b.name}
                 </span>
               </Link>
