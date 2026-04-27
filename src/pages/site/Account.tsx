@@ -154,14 +154,18 @@ export default function AccountPage() {
 
   function pickFile() { fileInput.current?.click(); }
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function handleFile(file: File) {
     if (file.size > 5 * 1024 * 1024) { toast.error(lang === "ar" ? "الحجم أكبر من 5MB" : "File exceeds 5MB"); return; }
+    if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = () => setCropSrc(reader.result as string);
     reader.readAsDataURL(file);
+  }
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
     e.target.value = "";
+    if (file) handleFile(file);
   }
 
   async function onCropped(dataUrl: string) {
