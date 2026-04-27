@@ -87,7 +87,7 @@ export function BrandStrip() {
 
             {/* Row 1: scroll left */}
             <div className="group/marquee overflow-hidden">
-              <div className="flex w-max gap-4 animate-marquee [animation-duration:38s] group-hover/marquee:[animation-play-state:paused]">
+              <div className="flex w-max gap-4 animate-marquee [animation-duration:70s] group-hover/marquee:[animation-play-state:paused]">
                 {[...list, ...list].map((b, i) => (
                   <Link
                     key={`r1-${b.id}-${i}`}
@@ -109,7 +109,7 @@ export function BrandStrip() {
             {/* Row 2: scroll right (opposite) */}
             {list.length > 4 && (
               <div className="group/marquee overflow-hidden">
-                <div className="flex w-max gap-4 animate-marquee-rtl [animation-duration:46s] group-hover/marquee:[animation-play-state:paused]">
+                <div className="flex w-max gap-4 animate-marquee-rtl [animation-duration:85s] group-hover/marquee:[animation-play-state:paused]">
                   {[...list.slice().reverse(), ...list.slice().reverse()].map((b, i) => (
                     <Link
                       key={`r2-${b.id}-${i}`}
