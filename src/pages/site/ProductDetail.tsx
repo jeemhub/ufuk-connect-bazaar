@@ -53,9 +53,41 @@ export default function ProductDetail() {
           </div>
           <h1 className="text-3xl font-bold md:text-4xl">{name}</h1>
           <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-primary">{formatIqd(product.priceIqd)}</span>
-            <span className="text-sm font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+          <div className="space-y-2">
+            {/* Retail price (always shown) */}
+            <div className="flex items-baseline gap-2">
+              <span className="min-w-[88px] text-sm font-semibold text-foreground/70">
+                {lang === "ar" ? "سعر المفرد" : "Retail"}
+              </span>
+              <span className="text-3xl font-extrabold text-primary">{formatIqd(product.priceIqd)}</span>
+              <span className="text-xs font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+            </div>
+
+            {/* Wholesale price — visible to wholesale & dealer */}
+            {(pricingTier === "wholesale" || pricingTier === "dealer") && product.priceWholesaleIqd ? (
+              <div className="flex items-baseline gap-2">
+                <span className="min-w-[88px] text-sm font-semibold" style={{ color: "hsl(45 100% 40%)" }}>
+                  {lang === "ar" ? "سعر الجملة" : "Wholesale"}
+                </span>
+                <span className="text-2xl font-bold" style={{ color: "hsl(45 100% 40%)" }}>
+                  {formatIqd(product.priceWholesaleIqd)}
+                </span>
+                <span className="text-xs font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+              </div>
+            ) : null}
+
+            {/* Dealer price — visible only to dealers */}
+            {pricingTier === "dealer" && product.priceDealerIqd ? (
+              <div className="flex items-baseline gap-2">
+                <span className="min-w-[88px] text-sm font-semibold" style={{ color: "hsl(0 84% 50%)" }}>
+                  {lang === "ar" ? "سعر الوكالة" : "Dealer"}
+                </span>
+                <span className="text-2xl font-bold" style={{ color: "hsl(0 84% 50%)" }}>
+                  {formatIqd(product.priceDealerIqd)}
+                </span>
+                <span className="text-xs font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+              </div>
+            ) : null}
           </div>
           {desc && <p className="text-foreground/80 leading-relaxed">{desc}</p>}
 
