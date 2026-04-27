@@ -314,16 +314,23 @@ function BrandEditor({
                     e.target.value = "";
                   }}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={() => fileRef.current?.click()}
+                <Dropzone
+                  accept="image/*"
+                  onFiles={(files) => onFileChosen(files[0])}
                   disabled={uploading}
+                  overlayLabel={t("drop_to_upload")}
                 >
-                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {t("upload_logo")}
-                </Button>
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                    className="flex w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-input bg-background px-3 py-6 text-sm text-muted-foreground transition hover:border-primary hover:text-primary disabled:opacity-50"
+                  >
+                    {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+                    <span className="font-medium">{t("upload_logo")}</span>
+                    <span className="text-xs">{t("drop_file_here")}</span>
+                  </button>
+                </Dropzone>
                 {form.logo_url && (
                   <Button
                     type="button"
