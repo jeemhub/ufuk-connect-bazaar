@@ -211,10 +211,10 @@ export default function AccountPage() {
 
   const initials = (fullName || email || "U").trim().slice(0, 2).toUpperCase();
 
-  const tierMeta: Record<string, { label: string; ringClass: string; badgeClass: string }> = {
-    retail:    { label: lang === "ar" ? "مفرد"  : "Retail",     ringClass: "ring-emerald-500/60",  badgeClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
-    wholesale: { label: lang === "ar" ? "جملة"  : "Wholesale",  ringClass: "ring-amber-500/70",    badgeClass: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
-    agency:    { label: lang === "ar" ? "وكالة" : "Agency",     ringClass: "ring-violet-500/70",   badgeClass: "bg-violet-500/10 text-violet-600 border-violet-500/30" },
+  const tierMeta: Record<string, { label: string; ringColor: string; badgeStyle: React.CSSProperties }> = {
+    retail:    { label: lang === "ar" ? "مفرد"  : "Retail",     ringColor: "hsl(142 71% 45%)", badgeStyle: { backgroundColor: "hsl(142 71% 45% / 0.12)", color: "hsl(142 71% 35%)", borderColor: "hsl(142 71% 45% / 0.4)" } },
+    wholesale: { label: lang === "ar" ? "جملة"  : "Wholesale",  ringColor: "hsl(45 100% 51%)", badgeStyle: { backgroundColor: "hsl(45 100% 51% / 0.15)", color: "hsl(38 92% 40%)",  borderColor: "hsl(45 100% 51% / 0.5)" } },
+    dealer:    { label: lang === "ar" ? "وكالة" : "Agency",     ringColor: "hsl(0 84% 55%)",   badgeStyle: { backgroundColor: "hsl(0 84% 55% / 0.12)",   color: "hsl(0 84% 45%)",   borderColor: "hsl(0 84% 55% / 0.4)" } },
   };
   const tier = tierMeta[pricingTier] ?? tierMeta.retail;
 
@@ -227,7 +227,10 @@ export default function AccountPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.25),transparent_60%)]" />
           <div className="relative flex flex-col items-center gap-4 px-6 pb-6 pt-10 text-center sm:pt-14">
             <div className="relative">
-              <Avatar className={`h-28 w-28 md:h-32 md:w-32 ring-4 ring-offset-4 ring-offset-card ${tier.ringClass} shadow-xl`}>
+              <Avatar
+                className="h-28 w-28 md:h-32 md:w-32 ring-4 ring-offset-4 ring-offset-card shadow-xl"
+                style={{ ["--tw-ring-color" as any]: tier.ringColor }}
+              >
                 {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
                 <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
               </Avatar>
