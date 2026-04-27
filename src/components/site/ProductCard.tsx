@@ -74,6 +74,7 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
           )}
         </div>
+        <AddToCartButton product={product} size="sm" fullWidth className="mt-2 h-8 text-xs" />
       </div>
     </Link>
   );
