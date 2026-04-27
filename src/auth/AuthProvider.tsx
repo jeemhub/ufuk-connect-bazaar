@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPricingTier("retail");
         setAvatarUrl(null);
         setFullName(null);
+        setIsVerified(false);
       }
     });
 
