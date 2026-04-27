@@ -164,7 +164,18 @@ export default function Users() {
                     </td>
                     <td className="px-4 py-3 font-semibold">{u.quote_count}</td>
                     <td className="px-4 py-3">
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant={u.is_verified ? "default" : "outline"}
+                          size="sm"
+                          className="gap-1"
+                          disabled={updating === u.id}
+                          onClick={() => toggleVerified(u.id, u.is_verified)}
+                          style={u.is_verified ? { backgroundColor: "hsl(210 100% 50%)", color: "white" } : undefined}
+                        >
+                          <BadgeCheck className="h-4 w-4" />
+                          {u.is_verified ? t("users_verified") : t("users_verify")}
+                        </Button>
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => openHistory(u)}>
                           <History className="h-4 w-4" /> {t("users_view_history")}
                         </Button>
