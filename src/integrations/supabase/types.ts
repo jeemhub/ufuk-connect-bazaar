@@ -689,6 +689,10 @@ export type Database = {
         Args: { _role: string; _user_id: string }
         Returns: undefined
       }
+      admin_set_verified: {
+        Args: { _user_id: string; _verified: boolean }
+        Returns: undefined
+      }
       get_visible_price: {
         Args: {
           _dealer: number
