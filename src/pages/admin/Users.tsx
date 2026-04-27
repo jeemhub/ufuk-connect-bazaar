@@ -129,7 +129,12 @@ export default function Users() {
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-primary-foreground">
                           {(u.full_name || u.email).charAt(0).toUpperCase()}
                         </div>
-                        <div className="font-medium">{u.full_name || "—"}</div>
+                        <div className="flex items-center gap-1 font-medium">
+                          {u.full_name || "—"}
+                          {u.is_verified && (
+                            <BadgeCheck className="h-4 w-4" style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }} />
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
