@@ -38,6 +38,8 @@ export function dbToProduct(r: DbProductRow, categoryKey?: string): Product {
     category: ((r.categories?.key ?? categoryKey) as CategoryKey) ?? "networking",
     subcategory: r.subcategory ?? "",
     priceIqd: Number(r.price_iqd ?? 0),
+    priceWholesaleIqd: r.price_wholesale_iqd != null ? Number(r.price_wholesale_iqd) : null,
+    priceDealerIqd: r.price_dealer_iqd != null ? Number(r.price_dealer_iqd) : null,
     stock: r.stock ?? 0,
     image: r.image_url || FALLBACK_IMG,
     datasheetUrl: r.datasheet_url ?? undefined,
