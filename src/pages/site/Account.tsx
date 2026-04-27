@@ -63,7 +63,7 @@ function parseUA(ua: string | null): { browser: string; os: string } {
 
 export default function AccountPage() {
   const { t, lang } = useLanguage();
-  const { user, loading, signOut, isVerified, pricingTier } = useAuth();
+  const { user, loading, signOut, isVerified, isAdmin, pricingTier } = useAuth();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState("");
@@ -217,7 +217,15 @@ export default function AccountPage() {
     wholesale: { label: lang === "ar" ? "مكتب"  : "Office",     ringColor: "hsl(45 100% 51%)", badgeStyle: { backgroundColor: "hsl(45 100% 51% / 0.15)", color: "hsl(38 92% 40%)",  borderColor: "hsl(45 100% 51% / 0.5)" } },
     dealer:    { label: lang === "ar" ? "وكيل"  : "Dealer",     ringColor: "hsl(0 84% 55%)",   badgeStyle: { backgroundColor: "hsl(0 84% 55% / 0.12)",   color: "hsl(0 84% 45%)",   borderColor: "hsl(0 84% 55% / 0.4)" } },
   };
-  const tier = tierMeta[pricingTier] ?? tierMeta.retail;
+  const adminMeta = {
+    label: "Admin",
+    badgeStyle: {
+      background: "linear-gradient(135deg, hsl(45 95% 65%), hsl(40 100% 50%))",
+      color: "hsl(0 0% 10%)",
+      borderColor: "hsl(40 80% 35%)",
+    } as React.CSSProperties,
+  };
+  const tier = isAdmin ? { label: adminMeta.label, ringColor: "hsl(45 95% 55%)", badgeStyle: adminMeta.badgeStyle } : (tierMeta[pricingTier] ?? tierMeta.retail);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
