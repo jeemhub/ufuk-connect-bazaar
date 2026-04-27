@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck } from "lucide-react";
+import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,6 +26,7 @@ type Row = {
   roles: string[];
   quote_count: number;
   is_verified: boolean;
+  is_blocked?: boolean;
 };
 
 type QuoteRow = {
@@ -43,12 +54,23 @@ export default function Users() {
   const [historyUser, setHistoryUser] = useState<Row | null>(null);
   const [history, setHistory] = useState<QuoteRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase.rpc("admin_list_users");
-    if (error) toast.error(error.message);
-    else setRows((data as Row[]) ?? []);
+    const [{ data, error }, { data: blocks }] = await Promise.all([
+      supabase.rpc("admin_list_users"),
+      supabase.from("profiles").select("id, is_blocked" as "*"),
+    ]);
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+    const blockMap = new Map<string, boolean>(
+      ((blocks as unknown as Array<{ id: string; is_blocked: boolean }>) ?? []).map((b) => [b.id, !!b.is_blocked]),
+    );
+    setRows(((data as Row[]) ?? []).map((r) => ({ ...r, is_blocked: blockMap.get(r.id) ?? false })));
     setLoading(false);
   }
 
@@ -65,7 +87,6 @@ export default function Users() {
 
   async function toggleVerified(userId: string, current: boolean) {
     setUpdating(userId);
-    // RPC type isn't in generated types yet — cast to unknown.
     const { error } = await (supabase.rpc as unknown as (
       fn: string,
       args: Record<string, unknown>,
@@ -77,6 +98,34 @@ export default function Users() {
     if (error) { toast.error(error.message); return; }
     toast.success(!current ? t("users_verified_on") : t("users_verified_off"));
     setRows((rs) => rs.map((r) => (r.id === userId ? { ...r, is_verified: !current } : r)));
+  }
+
+  async function toggleBlocked(userId: string, current: boolean) {
+    setUpdating(userId);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_set_blocked", {
+      _user_id: userId,
+      _blocked: !current,
+    });
+    setUpdating(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success(!current ? "تم حظر المستخدم" : "تم فك الحظر");
+    setRows((rs) => rs.map((r) => (r.id === userId ? { ...r, is_blocked: !current, is_verified: !current ? false : r.is_verified } : r)));
+  }
+
+  async function deleteUser(u: Row) {
+    setUpdating(u.id);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_delete_user", { _user_id: u.id });
+    setUpdating(null);
+    setConfirmDelete(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم حذف الحساب");
+    setRows((rs) => rs.filter((r) => r.id !== u.id));
   }
 
   async function openHistory(u: Row) {
@@ -169,18 +218,44 @@ export default function Users() {
                     </td>
                     <td className="px-4 py-3 font-semibold">{u.quote_count}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 flex-wrap">
                         <Button
                           variant={u.is_verified ? "default" : "outline"}
                           size="sm"
                           className="gap-1"
-                          disabled={updating === u.id}
+                          disabled={updating === u.id || u.is_blocked}
                           onClick={() => toggleVerified(u.id, u.is_verified)}
                           style={u.is_verified ? { backgroundColor: "hsl(210 100% 50%)", color: "white" } : undefined}
                         >
                           <BadgeCheck className="h-4 w-4" />
                           {u.is_verified ? t("users_verified") : t("users_verify")}
                         </Button>
+                        {u.is_blocked && (
+                          <Badge variant="destructive" className="gap-1"><Ban className="h-3 w-3" />محظور</Badge>
+                        )}
+                        {!isAdmin && (
+                          <Button
+                            variant={u.is_blocked ? "outline" : "destructive"}
+                            size="sm"
+                            className="gap-1"
+                            disabled={updating === u.id}
+                            onClick={() => toggleBlocked(u.id, !!u.is_blocked)}
+                          >
+                            {u.is_blocked ? <ShieldOff className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                            {u.is_blocked ? "فك الحظر" : "حظر"}
+                          </Button>
+                        )}
+                        {!isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 text-destructive hover:text-destructive"
+                            disabled={updating === u.id}
+                            onClick={() => setConfirmDelete(u)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => openHistory(u)}>
                           <History className="h-4 w-4" /> {t("users_view_history")}
                         </Button>
@@ -221,6 +296,26 @@ export default function Users() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الحساب نهائياً؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف حساب {confirmDelete?.full_name || confirmDelete?.email} وكافة بياناته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => confirmDelete && deleteUser(confirmDelete)}
+            >
+              حذف نهائي
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

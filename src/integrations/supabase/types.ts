@@ -371,6 +371,36 @@ export type Database = {
         }
         Relationships: []
       }
+      page_visits: {
+        Row: {
+          created_at: string
+          device: string | null
+          id: string
+          path: string
+          referrer: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          path: string
+          referrer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          path?: string
+          referrer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           brand: string
@@ -451,6 +481,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          is_blocked: boolean
           is_verified: boolean
           phone: string | null
           updated_at: string
@@ -460,6 +491,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          is_blocked?: boolean
           is_verified?: boolean
           phone?: string | null
           updated_at?: string
@@ -469,6 +501,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_blocked?: boolean
           is_verified?: boolean
           phone?: string | null
           updated_at?: string
@@ -675,6 +708,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_list_users: {
         Args: never
         Returns: {
@@ -687,6 +721,10 @@ export type Database = {
           quote_count: number
           roles: string[]
         }[]
+      }
+      admin_set_blocked: {
+        Args: { _blocked: boolean; _user_id: string }
+        Returns: undefined
       }
       admin_set_pricing_role: {
         Args: { _role: string; _user_id: string }
@@ -712,6 +750,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_current_user_blocked: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "customer" | "wholesale" | "dealer"
