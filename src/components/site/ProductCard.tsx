@@ -4,6 +4,7 @@ import { Product, formatIqd } from "@/data/mockData";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
+import { AddToCartButton } from "@/components/site/AddToCartButton";
 
 export function ProductCard({ product }: { product: Product }) {
   const { t, lang } = useLanguage();
