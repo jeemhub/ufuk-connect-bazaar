@@ -29,10 +29,7 @@ const Home = () => {
 
   return (
     <>
-      {/* 1. Trusted brands strip — moved to top */}
-      <BrandStrip />
-
-      {/* 2. Hero — refined */}
+      {/* 1. Hero */}
       <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
         {/* Ambient glows */}
         <div aria-hidden className="absolute inset-0 opacity-40" style={{ backgroundImage: "radial-gradient(circle at 15% 20%, hsl(217 91% 55% / 0.45), transparent 45%), radial-gradient(circle at 85% 80%, hsl(0 84% 50% / 0.3), transparent 45%)" }} />
