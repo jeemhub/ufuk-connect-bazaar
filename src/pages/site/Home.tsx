@@ -57,8 +57,7 @@ const Home = () => {
             <h1 className="animate-fade-in-up [animation-delay:120ms] text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
               {lang === "ar" ? (
                 <>
-                  بنية تحتية موثوقة <br />
-                  <span className="text-gradient-brand">للشبكات والطاقة الشمسية</span>
+                  شركة افق البصرة
                 </>
               ) : (
                 <>
@@ -67,7 +66,7 @@ const Home = () => {
                 </>
               )}
             </h1>
-            <p className="mt-5 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base text-primary-foreground/85 md:text-lg">
+            <p className="mt-5 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg rounded-md text-primary-foreground whitespace-pre-line">
               {t("hero_sub")}
             </p>
 
