@@ -177,7 +177,7 @@ export default function Orders() {
                   <td className="px-4 py-3 font-semibold">{formatIqd(o.total_iqd)} {t("currency_iqd")}</td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className={`rounded-full ${STATUS_STYLE[o.status] ?? ""}`}>
-                      {t(`status_${o.status}` as `status_${OrderStatus}`)}
+                      {t(`status_${o.status as OrderStatus}`)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
