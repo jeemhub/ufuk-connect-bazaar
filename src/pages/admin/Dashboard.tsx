@@ -1,4 +1,5 @@
 import { ArrowUpRight, DollarSign, Users, ShoppingBag, AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { formatIqd, orders, products, salesSeries } from "@/data/mockData";
 import { StatusBadge } from "@/components/admin/StatusBadge";
