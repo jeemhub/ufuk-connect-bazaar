@@ -54,12 +54,23 @@ export default function Users() {
   const [historyUser, setHistoryUser] = useState<Row | null>(null);
   const [history, setHistory] = useState<QuoteRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase.rpc("admin_list_users");
-    if (error) toast.error(error.message);
-    else setRows((data as Row[]) ?? []);
+    const [{ data, error }, { data: blocks }] = await Promise.all([
+      supabase.rpc("admin_list_users"),
+      supabase.from("profiles").select("id, is_blocked" as "*"),
+    ]);
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+    const blockMap = new Map<string, boolean>(
+      ((blocks as unknown as Array<{ id: string; is_blocked: boolean }>) ?? []).map((b) => [b.id, !!b.is_blocked]),
+    );
+    setRows(((data as Row[]) ?? []).map((r) => ({ ...r, is_blocked: blockMap.get(r.id) ?? false })));
     setLoading(false);
   }
 
@@ -76,7 +87,6 @@ export default function Users() {
 
   async function toggleVerified(userId: string, current: boolean) {
     setUpdating(userId);
-    // RPC type isn't in generated types yet — cast to unknown.
     const { error } = await (supabase.rpc as unknown as (
       fn: string,
       args: Record<string, unknown>,
@@ -88,6 +98,34 @@ export default function Users() {
     if (error) { toast.error(error.message); return; }
     toast.success(!current ? t("users_verified_on") : t("users_verified_off"));
     setRows((rs) => rs.map((r) => (r.id === userId ? { ...r, is_verified: !current } : r)));
+  }
+
+  async function toggleBlocked(userId: string, current: boolean) {
+    setUpdating(userId);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_set_blocked", {
+      _user_id: userId,
+      _blocked: !current,
+    });
+    setUpdating(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success(!current ? "تم حظر المستخدم" : "تم فك الحظر");
+    setRows((rs) => rs.map((r) => (r.id === userId ? { ...r, is_blocked: !current, is_verified: !current ? false : r.is_verified } : r)));
+  }
+
+  async function deleteUser(u: Row) {
+    setUpdating(u.id);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_delete_user", { _user_id: u.id });
+    setUpdating(null);
+    setConfirmDelete(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم حذف الحساب");
+    setRows((rs) => rs.filter((r) => r.id !== u.id));
   }
 
   async function openHistory(u: Row) {
