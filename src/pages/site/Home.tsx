@@ -62,7 +62,7 @@ const Home = () => {
               )}
             </h1>
             {lang !== "ar" && (
-              <h1 className="animate-fade-in-up [animation-delay:120ms] -mt-4 text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
+              <h1 className="animate-fade-in-up [animation-delay:120ms] mt-2 text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
                 COMPANY
               </h1>
             )}
