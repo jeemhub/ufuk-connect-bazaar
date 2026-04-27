@@ -47,105 +47,51 @@ const Home = () => {
         {/* Subtle grid */}
         <div aria-hidden className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
 
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 md:grid-cols-12 md:px-6 md:py-24 lg:py-28">
-          {/* Left content */}
-          <div className="md:col-span-7 lg:col-span-7">
-            <div className="mb-5 inline-flex animate-fade-in-up items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-1.5 text-xs font-semibold backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-              {t("hero_eyebrow")}
-            </div>
-            <h1 className="animate-fade-in-up [animation-delay:120ms] text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
-              {lang === "ar" ? (
-                <span className="text-gradient-brand">شركة افق البصرة</span>
-              ) : (
-                <span className="text-gradient-brand">UFUK AL-BASRA&nbsp;</span>
-              )}
-            </h1>
-            {lang !== "ar" && (
-              <h1 className="animate-fade-in-up [animation-delay:120ms] mt-2 text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
-                COMPANY
-              </h1>
+        <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 py-16 text-center md:px-6 md:py-24 lg:py-28">
+          <div className="mb-5 inline-flex animate-fade-in-up items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-1.5 text-xs font-semibold backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+            {t("hero_eyebrow")}
+          </div>
+          <h1 className="animate-fade-in-up [animation-delay:120ms] text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
+            {lang === "ar" ? (
+              <span className="text-gradient-brand">شركة افق البصرة</span>
+            ) : (
+              <span className="text-gradient-brand">UFUK AL-BASRA&nbsp;</span>
             )}
-            <p className="mt-5 mb-8 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg rounded-md text-primary-foreground whitespace-pre-line">
-              {t("hero_sub")}
-            </p>
+          </h1>
+          {lang !== "ar" && (
+            <h1 className="animate-fade-in-up [animation-delay:120ms] mt-2 text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
+              COMPANY
+            </h1>
+          )}
+          <p className="mt-5 mb-8 max-w-2xl animate-fade-in-up [animation-delay:240ms] text-pretty text-base md:text-lg rounded-md text-primary-foreground whitespace-pre-line">
+            {t("hero_sub")}
+          </p>
 
-            <div className="mt-8 flex animate-fade-in-up [animation-delay:360ms] flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="group gap-2 bg-primary-foreground text-primary shadow-elegant transition-transform hover:scale-[1.03] hover:bg-primary-foreground/90">
-                <Link to="/products">
-                  {t("hero_cta_shop")}
-                  <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground">
-                <Link to="/quote">{t("hero_cta_quote")}</Link>
-              </Button>
-            </div>
-
-            {/* Inline rating / trust */}
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 animate-fade-in-up [animation-delay:480ms] text-sm text-primary-foreground/85">
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" style={{ animation: `fade-in 0.4s ease-out ${500 + i * 80}ms both` }} />
-                ))}
-                <span className="ms-1 font-semibold">4.9/5</span>
-              </div>
-              <div className="h-4 w-px bg-primary-foreground/20" />
-              <div>{lang === "ar" ? "+5,000 عميل سعيد" : "5,000+ happy customers"}</div>
-              <div className="h-4 w-px bg-primary-foreground/20" />
-              <div>{lang === "ar" ? "+10 سنوات خبرة" : "10+ years experience"}</div>
-            </div>
+          <div className="mt-2 flex animate-fade-in-up [animation-delay:360ms] flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" className="group gap-2 bg-primary-foreground text-primary shadow-elegant transition-transform hover:scale-[1.03] hover:bg-primary-foreground/90">
+              <Link to="/products">
+                {t("hero_cta_shop")}
+                <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground">
+              <Link to="/quote">{t("hero_cta_quote")}</Link>
+            </Button>
           </div>
 
-          {/* Right visual card stack */}
-          <div className="relative md:col-span-5 lg:col-span-5">
-            <div className="relative mx-auto aspect-square w-full max-w-md animate-scale-in">
-              {/* Pulse ring */}
-              <div aria-hidden className="absolute inset-10 rounded-full border border-primary-foreground/20 animate-pulse-ring" />
-              <div aria-hidden className="absolute inset-16 rounded-full border border-primary-foreground/10 animate-pulse-ring [animation-delay:1s]" />
-              {/* Big card with float */}
-              <div className="absolute inset-0 animate-float-slow rounded-3xl border border-primary-foreground/15 bg-primary-foreground/5 p-6 backdrop-blur-xl shadow-elegant">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-brand shadow-glow">
-                    <Cable className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-widest text-primary-foreground/60">Enterprise</div>
-                    <div className="text-lg font-bold">Networking</div>
-                  </div>
-                </div>
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  {["Routers", "Switches", "AP", "Cables"].map((n, i) => (
-                    <div
-                      key={n}
-                      className="rounded-xl border border-primary-foreground/15 bg-primary-foreground/5 p-3 text-sm transition-all hover:scale-105 hover:bg-primary-foreground/10"
-                      style={{ animation: `fade-in 0.5s ease-out ${300 + i * 100}ms both` }}
-                    >
-                      {n}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Floating badge */}
-              <div className="absolute -bottom-4 -end-2 animate-float [animation-delay:1.5s] rotate-[6deg] rounded-2xl border border-primary-foreground/20 bg-background/90 p-4 text-foreground shadow-elegant backdrop-blur-md">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-400/20">
-                    <Sun className="h-5 w-5 text-yellow-500 animate-spin-slow" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Solar</div>
-                    <div className="text-sm font-bold">{lang === "ar" ? "أنظمة كاملة" : "Full Systems"}</div>
-                  </div>
-                </div>
-              </div>
-              {/* Floating UPS chip */}
-              <div className="absolute -top-3 -start-3 animate-float [animation-delay:0.7s] rotate-[-8deg] rounded-2xl border border-primary-foreground/20 bg-background/90 p-3 text-foreground shadow-elegant backdrop-blur-md">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold">UPS · 24/7</span>
-                </div>
-              </div>
+          {/* Inline rating / trust */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 animate-fade-in-up [animation-delay:480ms] text-sm text-primary-foreground/85">
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" style={{ animation: `fade-in 0.4s ease-out ${500 + i * 80}ms both` }} />
+              ))}
+              <span className="ms-1 font-semibold">4.9/5</span>
             </div>
+            <div className="h-4 w-px bg-primary-foreground/20" />
+            <div>{lang === "ar" ? "+5,000 عميل سعيد" : "5,000+ happy customers"}</div>
+            <div className="h-4 w-px bg-primary-foreground/20" />
+            <div>{lang === "ar" ? "+10 سنوات خبرة" : "10+ years experience"}</div>
           </div>
         </div>
 
