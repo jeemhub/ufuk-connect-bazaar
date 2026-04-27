@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
-import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck } from "lucide-react";
+import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck, ShoppingCart } from "lucide-react";
+import { useCart } from "@/cart/CartContext";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
