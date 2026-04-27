@@ -1,12 +1,28 @@
+import { useEffect, useState } from "react";
 import { ArrowUpRight, DollarSign, Users, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { formatIqd, orders, products, salesSeries } from "@/data/mockData";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Dashboard() {
   const { t, lang } = useLanguage();
+  const [visitors, setVisitors] = useState<{ total: number; last7: number; unique7: number }>({ total: 0, last7: 0, unique7: 0 });
+
+  useEffect(() => {
+    (async () => {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const [{ count: total }, { data: recent }] = await Promise.all([
+        supabase.from("page_visits").select("id", { count: "exact", head: true }),
+        supabase.from("page_visits").select("user_id, user_agent, created_at").gte("created_at", since).limit(1000),
+      ]);
+      const last7 = recent?.length ?? 0;
+      const uniq = new Set((recent ?? []).map((r: { user_id: string | null; user_agent: string | null }) => r.user_id ?? r.user_agent ?? "")).size;
+      setVisitors({ total: total ?? 0, last7, unique7: uniq });
+    })();
+  }, []);
 
   const totalRevenue = orders.reduce((s, o) => s + o.totalIqd, 0);
   const pendingOrders = orders.filter((o) => o.status === "pending" || o.status === "processing").length;
@@ -14,7 +30,7 @@ export default function Dashboard() {
 
   const stats = [
     { label: t("stat_revenue"), value: `${formatIqd(totalRevenue)} ${t("currency_iqd")}`, change: "+12.4%", icon: DollarSign, color: "text-primary", bg: "bg-primary/10", href: "/admin/orders" },
-    { label: t("stat_visitors"), value: "1,284", change: "+8.1%", icon: Users, color: "text-primary", bg: "bg-primary/10", href: "/admin/users" },
+    { label: t("stat_visitors"), value: visitors.last7.toLocaleString(), change: `${visitors.unique7} فريد`, icon: Users, color: "text-primary", bg: "bg-primary/10", href: "/admin/users" },
     { label: t("stat_pending"), value: String(pendingOrders), change: "+3", icon: ShoppingBag, color: "text-warning", bg: "bg-warning/10", href: "/admin/orders?status=pending" },
     { label: t("stat_low_stock"), value: String(lowStock), change: "!", icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10", href: "/admin/products?filter=low_stock" },
   ];
