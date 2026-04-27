@@ -182,18 +182,21 @@ export default function ProductDetail() {
 
               {/* Actions */}
               <div className="border-t border-border/60 bg-muted/30 p-5">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button asChild size="lg" disabled={!inStock} className="flex-1 bg-gradient-brand text-base font-bold shadow-md hover:shadow-lg">
-                    <Link to={`/quote?product=${product.id}`}>{t("request_quote")}</Link>
-                  </Button>
-                  {product.datasheetUrl && (
-                    <Button asChild size="lg" variant="outline" className="flex-1">
-                      <a href={product.datasheetUrl} target="_blank" rel="noopener noreferrer" download={product.datasheetName}>
-                        <Download className="me-2 h-4 w-4" />
-                        {t("download_datasheet")}
-                      </a>
+                <div className="flex flex-col gap-3">
+                  <AddToCartButton product={product} size="lg" fullWidth className="text-base" />
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button asChild size="lg" variant="outline" disabled={!inStock} className="flex-1 text-base font-bold">
+                      <Link to={`/quote?product=${product.id}`}>{t("request_quote")}</Link>
                     </Button>
-                  )}
+                    {product.datasheetUrl && (
+                      <Button asChild size="lg" variant="outline" className="flex-1">
+                        <a href={product.datasheetUrl} target="_blank" rel="noopener noreferrer" download={product.datasheetName}>
+                          <Download className="me-2 h-4 w-4" />
+                          {t("download_datasheet")}
+                        </a>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
