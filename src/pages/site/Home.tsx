@@ -56,9 +56,7 @@ const Home = () => {
             </div>
             <h1 className="animate-fade-in-up [animation-delay:120ms] text-balance text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl lg:text-[64px]">
               {lang === "ar" ? (
-                <>
-                  شركة افق البصرة
-                </>
+                <span className="text-gradient-brand">شركة افق البصرة</span>
               ) : (
                 <>
                   Reliable infrastructure for <br />
