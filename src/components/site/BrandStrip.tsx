@@ -42,9 +42,8 @@ export function BrandStrip() {
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
   const list: BrandItem[] = brands ?? [];
   const displayBrands = list.length > 0 ? list : fallbackBrands;
-  const copiesPerLoop = Math.max(2, Math.ceil(12 / displayBrands.length));
+  const copiesPerLoop = Math.max(8, Math.ceil(18 / displayBrands.length));
   const loopBrands = Array.from({ length: copiesPerLoop }, () => displayBrands).flat();
-  const marqueeBrands = [...loopBrands, ...loopBrands];
 
   return (
     <section className="relative overflow-hidden border-y border-border/60 bg-gradient-to-br from-background via-secondary/30 to-background">
@@ -96,22 +95,26 @@ export function BrandStrip() {
             <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background via-background/80 to-transparent md:w-40" />
 
             {/* Row 1: scroll left */}
-            <div className="group/marquee overflow-hidden">
-              <div className="flex w-max gap-4 animate-marquee [animation-duration:70s]">
-                {marqueeBrands.map((b, i) => (
-                  <Link
-                    key={`r1-${b.id}-${i}`}
-                    to={`/products?brand=${encodeURIComponent(b.name)}`}
-                    aria-label={b.name}
-                    className="group/card relative flex h-28 w-52 shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:bg-card hover:shadow-elegant"
-                  >
-                    <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover/card:translate-x-full" />
-                    <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-gradient-to-r from-primary via-primary/70 to-transparent transition-transform duration-500 group-hover/card:scale-x-100" />
-                    <BrandVisual name={b.name} url={b.logo_url} />
-                    <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-colors group-hover/card:text-primary">
-                      {b.name}
-                    </span>
-                  </Link>
+            <div className="overflow-hidden" dir="ltr">
+              <div className="flex w-max animate-marquee [animation-duration:70s]">
+                {[0, 1].map((group) => (
+                  <div key={group} aria-hidden={group === 1} className="flex shrink-0 gap-4 pe-4">
+                    {loopBrands.map((b, i) => (
+                      <Link
+                        key={`r1-${group}-${b.id}-${i}`}
+                        to={`/products?brand=${encodeURIComponent(b.name)}`}
+                        aria-label={b.name}
+                        className="group/card relative flex h-28 w-52 shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/50 hover:bg-card hover:shadow-elegant"
+                      >
+                        <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-[900ms] ease-out group-hover/card:translate-x-full" />
+                        <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-gradient-to-r from-primary via-primary/70 to-transparent transition-transform duration-500 group-hover/card:scale-x-100" />
+                        <BrandVisual name={b.name} url={b.logo_url} />
+                        <span className="relative text-xs font-bold tracking-tight text-foreground/80 transition-colors group-hover/card:text-primary">
+                          {b.name}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
                 ))}
               </div>
             </div>
