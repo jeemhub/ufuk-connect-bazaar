@@ -96,7 +96,7 @@ export function BrandStrip() {
 
             {/* Row 1: scroll left */}
             <div className="overflow-hidden" dir="ltr">
-              <div className="flex w-max animate-marquee [animation-duration:70s]">
+              <div className="flex w-max animate-marquee [animation-duration:160s]">
                 {[0, 1].map((group) => (
                   <div key={group} aria-hidden={group === 1} className="flex shrink-0 gap-4 pe-4">
                     {loopBrands.map((b, i) => (
