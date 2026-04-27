@@ -160,7 +160,8 @@
   }
 
   /* Pricing-tier avatar ring (Instagram story style) */
-  .tier-ring { background: hsl(var(--muted)); }
+  .tier-ring { background: hsl(142 71% 45%); }
+  .tier-ring-retail,
   .tier-ring-customer { background: hsl(142 71% 45%); }   /* green - retail */
   .tier-ring-wholesale { background: hsl(45 100% 51%); }  /* yellow - wholesale */
   .tier-ring-dealer { background: hsl(0 84% 55%); }       /* red - dealer */

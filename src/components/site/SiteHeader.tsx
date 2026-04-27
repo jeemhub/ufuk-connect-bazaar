@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useAuth, type PricingTier } from "@/auth/AuthProvider";
+import { useAuth } from "@/auth/AuthProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/site/NotificationBell";
 import { PushToggleButton } from "@/components/site/PushToggleButton";
@@ -57,9 +57,9 @@ export function SiteHeader() {
                 <button
                   type="button"
                   aria-label={user.email ?? "account"}
-                  className={`tier-ring tier-ring-${pricingTier} relative inline-flex items-center justify-center rounded-full p-[3px] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+                  className={`tier-ring tier-ring-${pricingTier} relative inline-flex h-12 w-12 items-center justify-center rounded-full p-1 transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
                 >
-                  <Avatar className="h-9 w-9">
+                  <Avatar className="h-10 w-10">
                     {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? user.email ?? ""} /> : null}
                     <AvatarFallback className="bg-gradient-brand text-xs font-bold text-primary-foreground">
                       {(fullName || user.email || "U").trim().slice(0, 2).toUpperCase()}
