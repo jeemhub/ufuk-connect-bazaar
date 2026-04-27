@@ -246,7 +246,7 @@ export default function AccountPage() {
             <div className="space-y-1">
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <h2 className="text-xl font-bold md:text-2xl">{fullName || (lang === "ar" ? "بدون اسم" : "No name")}</h2>
-                <Badge variant="outline" className={`border ${tier.badgeClass}`}>{tier.label}</Badge>
+                <Badge variant="outline" className="border font-semibold" style={tier.badgeStyle}>{tier.label}</Badge>
               </div>
               <p className="text-sm text-muted-foreground">{email}</p>
             </div>
