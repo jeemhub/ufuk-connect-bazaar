@@ -3,6 +3,16 @@ import { ArrowRight, ArrowLeft, Sparkles, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useBrands } from "@/hooks/useBrands";
 
+type BrandItem = { id: string; name: string; logo_url: string | null };
+
+const fallbackBrands: BrandItem[] = [
+  { id: "fallback-mikrotik", name: "MikroTik", logo_url: null },
+  { id: "fallback-ruijie", name: "Ruijie", logo_url: null },
+  { id: "fallback-must", name: "Must", logo_url: null },
+  { id: "fallback-ubiquiti", name: "Ubiquiti", logo_url: null },
+  { id: "fallback-tp-link", name: "TP-Link", logo_url: null },
+];
+
 function BrandVisual({ name, url }: { name: string; url: string | null }) {
   if (url) {
     return (
@@ -30,7 +40,11 @@ export function BrandStrip() {
   const { brands, loading } = useBrands({ activeOnly: true });
 
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
-  const list = brands ?? [];
+  const list: BrandItem[] = brands ?? [];
+  const displayBrands = list.length > 0 ? list : fallbackBrands;
+  const copiesPerLoop = Math.max(2, Math.ceil(12 / displayBrands.length));
+  const loopBrands = Array.from({ length: copiesPerLoop }, () => displayBrands).flat();
+  const marqueeBrands = [...loopBrands, ...loopBrands];
 
   return (
     <section className="relative overflow-hidden border-y border-border/60 bg-gradient-to-br from-background via-secondary/30 to-background">
@@ -75,10 +89,6 @@ export function BrandStrip() {
               />
             ))}
           </div>
-        ) : list.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-            —
-          </div>
         ) : (
           <div className="relative space-y-5">
             {/* Edge fade masks */}
@@ -87,8 +97,8 @@ export function BrandStrip() {
 
             {/* Row 1: scroll left */}
             <div className="group/marquee overflow-hidden">
-              <div className="flex w-max gap-4 animate-marquee [animation-duration:70s] group-hover/marquee:[animation-play-state:paused]">
-                {[...list, ...list].map((b, i) => (
+              <div className="flex w-max gap-4 animate-marquee [animation-duration:70s]">
+                {marqueeBrands.map((b, i) => (
                   <Link
                     key={`r1-${b.id}-${i}`}
                     to={`/products?brand=${encodeURIComponent(b.name)}`}
