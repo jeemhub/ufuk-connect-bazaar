@@ -20,6 +20,16 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type SalesPerms = {
+  can_manage_products?: boolean;
+  can_manage_categories?: boolean;
+  can_manage_brands?: boolean;
+  can_manage_blog?: boolean;
+  can_manage_projects?: boolean;
+  can_manage_orders?: boolean;
+  can_manage_quotes?: boolean;
+};
+
 type Row = {
   id: string;
   email: string;
@@ -30,6 +40,7 @@ type Row = {
   quote_count: number;
   is_verified: boolean;
   is_blocked?: boolean;
+  sales_perms?: SalesPerms;
 };
 
 type QuoteRow = {
