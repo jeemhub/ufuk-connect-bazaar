@@ -63,7 +63,7 @@ function parseUA(ua: string | null): { browser: string; os: string } {
 
 export default function AccountPage() {
   const { t, lang } = useLanguage();
-  const { user, loading, signOut, isVerified, isAdmin, pricingTier } = useAuth();
+  const { user, loading, signOut, isVerified, isAdmin, isSales, pricingTier } = useAuth();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState("");
