@@ -70,23 +70,23 @@ const App = () => (
                   <Route
                     path="/admin"
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireStaff>
                         <AdminLayout />
                       </ProtectedRoute>
                     }
                   >
                     <Route index element={<Dashboard />} />
-                    <Route path="products" element={<Products />} />
-                    <Route path="categories" element={<Categories />} />
-                    <Route path="brands" element={<AdminBrands />} />
-                    <Route path="blog" element={<AdminBlog />} />
-                    <Route path="projects" element={<AdminProjects />} />
-                    <Route path="about" element={<AdminAbout />} />
-                    <Route path="orders" element={<Orders />} />
-                    <Route path="users" element={<Users />} />
-                    <Route path="quotes" element={<Quotes />} />
-                    <Route path="security" element={<Security />} />
-                    <Route path="settings" element={<Settings />} />
+                    <Route path="products" element={<ProtectedRoute requirePerm="can_manage_products"><Products /></ProtectedRoute>} />
+                    <Route path="categories" element={<ProtectedRoute requirePerm="can_manage_categories"><Categories /></ProtectedRoute>} />
+                    <Route path="brands" element={<ProtectedRoute requirePerm="can_manage_brands"><AdminBrands /></ProtectedRoute>} />
+                    <Route path="blog" element={<ProtectedRoute requirePerm="can_manage_blog"><AdminBlog /></ProtectedRoute>} />
+                    <Route path="projects" element={<ProtectedRoute requirePerm="can_manage_projects"><AdminProjects /></ProtectedRoute>} />
+                    <Route path="about" element={<ProtectedRoute requireAdmin><AdminAbout /></ProtectedRoute>} />
+                    <Route path="orders" element={<ProtectedRoute requirePerm="can_manage_orders"><Orders /></ProtectedRoute>} />
+                    <Route path="users" element={<ProtectedRoute requireAdmin><Users /></ProtectedRoute>} />
+                    <Route path="quotes" element={<ProtectedRoute requirePerm="can_manage_quotes"><Quotes /></ProtectedRoute>} />
+                    <Route path="security" element={<ProtectedRoute requireAdmin><Security /></ProtectedRoute>} />
+                    <Route path="settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Routes>

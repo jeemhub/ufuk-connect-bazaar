@@ -3,8 +3,18 @@ import { useAuth } from "./AuthProvider";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Loader2 } from "lucide-react";
 
-export function ProtectedRoute({ children, requireAdmin = false }: { children: JSX.Element; requireAdmin?: boolean }) {
-  const { session, isAdmin, loading } = useAuth();
+export function ProtectedRoute({
+  children,
+  requireAdmin = false,
+  requireStaff = false,
+  requirePerm,
+}: {
+  children: JSX.Element;
+  requireAdmin?: boolean;
+  requireStaff?: boolean;
+  requirePerm?: keyof import("./AuthProvider").SalesPermissions;
+}) {
+  const { session, isAdmin, isStaff, salesPerms, loading } = useAuth();
   const { t } = useLanguage();
   const location = useLocation();
 
@@ -24,15 +34,27 @@ export function ProtectedRoute({ children, requireAdmin = false }: { children: J
   }
 
   if (requireAdmin && !isAdmin) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-6">
-        <div className="surface-card max-w-md p-8 text-center">
-          <h2 className="mb-2 text-xl font-bold text-destructive">403</h2>
-          <p className="text-muted-foreground">{t("auth_admin_only")}</p>
-        </div>
-      </div>
-    );
+    return <Forbidden message={t("auth_admin_only")} />;
+  }
+
+  if (requireStaff && !isStaff) {
+    return <Forbidden message={t("auth_admin_only")} />;
+  }
+
+  if (requirePerm && !isAdmin && !salesPerms[requirePerm]) {
+    return <Forbidden message="ليس لديك صلاحية للوصول إلى هذه الصفحة" />;
   }
 
   return children;
+}
+
+function Forbidden({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+      <div className="surface-card max-w-md p-8 text-center">
+        <h2 className="mb-2 text-xl font-bold text-destructive">403</h2>
+        <p className="text-muted-foreground">{message}</p>
+      </div>
+    </div>
+  );
 }

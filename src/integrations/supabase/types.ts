@@ -643,6 +643,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_permissions: {
+        Row: {
+          can_manage_blog: boolean
+          can_manage_brands: boolean
+          can_manage_categories: boolean
+          can_manage_orders: boolean
+          can_manage_products: boolean
+          can_manage_projects: boolean
+          can_manage_quotes: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_manage_blog?: boolean
+          can_manage_brands?: boolean
+          can_manage_categories?: boolean
+          can_manage_orders?: boolean
+          can_manage_products?: boolean
+          can_manage_projects?: boolean
+          can_manage_quotes?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_manage_blog?: boolean
+          can_manage_brands?: boolean
+          can_manage_categories?: boolean
+          can_manage_orders?: boolean
+          can_manage_products?: boolean
+          can_manage_projects?: boolean
+          can_manage_quotes?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_pages: {
         Row: {
           content_ar: string
@@ -819,6 +855,7 @@ export type Database = {
           phone: string
           quote_count: number
           roles: string[]
+          sales_perms: Json
         }[]
       }
       admin_set_blocked: {
@@ -829,9 +866,43 @@ export type Database = {
         Args: { _role: string; _user_id: string }
         Returns: undefined
       }
+      admin_set_sales_permissions: {
+        Args: {
+          _can_manage_blog?: boolean
+          _can_manage_brands?: boolean
+          _can_manage_categories?: boolean
+          _can_manage_orders?: boolean
+          _can_manage_products?: boolean
+          _can_manage_projects?: boolean
+          _can_manage_quotes?: boolean
+          _is_sales: boolean
+          _user_id: string
+        }
+        Returns: undefined
+      }
       admin_set_verified: {
         Args: { _user_id: string; _verified: boolean }
         Returns: undefined
+      }
+      get_my_sales_permissions: {
+        Args: never
+        Returns: {
+          can_manage_blog: boolean
+          can_manage_brands: boolean
+          can_manage_categories: boolean
+          can_manage_orders: boolean
+          can_manage_products: boolean
+          can_manage_projects: boolean
+          can_manage_quotes: boolean
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales_permissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_visible_price: {
         Args: {
@@ -849,10 +920,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_sales_perm: {
+        Args: { _perm: string; _user_id: string }
+        Returns: boolean
+      }
       is_current_user_blocked: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "customer" | "wholesale" | "dealer"
+      app_role: "admin" | "customer" | "wholesale" | "dealer" | "sales"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -980,7 +1055,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "customer", "wholesale", "dealer"],
+      app_role: ["admin", "customer", "wholesale", "dealer", "sales"],
     },
   },
 } as const

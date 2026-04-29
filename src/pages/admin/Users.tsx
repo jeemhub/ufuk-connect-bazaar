@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff } from "lucide-react";
+import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff, Headset } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +20,16 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type SalesPerms = {
+  can_manage_products?: boolean;
+  can_manage_categories?: boolean;
+  can_manage_brands?: boolean;
+  can_manage_blog?: boolean;
+  can_manage_projects?: boolean;
+  can_manage_orders?: boolean;
+  can_manage_quotes?: boolean;
+};
+
 type Row = {
   id: string;
   email: string;
@@ -27,6 +40,7 @@ type Row = {
   quote_count: number;
   is_verified: boolean;
   is_blocked?: boolean;
+  sales_perms?: SalesPerms;
 };
 
 type QuoteRow = {
@@ -55,6 +69,10 @@ export default function Users() {
   const [history, setHistory] = useState<QuoteRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
+  const [salesUser, setSalesUser] = useState<Row | null>(null);
+  const [salesEnabled, setSalesEnabled] = useState(false);
+  const [salesPermsForm, setSalesPermsForm] = useState<SalesPerms>({});
+  const [savingSales, setSavingSales] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -140,6 +158,36 @@ export default function Users() {
     setHistoryLoading(false);
   }
 
+  function openSales(u: Row) {
+    setSalesUser(u);
+    setSalesEnabled(u.roles.includes("sales"));
+    setSalesPermsForm(u.sales_perms ?? {});
+  }
+
+  async function saveSales() {
+    if (!salesUser) return;
+    setSavingSales(true);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_set_sales_permissions", {
+      _user_id: salesUser.id,
+      _is_sales: salesEnabled,
+      _can_manage_products: !!salesPermsForm.can_manage_products,
+      _can_manage_categories: !!salesPermsForm.can_manage_categories,
+      _can_manage_brands: !!salesPermsForm.can_manage_brands,
+      _can_manage_blog: !!salesPermsForm.can_manage_blog,
+      _can_manage_projects: !!salesPermsForm.can_manage_projects,
+      _can_manage_orders: !!salesPermsForm.can_manage_orders,
+      _can_manage_quotes: !!salesPermsForm.can_manage_quotes,
+    });
+    setSavingSales(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم حفظ صلاحيات المبيعات");
+    setSalesUser(null);
+    load();
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -189,11 +237,18 @@ export default function Users() {
                     <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                     <td className="px-4 py-3 font-mono text-xs">{u.phone || "—"}</td>
                     <td className="px-4 py-3">
-                      {isAdmin ? (
-                        <Badge className="gap-1 bg-primary"><ShieldCheck className="h-3 w-3" /> Admin</Badge>
-                      ) : (
-                        <Badge variant="outline">User</Badge>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {isAdmin ? (
+                          <Badge className="gap-1 bg-primary"><ShieldCheck className="h-3 w-3" /> Admin</Badge>
+                        ) : (
+                          <Badge variant="outline">User</Badge>
+                        )}
+                        {u.roles.includes("sales") && (
+                          <Badge className="gap-1" style={{ backgroundColor: "hsl(265 80% 55%)", color: "white" }}>
+                            <Headset className="h-3 w-3" /> مبيعات
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
@@ -256,6 +311,17 @@ export default function Users() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
+                        {!isAdmin && (
+                          <Button
+                            variant={u.roles.includes("sales") ? "default" : "outline"}
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => openSales(u)}
+                            style={u.roles.includes("sales") ? { backgroundColor: "hsl(265 80% 55%)", color: "white" } : undefined}
+                          >
+                            <Headset className="h-4 w-4" /> صلاحيات مبيعات
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => openHistory(u)}>
                           <History className="h-4 w-4" /> {t("users_view_history")}
                         </Button>
@@ -316,6 +382,63 @@ export default function Users() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!salesUser} onOpenChange={(o) => !o && setSalesUser(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Headset className="h-5 w-5" style={{ color: "hsl(265 80% 55%)" }} />
+              صلاحيات موظف المبيعات
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border p-3 text-sm">
+              <div className="font-semibold">{salesUser?.full_name || "—"}</div>
+              <div className="text-xs text-muted-foreground">{salesUser?.email}</div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div>
+                <Label className="text-sm font-semibold">تفعيل دور المبيعات</Label>
+                <p className="text-xs text-muted-foreground">يصبح بإمكان المستخدم الدخول إلى لوحة التحكم</p>
+              </div>
+              <Switch checked={salesEnabled} onCheckedChange={setSalesEnabled} />
+            </div>
+
+            <div className={`space-y-2 rounded-lg border border-border p-3 transition-opacity ${salesEnabled ? "opacity-100" : "opacity-50 pointer-events-none"}`}>
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">الأقسام المسموح بها</div>
+              {([
+                ["can_manage_products", "إدارة المنتجات والأسعار"],
+                ["can_manage_categories", "إدارة الفئات"],
+                ["can_manage_brands", "إدارة البراندات"],
+                ["can_manage_blog", "إدارة المدونة"],
+                ["can_manage_projects", "إدارة المشاريع"],
+                ["can_manage_orders", "إدارة الطلبات"],
+                ["can_manage_quotes", "إدارة طلبات عروض الأسعار"],
+              ] as const).map(([key, label]) => (
+                <label key={key} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-secondary/50">
+                  <Checkbox
+                    checked={!!salesPermsForm[key]}
+                    onCheckedChange={(v) => setSalesPermsForm((p) => ({ ...p, [key]: !!v }))}
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSalesUser(null)} disabled={savingSales}>
+              إلغاء
+            </Button>
+            <Button onClick={saveSales} disabled={savingSales} className="bg-gradient-brand">
+              {savingSales && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              حفظ الصلاحيات
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
