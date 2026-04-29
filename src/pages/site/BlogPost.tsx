@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { TierAvatar } from "@/components/site/TierAvatar";
 
-type Tier = "admin" | "dealer" | "wholesale" | "retail";
+type Tier = "admin" | "sales" | "dealer" | "wholesale" | "retail";
 type Profile = { full_name: string | null; avatar_url: string | null; is_verified: boolean; tier: Tier };
 
 type Comment = {
