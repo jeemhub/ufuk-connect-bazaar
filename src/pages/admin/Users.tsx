@@ -311,6 +311,17 @@ export default function Users() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
+                        {!isAdmin && (
+                          <Button
+                            variant={u.roles.includes("sales") ? "default" : "outline"}
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => openSales(u)}
+                            style={u.roles.includes("sales") ? { backgroundColor: "hsl(265 80% 55%)", color: "white" } : undefined}
+                          >
+                            <Headset className="h-4 w-4" /> صلاحيات مبيعات
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => openHistory(u)}>
                           <History className="h-4 w-4" /> {t("users_view_history")}
                         </Button>
