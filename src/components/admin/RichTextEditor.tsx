@@ -21,7 +21,7 @@ type Props = {
   bucket?: string; // storage bucket for inline images
 };
 
-const SANITIZE_OPTS: DOMPurify.Config = {
+const SANITIZE_OPTS = {
   ADD_ATTR: ["target", "rel", "style"],
   ALLOWED_TAGS: [
     "p","br","b","strong","i","em","u","s","strike","span","div",
@@ -29,7 +29,10 @@ const SANITIZE_OPTS: DOMPurify.Config = {
     "a","img","figure","figcaption","hr","pre","code",
     "table","thead","tbody","tr","th","td",
   ],
-};
+} as const;
+
+const clean = (html: string): string =>
+  DOMPurify.sanitize(html, SANITIZE_OPTS as never) as unknown as string;
 
 export function RichTextEditor({
   value, onChange, dir = "ltr", placeholder, minHeight = 280, bucket = "project-images",
