@@ -19,7 +19,10 @@ import BlogList from "./pages/site/BlogList";
 import BlogPost from "./pages/site/BlogPost";
 import AuthPage from "./pages/Auth";
 import AccountPage from "./pages/site/Account";
-import BrandsPage from "./pages/site/BrandsPage";
+import BrandsPage from "@/pages/site/BrandsPage";
+import AboutPage from "@/pages/site/About";
+import ProjectsPage from "@/pages/site/ProjectsPage";
+import ProjectDetail from "@/pages/site/ProjectDetail";
 import NotFound from "./pages/NotFound";
 
 import AdminLayout from "./components/admin/AdminLayout";
@@ -33,6 +36,8 @@ import Security from "./pages/admin/Security";
 import Quotes from "./pages/admin/Quotes";
 import AdminBlog from "./pages/admin/Blog";
 import AdminBrands from "./pages/admin/Brands";
+import AdminAbout from "./pages/admin/About";
+import AdminProjects from "./pages/admin/Projects";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +62,9 @@ const App = () => (
                     <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
                     <Route path="/brands" element={<BrandsPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/projects" element={<ProjectsPage />} />
+                    <Route path="/projects/:slug" element={<ProjectDetail />} />
                   </Route>
                   <Route path="/auth" element={<AuthPage />} />
                   <Route
@@ -72,6 +80,8 @@ const App = () => (
                     <Route path="categories" element={<Categories />} />
                     <Route path="brands" element={<AdminBrands />} />
                     <Route path="blog" element={<AdminBlog />} />
+                    <Route path="projects" element={<AdminProjects />} />
+                    <Route path="about" element={<AdminAbout />} />
                     <Route path="orders" element={<Orders />} />
                     <Route path="users" element={<Users />} />
                     <Route path="quotes" element={<Quotes />} />

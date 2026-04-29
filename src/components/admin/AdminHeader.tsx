@@ -1,4 +1,5 @@
-import { Bell, Search, Languages } from "lucide-react";
+import { Bell, Search, Languages, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -19,6 +20,12 @@ export function AdminHeader() {
       </div>
 
       <div className="ms-auto flex items-center gap-2">
+        <Button asChild variant="outline" size="sm" className="gap-2">
+          <Link to="/">
+            <Home className="h-4 w-4" />
+            <span className="hidden text-xs font-semibold sm:inline">{t("back_to_site")}</span>
+          </Link>
+        </Button>
         <Button variant="ghost" size="sm" onClick={toggle} className="gap-2">
           <Languages className="h-4 w-4" />
           <span className="text-xs font-semibold">

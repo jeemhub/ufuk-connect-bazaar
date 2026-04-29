@@ -28,7 +28,9 @@ export function SiteHeader() {
   const links = [
     { to: "/", label: t("nav_home"), end: true },
     { to: "/products", label: t("nav_shop") },
+    { to: "/projects", label: t("nav_projects") },
     { to: "/blog", label: t("nav_blog") },
+    { to: "/about", label: t("nav_about") },
     { to: "/quote", label: t("request_quote") },
   ];
 
