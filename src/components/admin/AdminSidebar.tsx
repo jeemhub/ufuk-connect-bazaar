@@ -2,6 +2,7 @@ import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, Sh
 import { NavLink } from "@/components/NavLink";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useAuth } from "@/auth/AuthProvider";
 import {
   Sidebar,
   SidebarContent,
