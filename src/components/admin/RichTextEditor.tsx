@@ -54,18 +54,18 @@ export function RichTextEditor({
   const exec = useCallback((cmd: string, val?: string) => {
     ref.current?.focus();
     document.execCommand(cmd, false, val);
-    if (ref.current) onChange(DOMPurify.sanitize(ref.current.innerHTML, SANITIZE_OPTS));
+    if (ref.current) onChange(clean(ref.current.innerHTML));
   }, [onChange]);
 
   const handleInput = () => {
     if (!ref.current) return;
-    onChange(DOMPurify.sanitize(ref.current.innerHTML, SANITIZE_OPTS));
+    onChange(clean(ref.current.innerHTML));
   };
 
   const insertHTML = (html: string) => {
     ref.current?.focus();
     document.execCommand("insertHTML", false, html);
-    if (ref.current) onChange(DOMPurify.sanitize(ref.current.innerHTML, SANITIZE_OPTS));
+    if (ref.current) onChange(clean(ref.current.innerHTML));
   };
 
   const onAddLink = () => {
@@ -78,7 +78,7 @@ export function RichTextEditor({
         a.setAttribute("target", "_blank");
         a.setAttribute("rel", "noopener noreferrer");
       });
-      if (ref.current) onChange(DOMPurify.sanitize(ref.current.innerHTML, SANITIZE_OPTS));
+      if (ref.current) onChange(clean(ref.current.innerHTML));
     }, 0);
   };
 
@@ -213,5 +213,5 @@ export function RichTextEditor({
 }
 
 export function sanitizeHTML(html: string): string {
-  return DOMPurify.sanitize(html, SANITIZE_OPTS);
+  return clean(html);
 }
