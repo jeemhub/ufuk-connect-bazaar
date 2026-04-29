@@ -1,5 +1,6 @@
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote, Newspaper, Award } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote, Newspaper, Award, Home, Info, Hammer } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import {
   Sidebar,
@@ -10,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -24,6 +26,8 @@ export function AdminSidebar() {
     { to: "/admin/categories", icon: FolderTree, label: t("nav_categories") },
     { to: "/admin/brands", icon: Award, label: t("admin_brands") },
     { to: "/admin/blog", icon: Newspaper, label: t("admin_blog") },
+    { to: "/admin/projects", icon: Hammer, label: t("admin_projects") },
+    { to: "/admin/about", icon: Info, label: t("admin_about") },
     { to: "/admin/orders", icon: ShoppingCart, label: t("nav_orders") },
     { to: "/admin/users", icon: Users, label: t("users_title") },
     { to: "/admin/quotes", icon: MessageSquareQuote, label: t("nav_quotes") },
@@ -70,6 +74,22 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="border-t border-sidebar-border p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={t("back_to_site")}>
+              <Link
+                to="/"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <Home className="h-4 w-4 shrink-0" />
+                {!collapsed && <span className="truncate">{t("back_to_site")}</span>}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
