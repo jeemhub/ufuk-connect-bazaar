@@ -225,7 +225,20 @@ export default function AccountPage() {
       borderColor: "hsl(40 80% 35%)",
     } as React.CSSProperties,
   };
-  const tier = isAdmin ? { label: adminMeta.label, ringColor: "hsl(45 95% 55%)", badgeStyle: adminMeta.badgeStyle } : (tierMeta[pricingTier] ?? tierMeta.retail);
+  const salesMeta = {
+    label: lang === "ar" ? "موظف مبيعات" : "Sales",
+    ringColor: "hsl(265 80% 55%)",
+    badgeStyle: {
+      background: "linear-gradient(135deg, hsl(275 85% 65%), hsl(255 75% 45%))",
+      color: "hsl(0 0% 100%)",
+      borderColor: "hsl(265 60% 30%)",
+    } as React.CSSProperties,
+  };
+  const tier = isAdmin
+    ? { label: adminMeta.label, ringColor: "hsl(45 95% 55%)", badgeStyle: adminMeta.badgeStyle }
+    : isSales
+    ? { label: salesMeta.label, ringColor: salesMeta.ringColor, badgeStyle: salesMeta.badgeStyle }
+    : (tierMeta[pricingTier] ?? tierMeta.retail);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
