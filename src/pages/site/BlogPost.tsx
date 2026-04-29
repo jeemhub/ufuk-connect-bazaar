@@ -61,11 +61,13 @@ export default function BlogPostPage() {
         supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
       ]);
       const tierByUser: Record<string, Tier> = {};
+      // Priority: admin > sales > dealer > wholesale > retail
       (roles ?? []).forEach((r: any) => {
         const cur = tierByUser[r.user_id];
         if (r.role === "admin") tierByUser[r.user_id] = "admin";
-        else if (r.role === "dealer" && cur !== "admin") tierByUser[r.user_id] = "dealer";
-        else if (r.role === "wholesale" && cur !== "admin" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
+        else if (r.role === "sales" && cur !== "admin") tierByUser[r.user_id] = "sales";
+        else if (r.role === "dealer" && cur !== "admin" && cur !== "sales") tierByUser[r.user_id] = "dealer";
+        else if (r.role === "wholesale" && cur !== "admin" && cur !== "sales" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
         else if (!cur) tierByUser[r.user_id] = "retail";
       });
       const map: Record<string, Profile> = {};
