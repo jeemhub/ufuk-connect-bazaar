@@ -237,11 +237,18 @@ export default function Users() {
                     <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                     <td className="px-4 py-3 font-mono text-xs">{u.phone || "—"}</td>
                     <td className="px-4 py-3">
-                      {isAdmin ? (
-                        <Badge className="gap-1 bg-primary"><ShieldCheck className="h-3 w-3" /> Admin</Badge>
-                      ) : (
-                        <Badge variant="outline">User</Badge>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {isAdmin ? (
+                          <Badge className="gap-1 bg-primary"><ShieldCheck className="h-3 w-3" /> Admin</Badge>
+                        ) : (
+                          <Badge variant="outline">User</Badge>
+                        )}
+                        {u.roles.includes("sales") && (
+                          <Badge className="gap-1" style={{ backgroundColor: "hsl(265 80% 55%)", color: "white" }}>
+                            <Headset className="h-3 w-3" /> مبيعات
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
