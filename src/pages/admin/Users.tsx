@@ -69,6 +69,10 @@ export default function Users() {
   const [history, setHistory] = useState<QuoteRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
+  const [salesUser, setSalesUser] = useState<Row | null>(null);
+  const [salesEnabled, setSalesEnabled] = useState(false);
+  const [salesPermsForm, setSalesPermsForm] = useState<SalesPerms>({});
+  const [savingSales, setSavingSales] = useState(false);
 
   async function load() {
     setLoading(true);
