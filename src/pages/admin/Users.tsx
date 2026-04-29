@@ -382,6 +382,63 @@ export default function Users() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!salesUser} onOpenChange={(o) => !o && setSalesUser(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Headset className="h-5 w-5" style={{ color: "hsl(265 80% 55%)" }} />
+              صلاحيات موظف المبيعات
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border p-3 text-sm">
+              <div className="font-semibold">{salesUser?.full_name || "—"}</div>
+              <div className="text-xs text-muted-foreground">{salesUser?.email}</div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div>
+                <Label className="text-sm font-semibold">تفعيل دور المبيعات</Label>
+                <p className="text-xs text-muted-foreground">يصبح بإمكان المستخدم الدخول إلى لوحة التحكم</p>
+              </div>
+              <Switch checked={salesEnabled} onCheckedChange={setSalesEnabled} />
+            </div>
+
+            <div className={`space-y-2 rounded-lg border border-border p-3 transition-opacity ${salesEnabled ? "opacity-100" : "opacity-50 pointer-events-none"}`}>
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">الأقسام المسموح بها</div>
+              {([
+                ["can_manage_products", "إدارة المنتجات والأسعار"],
+                ["can_manage_categories", "إدارة الفئات"],
+                ["can_manage_brands", "إدارة البراندات"],
+                ["can_manage_blog", "إدارة المدونة"],
+                ["can_manage_projects", "إدارة المشاريع"],
+                ["can_manage_orders", "إدارة الطلبات"],
+                ["can_manage_quotes", "إدارة طلبات عروض الأسعار"],
+              ] as const).map(([key, label]) => (
+                <label key={key} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-secondary/50">
+                  <Checkbox
+                    checked={!!salesPermsForm[key]}
+                    onCheckedChange={(v) => setSalesPermsForm((p) => ({ ...p, [key]: !!v }))}
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSalesUser(null)} disabled={savingSales}>
+              إلغاء
+            </Button>
+            <Button onClick={saveSales} disabled={savingSales} className="bg-gradient-brand">
+              {savingSales && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              حفظ الصلاحيات
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
