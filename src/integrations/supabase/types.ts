@@ -508,6 +508,69 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          author_id: string | null
+          body_ar: string | null
+          body_en: string | null
+          client: string | null
+          completed_at: string | null
+          cover_url: string | null
+          created_at: string
+          gallery: string[]
+          id: string
+          is_published: boolean
+          location: string | null
+          slug: string
+          sort: number
+          summary_ar: string | null
+          summary_en: string | null
+          title_ar: string
+          title_en: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body_ar?: string | null
+          body_en?: string | null
+          client?: string | null
+          completed_at?: string | null
+          cover_url?: string | null
+          created_at?: string
+          gallery?: string[]
+          id?: string
+          is_published?: boolean
+          location?: string | null
+          slug: string
+          sort?: number
+          summary_ar?: string | null
+          summary_en?: string | null
+          title_ar: string
+          title_en: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body_ar?: string | null
+          body_en?: string | null
+          client?: string | null
+          completed_at?: string | null
+          cover_url?: string | null
+          created_at?: string
+          gallery?: string[]
+          id?: string
+          is_published?: boolean
+          location?: string | null
+          slug?: string
+          sort?: number
+          summary_ar?: string | null
+          summary_en?: string | null
+          title_ar?: string
+          title_en?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -577,6 +640,42 @@ export type Database = {
           product_id?: string | null
           product_name?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      site_pages: {
+        Row: {
+          content_ar: string
+          content_en: string
+          cover_url: string | null
+          id: string
+          key: string
+          title_ar: string
+          title_en: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content_ar?: string
+          content_en?: string
+          cover_url?: string | null
+          id?: string
+          key: string
+          title_ar?: string
+          title_en?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content_ar?: string
+          content_en?: string
+          cover_url?: string | null
+          id?: string
+          key?: string
+          title_ar?: string
+          title_en?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
