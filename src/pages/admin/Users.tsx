@@ -158,6 +158,36 @@ export default function Users() {
     setHistoryLoading(false);
   }
 
+  function openSales(u: Row) {
+    setSalesUser(u);
+    setSalesEnabled(u.roles.includes("sales"));
+    setSalesPermsForm(u.sales_perms ?? {});
+  }
+
+  async function saveSales() {
+    if (!salesUser) return;
+    setSavingSales(true);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_set_sales_permissions", {
+      _user_id: salesUser.id,
+      _is_sales: salesEnabled,
+      _can_manage_products: !!salesPermsForm.can_manage_products,
+      _can_manage_categories: !!salesPermsForm.can_manage_categories,
+      _can_manage_brands: !!salesPermsForm.can_manage_brands,
+      _can_manage_blog: !!salesPermsForm.can_manage_blog,
+      _can_manage_projects: !!salesPermsForm.can_manage_projects,
+      _can_manage_orders: !!salesPermsForm.can_manage_orders,
+      _can_manage_quotes: !!salesPermsForm.can_manage_quotes,
+    });
+    setSavingSales(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم حفظ صلاحيات المبيعات");
+    setSalesUser(null);
+    load();
+  }
+
   return (
     <div className="space-y-6">
       <div>
