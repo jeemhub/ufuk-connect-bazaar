@@ -65,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const sales = roleNames.includes("sales");
     setIsAdmin(admin);
     setIsSales(sales);
-    if (roleNames.includes("dealer")) setPricingTier("dealer");
+    // Sales staff are treated as dealers for pricing visibility
+    if (admin || sales || roleNames.includes("dealer")) setPricingTier("dealer");
     else if (roleNames.includes("wholesale")) setPricingTier("wholesale");
     else setPricingTier("retail");
     const p = profile as unknown as { avatar_url?: string | null; full_name?: string | null; is_verified?: boolean; is_blocked?: boolean } | null;

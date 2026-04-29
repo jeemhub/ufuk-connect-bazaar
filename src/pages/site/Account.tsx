@@ -63,7 +63,7 @@ function parseUA(ua: string | null): { browser: string; os: string } {
 
 export default function AccountPage() {
   const { t, lang } = useLanguage();
-  const { user, loading, signOut, isVerified, isAdmin, pricingTier } = useAuth();
+  const { user, loading, signOut, isVerified, isAdmin, isSales, pricingTier } = useAuth();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState("");
@@ -225,7 +225,20 @@ export default function AccountPage() {
       borderColor: "hsl(40 80% 35%)",
     } as React.CSSProperties,
   };
-  const tier = isAdmin ? { label: adminMeta.label, ringColor: "hsl(45 95% 55%)", badgeStyle: adminMeta.badgeStyle } : (tierMeta[pricingTier] ?? tierMeta.retail);
+  const salesMeta = {
+    label: lang === "ar" ? "موظف مبيعات" : "Sales",
+    ringColor: "hsl(265 80% 55%)",
+    badgeStyle: {
+      background: "linear-gradient(135deg, hsl(275 85% 65%), hsl(255 75% 45%))",
+      color: "hsl(0 0% 100%)",
+      borderColor: "hsl(265 60% 30%)",
+    } as React.CSSProperties,
+  };
+  const tier = isAdmin
+    ? { label: adminMeta.label, ringColor: "hsl(45 95% 55%)", badgeStyle: adminMeta.badgeStyle }
+    : isSales
+    ? { label: salesMeta.label, ringColor: salesMeta.ringColor, badgeStyle: salesMeta.badgeStyle }
+    : (tierMeta[pricingTier] ?? tierMeta.retail);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
@@ -243,6 +256,20 @@ export default function AccountPage() {
                     background:
                       "conic-gradient(from 0deg, hsl(45 95% 65%), hsl(40 100% 50%), hsl(35 90% 45%), hsl(50 100% 70%), hsl(40 100% 50%), hsl(45 95% 65%))",
                     boxShadow: "0 0 0 4px hsl(var(--card)), 0 0 24px hsl(45 95% 55% / 0.55)",
+                  }}
+                >
+                  <Avatar className="h-28 w-28 md:h-32 md:w-32">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+                    <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
+                  </Avatar>
+                </div>
+              ) : isSales ? (
+                <div
+                  className="rounded-full p-[5px] shadow-xl"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, hsl(275 85% 65%), hsl(265 80% 55%), hsl(255 75% 45%), hsl(280 85% 70%), hsl(265 80% 55%), hsl(275 85% 65%))",
+                    boxShadow: "0 0 0 4px hsl(var(--card)), 0 0 24px hsl(265 80% 55% / 0.55)",
                   }}
                 >
                   <Avatar className="h-28 w-28 md:h-32 md:w-32">
