@@ -263,6 +263,20 @@ export default function AccountPage() {
                     <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
                   </Avatar>
                 </div>
+              ) : isSales ? (
+                <div
+                  className="rounded-full p-[5px] shadow-xl"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, hsl(275 85% 65%), hsl(265 80% 55%), hsl(255 75% 45%), hsl(280 85% 70%), hsl(265 80% 55%), hsl(275 85% 65%))",
+                    boxShadow: "0 0 0 4px hsl(var(--card)), 0 0 24px hsl(265 80% 55% / 0.55)",
+                  }}
+                >
+                  <Avatar className="h-28 w-28 md:h-32 md:w-32">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName || email} />}
+                    <AvatarFallback className="bg-gradient-brand text-3xl font-bold text-primary-foreground">{initials}</AvatarFallback>
+                  </Avatar>
+                </div>
               ) : (
                 <Avatar
                   className="h-28 w-28 md:h-32 md:w-32 ring-4 ring-offset-4 ring-offset-card shadow-xl"
