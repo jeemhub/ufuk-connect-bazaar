@@ -26,7 +26,7 @@ import ProjectDetail from "@/pages/site/ProjectDetail";
 import NotFound from "./pages/NotFound";
 
 import AdminLayout from "./components/admin/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
+import DashboardSwitch from "./pages/admin/DashboardSwitch";
 import Products from "./pages/admin/Products";
 import Categories from "./pages/admin/Categories";
 import Orders from "./pages/admin/Orders";
@@ -75,7 +75,7 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<Dashboard />} />
+                    <Route index element={<DashboardSwitch />} />
                     <Route path="products" element={<ProtectedRoute requirePerm="can_manage_products"><Products /></ProtectedRoute>} />
                     <Route path="categories" element={<ProtectedRoute requirePerm="can_manage_categories"><Categories /></ProtectedRoute>} />
                     <Route path="brands" element={<ProtectedRoute requirePerm="can_manage_brands"><AdminBrands /></ProtectedRoute>} />
