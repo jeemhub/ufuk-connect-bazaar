@@ -62,6 +62,9 @@ const App = () => (
                     <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
                     <Route path="/brands" element={<BrandsPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/projects" element={<ProjectsPage />} />
+                    <Route path="/projects/:slug" element={<ProjectDetail />} />
                   </Route>
                   <Route path="/auth" element={<AuthPage />} />
                   <Route
@@ -77,6 +80,8 @@ const App = () => (
                     <Route path="categories" element={<Categories />} />
                     <Route path="brands" element={<AdminBrands />} />
                     <Route path="blog" element={<AdminBlog />} />
+                    <Route path="projects" element={<AdminProjects />} />
+                    <Route path="about" element={<AdminAbout />} />
                     <Route path="orders" element={<Orders />} />
                     <Route path="users" element={<Users />} />
                     <Route path="quotes" element={<Quotes />} />
