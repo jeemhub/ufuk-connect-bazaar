@@ -19,7 +19,10 @@ import BlogList from "./pages/site/BlogList";
 import BlogPost from "./pages/site/BlogPost";
 import AuthPage from "./pages/Auth";
 import AccountPage from "./pages/site/Account";
-import BrandsPage from "./pages/site/BrandsPage";
+import BrandsPage from "@/pages/site/BrandsPage";
+import AboutPage from "@/pages/site/About";
+import ProjectsPage from "@/pages/site/ProjectsPage";
+import ProjectDetail from "@/pages/site/ProjectDetail";
 import NotFound from "./pages/NotFound";
 
 import AdminLayout from "./components/admin/AdminLayout";
@@ -33,6 +36,8 @@ import Security from "./pages/admin/Security";
 import Quotes from "./pages/admin/Quotes";
 import AdminBlog from "./pages/admin/Blog";
 import AdminBrands from "./pages/admin/Brands";
+import AdminAbout from "./pages/admin/About";
+import AdminProjects from "./pages/admin/Projects";
 
 const queryClient = new QueryClient();
 
