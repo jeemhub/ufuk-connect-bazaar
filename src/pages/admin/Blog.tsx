@@ -86,7 +86,7 @@ export default function AdminBlog() {
       const path = `${user?.id ?? "admin"}/${Date.now()}-cover.jpg`;
       const { error } = await supabase.storage
         .from("blog-images")
-        .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg", cacheControl: "31536000" });
       if (error) { toast.error(error.message); return; }
       const { data } = supabase.storage.from("blog-images").getPublicUrl(path);
       setForm((f) => ({ ...f, cover_url: data.publicUrl }));
