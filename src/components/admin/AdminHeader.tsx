@@ -1,9 +1,10 @@
-import { Bell, Search, Languages, Home } from "lucide-react";
+import { Search, Languages, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { NotificationBell } from "@/components/site/NotificationBell";
 
 export function AdminHeader() {
   const { t, lang, toggle } = useLanguage();
