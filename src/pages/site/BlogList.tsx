@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { usePublishedPosts } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 
 export default function BlogList() {
   const { t, lang } = useLanguage();
@@ -34,7 +35,11 @@ export default function BlogList() {
               className="surface-card group overflow-hidden transition-all hover:-translate-y-1 hover:shadow-elegant">
               <div className="aspect-video w-full overflow-hidden bg-secondary">
                 {p.cover_url ? (
-                  <img src={p.cover_url} alt={lang === "ar" ? p.title_ar : p.title_en}
+                  <img src={optimizedImage(p.cover_url, { width: 600 }) ?? p.cover_url}
+                    srcSet={optimizedSrcSet(p.cover_url, [400, 600, 900])}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    alt={lang === "ar" ? p.title_ar : p.title_en}
+                    loading="lazy" decoding="async"
                     className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                 ) : (
                   <div className="h-full w-full bg-gradient-brand" />

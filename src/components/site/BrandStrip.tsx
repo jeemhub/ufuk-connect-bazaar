@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ArrowLeft, Sparkles, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useBrands } from "@/hooks/useBrands";
+import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 
 type BrandItem = { id: string; name: string; logo_url: string | null };
 
@@ -17,9 +18,14 @@ function BrandVisual({ name, url }: { name: string; url: string | null }) {
   if (url) {
     return (
       <img
-        src={url}
+        src={optimizedImage(url, { width: 200 })}
+        srcSet={optimizedSrcSet(url, [120, 200, 320])}
+        sizes="(max-width: 768px) 120px, 200px"
         alt={name}
         loading="lazy"
+        decoding="async"
+        width={170}
+        height={48}
         className="max-h-12 w-auto object-contain transition-all duration-500 group-hover/card:scale-110"
       />
     );

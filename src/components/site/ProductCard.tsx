@@ -5,6 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
+import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 
 export function ProductCard({ product }: { product: Product }) {
   const { t, lang } = useLanguage();
@@ -27,9 +28,14 @@ export function ProductCard({ product }: { product: Product }) {
       {/* Image area */}
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary/60 via-secondary/30 to-background">
         <img
-          src={product.image}
+          src={optimizedImage(product.image, { width: 600 }) ?? product.image}
+          srcSet={optimizedSrcSet(product.image, [300, 450, 600, 900])}
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
           alt={name}
           loading="lazy"
+          decoding="async"
+          width={600}
+          height={600}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
         {/* Top badges */}
