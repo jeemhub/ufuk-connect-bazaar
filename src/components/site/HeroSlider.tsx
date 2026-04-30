@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "luci
 import { Button } from "@/components/ui/button";
 import { useFeaturedPosts } from "@/hooks/useBlog";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 
 export function HeroSlider() {
   const { t, lang } = useLanguage();
@@ -61,8 +62,13 @@ export function HeroSlider() {
                   <div className="relative md:col-span-7 overflow-hidden rounded-2xl md:m-3">
                     {p.cover_url ? (
                       <img
-                        src={p.cover_url}
+                        src={optimizedImage(p.cover_url, { width: 900 }) ?? p.cover_url}
+                        srcSet={optimizedSrcSet(p.cover_url, [600, 900, 1280])}
+                        sizes="(max-width: 768px) 100vw, 60vw"
                         alt={title}
+                        loading={active ? "eager" : "lazy"}
+                        fetchPriority={active ? "high" : "auto"}
+                        decoding="async"
                         className={`h-72 md:h-full w-full object-cover rounded-2xl transition-transform duration-[8000ms] ease-out ${
                           active ? "scale-105" : "scale-100"
                         }`}
