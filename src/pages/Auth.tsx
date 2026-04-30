@@ -236,6 +236,35 @@ export default function AuthPage() {
             {lang === "ar" ? "المتابعة عبر Google" : "Continue with Google"}
           </Button>
 
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const result = await lovable.auth.signInWithOAuth("apple", {
+                  redirect_uri: window.location.origin,
+                });
+                if (result.error) {
+                  toast.error(lang === "ar" ? "فشل تسجيل الدخول عبر Apple" : "Apple sign-in failed");
+                  return;
+                }
+                if (result.redirected) return;
+              } catch {
+                toast.error(lang === "ar" ? "فشل تسجيل الدخول عبر Apple" : "Apple sign-in failed");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="mt-3 w-full gap-2"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+              <path d="M16.365 1.43c0 1.14-.46 2.23-1.21 3.02-.8.85-2.11 1.51-3.19 1.43-.13-1.11.42-2.27 1.16-3.02.83-.86 2.24-1.49 3.24-1.43zM20.5 17.27c-.55 1.27-.81 1.84-1.52 2.97-.99 1.57-2.39 3.52-4.12 3.54-1.54.01-1.93-1-4.02-.99-2.09.01-2.52 1.01-4.06 1-1.73-.02-3.05-1.78-4.04-3.35C-.05 16.86-.36 11.5 1.92 8.66c1.62-2.02 4.18-3.2 6.58-3.2 2.45 0 3.99 1.34 6.02 1.34 1.97 0 3.17-1.34 6-1.34 2.14 0 4.41 1.17 6.03 3.18-5.3 2.91-4.44 10.49-1.05 8.63z"/>
+            </svg>
+            {lang === "ar" ? "المتابعة عبر Apple" : "Continue with Apple"}
+          </Button>
+
           <div className="mt-6 text-center text-sm text-muted-foreground">
             {mode === "login" ? t("auth_no_account") : t("auth_have_account")}{" "}
             <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="font-semibold text-primary hover:underline">
