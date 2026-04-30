@@ -13,7 +13,7 @@ import logo from "@/assets/logo.png";
 
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
-  const { user, isAdmin, pricingTier, avatarUrl, fullName, isVerified, signOut } = useAuth();
+  const { user, isAdmin, isSales, pricingTier, avatarUrl, fullName, isVerified, signOut } = useAuth();
   const { count: cartCount, setOpen: setCartOpen } = useCart();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
