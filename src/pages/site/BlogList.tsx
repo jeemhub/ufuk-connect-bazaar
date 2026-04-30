@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { usePublishedPosts } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 
 export default function BlogList() {
   const { t, lang } = useLanguage();
