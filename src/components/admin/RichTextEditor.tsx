@@ -89,7 +89,7 @@ export function RichTextEditor({
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${user?.id ?? "admin"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false, contentType: file.type });
+      const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false, contentType: file.type, cacheControl: "31536000" });
       if (error) {
         toast.error(error.message);
         return null;
