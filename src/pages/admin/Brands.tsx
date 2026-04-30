@@ -203,7 +203,7 @@ function BrandEditor({
       const path = `${form.slug || slugify(form.name) || "brand"}-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from("brand-logos")
-        .upload(path, blob, { contentType: "image/jpeg", upsert: true });
+        .upload(path, blob, { contentType: "image/jpeg", upsert: true, cacheControl: "31536000" });
       if (upErr) throw upErr;
       const { data } = supabase.storage.from("brand-logos").getPublicUrl(path);
       setForm((f) => ({ ...f, logo_url: data.publicUrl }));
