@@ -116,7 +116,7 @@ const Home = () => {
             <Sparkles className="h-4 w-4 animate-pulse text-primary" />
             {t("hero_eyebrow")}
           </div>
-          <h1 className="animate-fade-in-up [animation-delay:120ms] text-balance text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl lg:text-[88px]">
+          <h1 className="text-balance text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl lg:text-[88px]">
             {lang === "ar" ? (
               <span className="bg-gradient-brand bg-clip-text text-transparent">شركة افق البصرة</span>
             ) : (
@@ -124,7 +124,7 @@ const Home = () => {
             )}
           </h1>
           {lang !== "ar" && (
-            <h1 className="animate-fade-in-up [animation-delay:120ms] mt-2 text-balance text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl lg:text-[88px] text-foreground">
+            <h1 className="mt-2 text-balance text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl lg:text-[88px] text-foreground">
               COMPANY
             </h1>
           )}
