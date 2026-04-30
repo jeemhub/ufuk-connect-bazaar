@@ -57,7 +57,7 @@ export default function BlogPostPage() {
     const userIds = Array.from(new Set(list.map((c) => c.user_id)));
     if (userIds.length > 0) {
       const [{ data: profs }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, avatar_url, is_verified").in("id", userIds),
+        supabase.from("public_profiles" as any).select("id, full_name, avatar_url, is_verified").in("id", userIds),
         supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
       ]);
       const tierByUser: Record<string, Tier> = {};
