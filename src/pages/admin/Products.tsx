@@ -260,13 +260,15 @@ export default function Products() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="brand">{t("product_brand")}</Label>
-              <select id="brand" name="brand" defaultValue={editing?.brand ?? "MikroTik"} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <select id="brand" name="brand" defaultValue={editing?.brand ?? "__none__"} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <option value="__none__">{lang === "ar" ? "بدون علامة" : "No brand"}</option>
                 {brands.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="category">{t("product_category")}</Label>
-              <select id="category" name="category" defaultValue={editing?.category ?? "networking"} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <select id="category" name="category" defaultValue={editing?.category ?? "__none__"} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <option value="__none__">{lang === "ar" ? "بدون قسم" : "No category"}</option>
                 {categories.map((c) => <option key={c.key} value={c.key}>{lang === "ar" ? c.ar : c.en}</option>)}
               </select>
             </div>
