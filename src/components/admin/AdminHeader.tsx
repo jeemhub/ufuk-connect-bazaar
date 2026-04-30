@@ -1,9 +1,10 @@
-import { Bell, Search, Languages, Home } from "lucide-react";
+import { Search, Languages, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { NotificationBell } from "@/components/site/NotificationBell";
 
 export function AdminHeader() {
   const { t, lang, toggle } = useLanguage();
@@ -32,10 +33,7 @@ export function AdminHeader() {
             {lang === "ar" ? t("switch_to_english") : t("switch_to_arabic")}
           </span>
         </Button>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-4 w-4" />
-          <span className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
-        </Button>
+        <NotificationBell />
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-primary-foreground">
           A
         </div>
