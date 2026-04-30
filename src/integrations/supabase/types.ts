@@ -403,7 +403,7 @@ export type Database = {
       }
       products: {
         Row: {
-          brand: string
+          brand: string | null
           category_id: string | null
           created_at: string
           datasheet_name: string | null
@@ -424,7 +424,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          brand: string
+          brand?: string | null
           category_id?: string | null
           created_at?: string
           datasheet_name?: string | null
@@ -445,7 +445,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          brand?: string
+          brand?: string | null
           category_id?: string | null
           created_at?: string
           datasheet_name?: string | null
