@@ -133,14 +133,15 @@ export default function Products() {
       finalImage = uploaded;
     }
 
-    const categoryKey = String(f.get("category") || "networking");
+    const categoryKey = String(f.get("category") || "");
+    const brandValue = String(f.get("brand") || "");
     const payload = {
       name_ar: String(f.get("nameAr") || ""),
       name_en: String(f.get("nameEn") || ""),
       desc_ar: String(f.get("descAr") || "") || null,
       desc_en: String(f.get("descEn") || "") || null,
-      brand: String(f.get("brand") || "MikroTik"),
-      category_id: catMap[categoryKey] ?? null,
+      brand: brandValue && brandValue !== "__none__" ? brandValue : null,
+      category_id: categoryKey && categoryKey !== "__none__" ? (catMap[categoryKey] ?? null) : null,
       subcategory: String(f.get("subcategory") || "") || null,
       price_iqd: Number(f.get("priceIqd") || 0),
       price_wholesale_iqd: Number(f.get("priceWholesale") || 0),
