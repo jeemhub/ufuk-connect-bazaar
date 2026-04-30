@@ -177,11 +177,11 @@ export function SiteHeader() {
                   <DropdownMenuItem asChild>
                     <Link to="/account"><UserIcon className="me-2 h-4 w-4" />{t("my_account")}</Link>
                   </DropdownMenuItem>
-                  {isAdmin && (
+                  {(isAdmin || isSales) && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/admin"><ShieldCheck className="me-2 h-4 w-4" />{t("admin_panel")}</Link>
+                        <Link to="/admin"><ShieldCheck className="me-2 h-4 w-4" />{isAdmin ? t("admin_panel") : (lang === "ar" ? "لوحة التحكم" : "Dashboard")}</Link>
                       </DropdownMenuItem>
                     </>
                   )}
