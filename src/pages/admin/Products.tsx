@@ -94,7 +94,7 @@ export default function Products() {
     const ext = blob.type.split("/")[1] || "jpg";
     const path = `products/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("product-images").upload(path, blob, {
-      contentType: blob.type, upsert: false,
+      contentType: blob.type, upsert: false, cacheControl: "31536000",
     });
     if (error) { toast.error(error.message); return null; }
     return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;

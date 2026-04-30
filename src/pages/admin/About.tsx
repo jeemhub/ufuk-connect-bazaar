@@ -44,7 +44,7 @@ export default function AdminAbout() {
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `about/${user?.id ?? "admin"}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("project-images").upload(path, file, { upsert: true, contentType: file.type });
+      const { error } = await supabase.storage.from("project-images").upload(path, file, { upsert: true, contentType: file.type, cacheControl: "31536000" });
       if (error) return toast.error(error.message);
       const { data } = supabase.storage.from("project-images").getPublicUrl(path);
       update({ cover_url: data.publicUrl });

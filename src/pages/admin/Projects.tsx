@@ -103,7 +103,7 @@ export default function AdminProjects() {
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${folder}/${user?.id ?? "admin"}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
-    const { error } = await supabase.storage.from("project-images").upload(path, file, { upsert: false, contentType: file.type });
+    const { error } = await supabase.storage.from("project-images").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "31536000" });
     if (error) {
       toast.error(error.message);
       return null;

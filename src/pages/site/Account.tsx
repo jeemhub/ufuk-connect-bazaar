@@ -179,6 +179,7 @@ export default function AccountPage() {
       const { error: upErr } = await supabase.storage.from("avatars").upload(path, blob, {
         contentType: "image/jpeg",
         upsert: true,
+        cacheControl: "31536000",
       });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
