@@ -63,6 +63,7 @@ export default function QuotePage() {
       const { error } = await supabase.storage.from("quote-attachments").upload(path, f, {
         contentType: f.type,
         upsert: false,
+        cacheControl: "31536000",
       });
       if (error) throw error;
       const { data } = supabase.storage.from("quote-attachments").getPublicUrl(path);
