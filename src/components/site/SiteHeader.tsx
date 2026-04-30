@@ -13,7 +13,7 @@ import logo from "@/assets/logo.png";
 
 export function SiteHeader() {
   const { t, lang, toggle } = useLanguage();
-  const { user, isAdmin, pricingTier, avatarUrl, fullName, isVerified, signOut } = useAuth();
+  const { user, isAdmin, isSales, pricingTier, avatarUrl, fullName, isVerified, signOut } = useAuth();
   const { count: cartCount, setOpen: setCartOpen } = useCart();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -177,11 +177,11 @@ export function SiteHeader() {
                   <DropdownMenuItem asChild>
                     <Link to="/account"><UserIcon className="me-2 h-4 w-4" />{t("my_account")}</Link>
                   </DropdownMenuItem>
-                  {isAdmin && (
+                  {(isAdmin || isSales) && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/admin"><ShieldCheck className="me-2 h-4 w-4" />{t("admin_panel")}</Link>
+                        <Link to="/admin"><ShieldCheck className="me-2 h-4 w-4" />{isAdmin ? t("admin_panel") : (lang === "ar" ? "لوحة التحكم" : "Dashboard")}</Link>
                       </DropdownMenuItem>
                     </>
                   )}
