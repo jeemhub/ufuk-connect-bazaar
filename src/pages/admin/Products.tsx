@@ -142,6 +142,7 @@ export default function Products() {
     const payload = {
       name_ar: String(f.get("nameAr") || ""),
       name_en: String(f.get("nameEn") || ""),
+      name_data: String(f.get("nameData") || "") || null,
       desc_ar: String(f.get("descAr") || "") || null,
       desc_en: String(f.get("descEn") || "") || null,
       brand: brandValue && brandValue !== "__none__" ? brandValue : null,
