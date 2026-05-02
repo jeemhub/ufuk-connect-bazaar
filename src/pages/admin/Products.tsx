@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet } from "lucide-react";
+import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,6 +49,7 @@ export default function Products() {
   const [rawImage, setRawImage] = useState<string>("");
   const [cropOpen, setCropOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const imgInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -169,10 +171,17 @@ export default function Products() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("products_title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("products_subtitle")}</p>
         </div>
-        <Button onClick={openNew} className="gap-2 bg-gradient-brand shadow-elegant hover:opacity-95">
-          <Plus className="h-4 w-4" /> {t("add_product")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
+            <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد Excel" : "Import Excel"}
+          </Button>
+          <Button onClick={openNew} className="gap-2 bg-gradient-brand shadow-elegant hover:opacity-95">
+            <Plus className="h-4 w-4" /> {t("add_product")}
+          </Button>
+        </div>
       </div>
+
+      <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} onDone={refetch} />
 
       <div className="surface-card p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
