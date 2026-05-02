@@ -109,6 +109,7 @@ export function NotificationBell() {
           )}
         </div>
         <NotificationPushSwitch />
+        <TestNotificationButton />
         <ScrollArea className="max-h-96">
           {items.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">{t("notif_empty")}</div>
