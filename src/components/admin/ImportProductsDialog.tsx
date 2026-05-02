@@ -73,6 +73,10 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
         price_iqd: 0,
         price_wholesale_iqd: 0,
         price_dealer_iqd: 0,
+        brand: null,
+        category_id: null,
+        subcategory: null,
+        image_url: "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=800&q=80",
         is_active: true,
       };
     });
