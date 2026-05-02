@@ -22,9 +22,24 @@ const initialZones = [
 ];
 
 export default function Settings() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const ar = lang === "ar";
   const [vat, setVat] = useState(0);
   const [zones, setZones] = useState(initialZones);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAllProducts = async () => {
+    setDeleting(true);
+    const { error, count } = await supabase
+      .from("products")
+      .delete({ count: "exact" })
+      .not("id", "is", null);
+    setDeleting(false);
+    setConfirmText("");
+    if (error) { toast.error(error.message); return; }
+    toast.success(ar ? `تم حذف ${count ?? 0} منتج` : `Deleted ${count ?? 0} products`);
+  };
 
   return (
     <div className="space-y-6">
