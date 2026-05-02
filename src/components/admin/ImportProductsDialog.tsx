@@ -41,11 +41,16 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
     try {
       const XLSX = await import("xlsx");
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
+      // codepage 1256 = Arabic (Windows). Helps when .xls files were saved with legacy encoding.
+      const wb = XLSX.read(buf, { type: "array", codepage: 1256 });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json<Row>(ws, { header: 1, defval: null, raw: true });
+      // Fix any cells that arrived as mojibake (CP1256 bytes interpreted as Latin-1)
+      const fixed = (data as Row[]).map(row =>
+        row?.map(cell => (typeof cell === "string" ? fixArabicMojibake(cell) : cell))
+      );
       setFileName(file.name);
-      setRows(data as Row[]);
+      setRows(fixed as Row[]);
     } catch (e: any) {
       toast.error(e?.message || (ar ? "تعذّر قراءة الملف" : "Failed to read file"));
     } finally {
