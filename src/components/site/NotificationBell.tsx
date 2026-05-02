@@ -1,4 +1,4 @@
-import { Bell, BellOff, Check } from "lucide-react";
+import { Bell, BellOff, Check, Send, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -8,8 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useAuth } from "@/auth/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { useState } from "react";
 
 function NotificationPushSwitch() {
   const { t } = useLanguage();
