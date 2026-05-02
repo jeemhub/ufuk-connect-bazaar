@@ -12,6 +12,25 @@ import { useLanguage } from "@/i18n/LanguageContext";
 
 type Row = (string | number | null)[];
 
+/**
+ * Fix Arabic text that arrived as mojibake (CP1256 bytes mis-decoded as Latin-1/UTF-8).
+ * Detects strings that contain typical mojibake characters and re-decodes them as windows-1256.
+ */
+function fixArabicMojibake(s: string): string {
+  if (!s) return s;
+  // If it already contains Arabic characters, leave it alone.
+  if (/[\u0600-\u06FF]/.test(s)) return s;
+  // Mojibake heuristic: contains characters from the CP1256 high range (À-ÿ etc.)
+  if (!/[\u00A0-\u00FF]/.test(s)) return s;
+  try {
+    const bytes = new Uint8Array(Array.from(s, ch => ch.charCodeAt(0) & 0xff));
+    const decoded = new TextDecoder("windows-1256").decode(bytes);
+    return /[\u0600-\u06FF]/.test(decoded) ? decoded : s;
+  } catch {
+    return s;
+  }
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
