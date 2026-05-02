@@ -24,6 +24,7 @@ type EditState = (Product & {
   is_active?: boolean;
   priceWholesale?: number;
   priceDealer?: number;
+  nameData?: string | null;
 }) | null;
 
 export default function Products() {
