@@ -108,6 +108,55 @@ export default function Settings() {
           </table>
         </div>
       </div>
+
+      <div className="surface-card border border-destructive/40 p-5">
+        <h2 className="mb-1 font-semibold text-destructive">{ar ? "منطقة الخطر" : "Danger zone"}</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          {ar ? "إجراءات لا يمكن التراجع عنها. تعامَل معها بحذر." : "Irreversible actions. Proceed with caution."}
+        </p>
+        <div className="flex flex-col items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="font-medium">{ar ? "حذف جميع المنتجات" : "Delete all products"}</div>
+            <div className="text-sm text-muted-foreground">
+              {ar ? "سيُحذف كل منتج في المتجر بشكل نهائي." : "Permanently removes every product in the store."}
+            </div>
+          </div>
+          <AlertDialog onOpenChange={(o) => { if (!o) setConfirmText(""); }}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="gap-2">
+                <Trash2 className="h-4 w-4" /> {ar ? "حذف الكل" : "Delete all"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{ar ? "تأكيد حذف جميع المنتجات" : "Confirm delete all products"}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {ar
+                    ? 'لا يمكن التراجع عن هذا الإجراء. اكتب DELETE للتأكيد.'
+                    : 'This cannot be undone. Type DELETE to confirm.'}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoFocus
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>{ar ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={confirmText !== "DELETE" || deleting}
+                  onClick={(e) => { e.preventDefault(); handleDeleteAllProducts(); }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deleting && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                  {ar ? "حذف نهائي" : "Delete permanently"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
     </div>
   );
 }
