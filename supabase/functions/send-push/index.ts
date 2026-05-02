@@ -5,7 +5,7 @@ import webpush from "https://esm.sh/web-push@3.6.7";
 
 declare const Deno: any;
 
-const VAPID_PUBLIC = "BGMK-tXOiEvz3KPkScSzeV24hv6P61UMdzKmQxggQ44wJBKbqkjrbo9KeZ7QmWgkO6dtw6cQVKP0sr1Gj5TpkMI";
+const VAPID_PUBLIC = "BGl6L2Ibz6s8atdB3ghu4FbW3jKm6fqIACxUIrMexu7kdzsSwFeqC1p3pyYzo2ZmSwwFFa7IG_hu5pCz72FPvy8";
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@example.com";
 
