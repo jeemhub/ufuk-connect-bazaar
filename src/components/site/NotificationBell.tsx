@@ -42,6 +42,47 @@ function NotificationPushSwitch() {
   );
 }
 
+function TestNotificationButton() {
+  const { language } = useLanguage();
+  const { user } = useAuth();
+  const [sending, setSending] = useState(false);
+
+  if (!user) return null;
+
+  const isAr = language === "ar";
+
+  const handleSend = async () => {
+    setSending(true);
+    const { error } = await supabase.from("notifications").insert({
+      user_id: user.id,
+      type: "test",
+      title: isAr ? "إشعار تجريبي 🔔" : "Test notification 🔔",
+      body: isAr
+        ? "إذا وصلك هذا الإشعار على هاتفك، فإن الإعدادات تعمل بشكل صحيح."
+        : "If you got this on your phone, push notifications are working.",
+      link: "/",
+    });
+    setSending(false);
+    if (error) {
+      toast.error(isAr ? "فشل إرسال الإشعار" : "Failed to send notification");
+    } else {
+      toast.success(isAr ? "تم إرسال الإشعار التجريبي" : "Test notification sent");
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-3 border-b p-3">
+      <div className="text-xs font-medium truncate">
+        {isAr ? "اختبار الإشعارات" : "Test notifications"}
+      </div>
+      <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleSend} disabled={sending}>
+        {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+        {isAr ? "إرسال" : "Send"}
+      </Button>
+    </div>
+  );
+}
+
 export function NotificationBell() {
   const { t } = useLanguage();
   const { items, unreadCount, markAllRead, markRead } = useNotifications();
