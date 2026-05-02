@@ -43,7 +43,7 @@ function NotificationPushSwitch() {
 }
 
 function TestNotificationButton() {
-  const { language } = useLanguage();
+  const { lang } = useLanguage();
   const { user } = useAuth();
   const [sending, setSending] = useState(false);
 
