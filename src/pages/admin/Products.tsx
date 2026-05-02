@@ -256,11 +256,15 @@ export default function Products() {
           <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="nameAr">{t("name_ar")}</Label>
-              <Input id="nameAr" name="nameAr" defaultValue={editing?.nameAr} required />
+              <Input id="nameAr" name="nameAr" defaultValue={editing?.nameAr} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="nameEn">{t("name_en")}</Label>
-              <Input id="nameEn" name="nameEn" defaultValue={editing?.nameEn} required />
+              <Input id="nameEn" name="nameEn" defaultValue={editing?.nameEn} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="nameData">{lang === "ar" ? "الاسم في Data" : "Data name"}</Label>
+              <Input id="nameData" name="nameData" defaultValue={editing?.nameData ?? ""} placeholder={lang === "ar" ? "اسم المادة كما في ملف Excel" : "Item name as in Excel sheet"} />
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="descAr">{t("description_ar")}</Label>
