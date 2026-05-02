@@ -24,6 +24,7 @@ type EditState = (Product & {
   is_active?: boolean;
   priceWholesale?: number;
   priceDealer?: number;
+  nameData?: string | null;
 }) | null;
 
 export default function Products() {
@@ -35,6 +36,7 @@ export default function Products() {
       is_active: r.is_active,
       priceWholesale: Number(r.price_wholesale_iqd ?? 0),
       priceDealer: Number(r.price_dealer_iqd ?? 0),
+      nameData: (r as AdminProductRow & { name_data?: string | null }).name_data ?? null,
     })),
     [rows]
   );
@@ -140,6 +142,7 @@ export default function Products() {
     const payload = {
       name_ar: String(f.get("nameAr") || ""),
       name_en: String(f.get("nameEn") || ""),
+      name_data: String(f.get("nameData") || "") || null,
       desc_ar: String(f.get("descAr") || "") || null,
       desc_en: String(f.get("descEn") || "") || null,
       brand: brandValue && brandValue !== "__none__" ? brandValue : null,
@@ -253,11 +256,15 @@ export default function Products() {
           <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="nameAr">{t("name_ar")}</Label>
-              <Input id="nameAr" name="nameAr" defaultValue={editing?.nameAr} required />
+              <Input id="nameAr" name="nameAr" defaultValue={editing?.nameAr} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="nameEn">{t("name_en")}</Label>
-              <Input id="nameEn" name="nameEn" defaultValue={editing?.nameEn} required />
+              <Input id="nameEn" name="nameEn" defaultValue={editing?.nameEn} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="nameData">{lang === "ar" ? "الاسم في Data" : "Data name"}</Label>
+              <Input id="nameData" name="nameData" defaultValue={editing?.nameData ?? ""} placeholder={lang === "ar" ? "اسم المادة كما في ملف Excel" : "Item name as in Excel sheet"} />
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="descAr">{t("description_ar")}</Label>
