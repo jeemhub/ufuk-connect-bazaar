@@ -1,4 +1,4 @@
-import { Bell, BellOff, Check } from "lucide-react";
+import { Bell, BellOff, Check, Send, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -8,8 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useAuth } from "@/auth/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { useState } from "react";
 
 function NotificationPushSwitch() {
   const { t } = useLanguage();
@@ -35,6 +38,47 @@ function NotificationPushSwitch() {
         <div className="text-xs font-medium truncate">{t("notif_enable_push")}</div>
       </div>
       <Switch checked={enabled} onCheckedChange={handleToggle} disabled={loading || permission === "denied"} />
+    </div>
+  );
+}
+
+function TestNotificationButton() {
+  const { lang } = useLanguage();
+  const { user } = useAuth();
+  const [sending, setSending] = useState(false);
+
+  if (!user) return null;
+
+  const isAr = lang === "ar";
+
+  const handleSend = async () => {
+    setSending(true);
+    const { error } = await supabase.from("notifications").insert({
+      user_id: user.id,
+      type: "test",
+      title: isAr ? "إشعار تجريبي 🔔" : "Test notification 🔔",
+      body: isAr
+        ? "إذا وصلك هذا الإشعار على هاتفك، فإن الإعدادات تعمل بشكل صحيح."
+        : "If you got this on your phone, push notifications are working.",
+      link: "/",
+    });
+    setSending(false);
+    if (error) {
+      toast.error(isAr ? "فشل إرسال الإشعار" : "Failed to send notification");
+    } else {
+      toast.success(isAr ? "تم إرسال الإشعار التجريبي" : "Test notification sent");
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-3 border-b p-3">
+      <div className="text-xs font-medium truncate">
+        {isAr ? "اختبار الإشعارات" : "Test notifications"}
+      </div>
+      <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleSend} disabled={sending}>
+        {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+        {isAr ? "إرسال" : "Send"}
+      </Button>
     </div>
   );
 }
@@ -65,6 +109,7 @@ export function NotificationBell() {
           )}
         </div>
         <NotificationPushSwitch />
+        <TestNotificationButton />
         <ScrollArea className="max-h-96">
           {items.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">{t("notif_empty")}</div>
