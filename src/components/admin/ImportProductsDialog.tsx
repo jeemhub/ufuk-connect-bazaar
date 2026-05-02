@@ -12,6 +12,25 @@ import { useLanguage } from "@/i18n/LanguageContext";
 
 type Row = (string | number | null)[];
 
+/**
+ * Fix Arabic text that arrived as mojibake (CP1256 bytes mis-decoded as Latin-1/UTF-8).
+ * Detects strings that contain typical mojibake characters and re-decodes them as windows-1256.
+ */
+function fixArabicMojibake(s: string): string {
+  if (!s) return s;
+  // If it already contains Arabic characters, leave it alone.
+  if (/[\u0600-\u06FF]/.test(s)) return s;
+  // Mojibake heuristic: contains characters from the CP1256 high range (À-ÿ etc.)
+  if (!/[\u00A0-\u00FF]/.test(s)) return s;
+  try {
+    const bytes = new Uint8Array(Array.from(s, ch => ch.charCodeAt(0) & 0xff));
+    const decoded = new TextDecoder("windows-1256").decode(bytes);
+    return /[\u0600-\u06FF]/.test(decoded) ? decoded : s;
+  } catch {
+    return s;
+  }
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -41,11 +60,16 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
     try {
       const XLSX = await import("xlsx");
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
+      // codepage 1256 = Arabic (Windows). Helps when .xls files were saved with legacy encoding.
+      const wb = XLSX.read(buf, { type: "array", codepage: 1256 });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json<Row>(ws, { header: 1, defval: null, raw: true });
+      // Fix any cells that arrived as mojibake (CP1256 bytes interpreted as Latin-1)
+      const fixed = (data as Row[]).map(row =>
+        row?.map(cell => (typeof cell === "string" ? fixArabicMojibake(cell) : cell))
+      );
       setFileName(file.name);
-      setRows(data as Row[]);
+      setRows(fixed as Row[]);
     } catch (e: any) {
       toast.error(e?.message || (ar ? "تعذّر قراءة الملف" : "Failed to read file"));
     } finally {
