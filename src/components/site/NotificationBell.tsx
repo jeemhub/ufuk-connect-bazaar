@@ -49,7 +49,7 @@ function TestNotificationButton() {
 
   if (!user) return null;
 
-  const isAr = language === "ar";
+  const isAr = lang === "ar";
 
   const handleSend = async () => {
     setSending(true);
