@@ -36,6 +36,7 @@ export default function Products() {
       is_active: r.is_active,
       priceWholesale: Number(r.price_wholesale_iqd ?? 0),
       priceDealer: Number(r.price_dealer_iqd ?? 0),
+      nameData: (r as AdminProductRow & { name_data?: string | null }).name_data ?? null,
     })),
     [rows]
   );
