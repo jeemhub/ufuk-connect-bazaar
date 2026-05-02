@@ -66,8 +66,9 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
       const stockRaw = r[stockCol - 1];
       const stockNum = parseInt(String(stockRaw ?? "0").replace(/[^\d-]/g, ""), 10);
       return {
-        name_ar: name,
-        name_en: name,
+        name_ar: "",
+        name_en: "",
+        name_data: name,
         stock: Number.isFinite(stockNum) ? stockNum : 0,
         price_iqd: 0,
         price_wholesale_iqd: 0,
