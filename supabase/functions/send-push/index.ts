@@ -7,9 +7,23 @@ declare const Deno: any;
 
 const VAPID_PUBLIC = "BGl6L2Ibz6s8atdB3ghu4FbW3jKm6fqIACxUIrMexu7kdzsSwFeqC1p3pyYzo2ZmSwwFFa7IG_hu5pCz72FPvy8";
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@example.com";
+const RAW_SUBJECT = (Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@example.com").trim();
+// Normalize: must be a valid URL (mailto: or https:)
+function normalizeSubject(s: string): string {
+  if (!s) return "mailto:admin@example.com";
+  if (s.startsWith("mailto:") || s.startsWith("https://") || s.startsWith("http://")) return s;
+  if (s.includes("@")) return `mailto:${s}`;
+  return `https://${s}`;
+}
+const VAPID_SUBJECT = normalizeSubject(RAW_SUBJECT);
 
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+if (VAPID_PRIVATE) {
+  try {
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+  } catch (e) {
+    console.error("setVapidDetails failed:", e);
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
