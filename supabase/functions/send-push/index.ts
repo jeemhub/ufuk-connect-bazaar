@@ -5,11 +5,25 @@ import webpush from "https://esm.sh/web-push@3.6.7";
 
 declare const Deno: any;
 
-const VAPID_PUBLIC = "BGl6L2Ibz6s8atdB3ghu4FbW3jKm6fqIACxUIrMexu7kdzsSwFeqC1p3pyYzo2ZmSwwFFa7IG_hu5pCz72FPvy8";
+const VAPID_PUBLIC = "BFz5sdAQts-WBOFV17OebqvvpkruP_EflR5pq2mZ_6oYKRKEGd-N6xxYXp3mxj9wa4JgvUnhXdlm3BlcbxsKv6s";
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@example.com";
+const RAW_SUBJECT = (Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@example.com").trim();
+// Normalize: must be a valid URL (mailto: or https:)
+function normalizeSubject(s: string): string {
+  if (!s) return "mailto:admin@example.com";
+  if (s.startsWith("mailto:") || s.startsWith("https://") || s.startsWith("http://")) return s;
+  if (s.includes("@")) return `mailto:${s}`;
+  return `https://${s}`;
+}
+const VAPID_SUBJECT = normalizeSubject(RAW_SUBJECT);
 
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+if (VAPID_PRIVATE) {
+  try {
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+  } catch (e) {
+    console.error("setVapidDetails failed:", e);
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,16 +69,17 @@ Deno.serve(async (req: Request) => {
         );
         return { id: s.id, ok: true };
       } catch (err: any) {
-        // Cleanup expired/invalid subscriptions
-        if (err?.statusCode === 404 || err?.statusCode === 410) {
+        console.error("push fail", { id: s.id, status: err?.statusCode, body: err?.body, msg: err?.message });
+        if (err?.statusCode === 404 || err?.statusCode === 410 || err?.statusCode === 403) {
           await supabase.from("push_subscriptions").delete().eq("id", s.id);
         }
-        return { id: s.id, ok: false, status: err?.statusCode };
+        return { id: s.id, ok: false, status: err?.statusCode, body: err?.body };
       }
     }));
 
+    const details = results.map((r) => r.status === "fulfilled" ? r.value : { ok: false, error: String(r.reason) });
     const sent = results.filter((r) => r.status === "fulfilled" && (r.value as any).ok).length;
-    return new Response(JSON.stringify({ sent, total: subs?.length ?? 0 }), {
+    return new Response(JSON.stringify({ sent, total: subs?.length ?? 0, details, subject: VAPID_SUBJECT }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
