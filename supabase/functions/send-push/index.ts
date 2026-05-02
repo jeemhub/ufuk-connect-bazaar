@@ -69,16 +69,17 @@ Deno.serve(async (req: Request) => {
         );
         return { id: s.id, ok: true };
       } catch (err: any) {
-        // Cleanup expired/invalid subscriptions
-        if (err?.statusCode === 404 || err?.statusCode === 410) {
+        console.error("push fail", { id: s.id, status: err?.statusCode, body: err?.body, msg: err?.message });
+        if (err?.statusCode === 404 || err?.statusCode === 410 || err?.statusCode === 403) {
           await supabase.from("push_subscriptions").delete().eq("id", s.id);
         }
-        return { id: s.id, ok: false, status: err?.statusCode };
+        return { id: s.id, ok: false, status: err?.statusCode, body: err?.body };
       }
     }));
 
+    const details = results.map((r) => r.status === "fulfilled" ? r.value : { ok: false, error: String(r.reason) });
     const sent = results.filter((r) => r.status === "fulfilled" && (r.value as any).ok).length;
-    return new Response(JSON.stringify({ sent, total: subs?.length ?? 0 }), {
+    return new Response(JSON.stringify({ sent, total: subs?.length ?? 0, details, subject: VAPID_SUBJECT }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
