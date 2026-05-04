@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff, Headset } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff, Headset, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
