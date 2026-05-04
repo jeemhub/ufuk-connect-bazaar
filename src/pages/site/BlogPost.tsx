@@ -39,8 +39,8 @@ export default function BlogPostPage() {
   const [replyText, setReplyText] = useState("");
 
   const loadEngagement = useCallback(async (postId: string) => {
-    const { count } = await supabase.from("blog_likes").select("*", { count: "exact", head: true }).eq("post_id", postId);
-    setLikes(count ?? 0);
+    const { data: countData } = await supabase.rpc("get_blog_like_count", { _post_id: postId });
+    setLikes(Number(countData ?? 0));
     if (user) {
       const { data } = await supabase.from("blog_likes").select("post_id").eq("post_id", postId).eq("user_id", user.id).maybeSingle();
       setLiked(!!data);
