@@ -40,12 +40,42 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // ===== AUTH CHECK =====
+    // Allow only:
+    //  (a) internal callers presenting the SERVICE_ROLE key (e.g. DB trigger)
+    //  (b) authenticated users with the 'admin' role
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+
+    const isServiceRole = !!token && token === SERVICE_ROLE;
+
+    if (!isServiceRole) {
+      // Verify user JWT and admin role
+      const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: isAdmin, error: roleErr } = await userClient.rpc("has_role", {
+        _user_id: userData.user.id,
+        _role: "admin",
+      });
+      if (roleErr || !isAdmin) {
+        return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const { user_ids, broadcast, title, body, link, tag } = await req.json();
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
     let query = supabase.from("push_subscriptions").select("id, endpoint, p256dh, auth, user_id");
     if (!broadcast) {
