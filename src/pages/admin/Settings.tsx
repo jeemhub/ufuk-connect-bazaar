@@ -49,6 +49,8 @@ export default function Settings() {
         <p className="mt-1 text-sm text-muted-foreground">{t("settings_subtitle")}</p>
       </div>
 
+      <GlassThemeSettings />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="surface-card p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
