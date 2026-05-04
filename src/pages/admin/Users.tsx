@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff, Headset } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff, Headset, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -73,6 +74,50 @@ export default function Users() {
   const [salesEnabled, setSalesEnabled] = useState(false);
   const [salesPermsForm, setSalesPermsForm] = useState<SalesPerms>({});
   const [savingSales, setSavingSales] = useState(false);
+  const [search, setSearch] = useState("");
+  type FilterKey = "customer" | "wholesale" | "dealer" | "sales" | "verified" | "blocked";
+  const [filters, setFilters] = useState<Record<FilterKey, boolean>>({
+    customer: false, wholesale: false, dealer: false, sales: false, verified: false, blocked: false,
+  });
+  const toggleFilter = (k: FilterKey) =>
+    setFilters((f) => ({ ...f, [k]: !f[k] }));
+  const clearFilters = () => {
+    setFilters({ customer: false, wholesale: false, dealer: false, sales: false, verified: false, blocked: false });
+    setSearch("");
+  };
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const anyTier = filters.customer || filters.wholesale || filters.dealer;
+    return rows.filter((u) => {
+      if (q) {
+        const hay = `${u.full_name ?? ""} ${u.email ?? ""} ${u.phone ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const tier = pricingRole(u.roles);
+      if (anyTier) {
+        const ok =
+          (filters.customer && tier === "customer") ||
+          (filters.wholesale && tier === "wholesale") ||
+          (filters.dealer && tier === "dealer");
+        if (!ok) return false;
+      }
+      if (filters.sales && !u.roles.includes("sales")) return false;
+      if (filters.verified && !u.is_verified) return false;
+      if (filters.blocked && !u.is_blocked) return false;
+      return true;
+    });
+  }, [rows, search, filters]);
+
+  const filterChips: { key: FilterKey; label: string; icon: typeof UserIcon }[] = [
+    { key: "customer",  label: "المفرد",   icon: UserIcon },
+    { key: "wholesale", label: "الجملة",   icon: Store },
+    { key: "dealer",    label: "وكالة",    icon: Briefcase },
+    { key: "sales",     label: "مبيعات",   icon: Headset },
+    { key: "verified",  label: "موثق",     icon: BadgeCheck },
+    { key: "blocked",   label: "محظورين",  icon: Ban },
+  ];
+  const activeCount = Object.values(filters).filter(Boolean).length + (search ? 1 : 0);
 
   async function load() {
     setLoading(true);
@@ -195,6 +240,51 @@ export default function Users() {
         <p className="mt-1 text-sm text-muted-foreground">{t("users_subtitle")}</p>
       </div>
 
+      <div className="surface-card p-4 space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="بحث بالاسم أو البريد أو الهاتف..."
+              className="ps-10"
+            />
+          </div>
+          {activeCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+              <X className="h-4 w-4" /> مسح الفلاتر ({activeCount})
+            </Button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {filterChips.map((c) => {
+            const active = filters[c.key];
+            const Icon = c.icon;
+            return (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => toggleFilter(c.key)}
+                aria-pressed={active}
+                className={
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors " +
+                  (active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-accent")
+                }
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {loading ? "..." : `عدد النتائج: ${filteredRows.length} من ${rows.length}`}
+        </div>
+      </div>
+
       <div className="surface-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -213,10 +303,10 @@ export default function Users() {
               {loading && (
                 <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>
               )}
-              {!loading && rows.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("users_empty")}</td></tr>
+              {!loading && filteredRows.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{rows.length === 0 ? t("users_empty") : "لا توجد نتائج مطابقة"}</td></tr>
               )}
-              {!loading && rows.map((u) => {
+              {!loading && filteredRows.map((u) => {
                 const tier = pricingRole(u.roles);
                 const isAdmin = u.roles.includes("admin");
                 return (
