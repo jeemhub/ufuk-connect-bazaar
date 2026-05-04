@@ -172,3 +172,147 @@
   .animate-marquee, .animate-marquee-rtl, .animate-conveyor, .animate-conveyor-rtl, .animate-float, .animate-float-slow, .animate-spin-slow, .animate-blob, .text-gradient-brand { animation: none !important; }
 }
 
+/* ============================================================
+   Liquid Glass theme (admin panel)
+   Activated by adding .glass + .glass-{light|medium|strong}
+   on <html>. Components opt in via .glass-surface utilities.
+   ============================================================ */
+@layer base {
+  html.glass {
+    /* Default (medium) tuning, overridden by intensity classes. */
+    --glass-bg: hsl(0 0% 100% / 0.55);
+    --glass-bg-strong: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(0 0% 100% / 0.5);
+    --glass-border-strong: hsl(0 0% 100% / 0.7);
+    --glass-blur: 18px;
+    --glass-saturate: 160%;
+    --glass-shadow: 0 8px 32px -8px hsl(222 47% 11% / 0.18);
+    --glass-highlight: hsl(0 0% 100% / 0.6);
+
+    /* Decorative aurora backdrop behind the whole admin area */
+    --glass-aurora:
+      radial-gradient(900px 500px at 8% -10%, hsl(217 91% 70% / 0.35), transparent 60%),
+      radial-gradient(700px 600px at 105% 10%, hsl(280 80% 75% / 0.25), transparent 60%),
+      radial-gradient(800px 500px at 50% 110%, hsl(190 90% 70% / 0.28), transparent 60%);
+  }
+
+  html.glass.glass-light {
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-bg-strong: hsl(0 0% 100% / 0.82);
+    --glass-border: hsl(0 0% 100% / 0.55);
+    --glass-blur: 10px;
+    --glass-saturate: 140%;
+    --glass-shadow: 0 4px 18px -6px hsl(222 47% 11% / 0.12);
+  }
+
+  html.glass.glass-strong {
+    --glass-bg: hsl(0 0% 100% / 0.4);
+    --glass-bg-strong: hsl(0 0% 100% / 0.55);
+    --glass-border: hsl(0 0% 100% / 0.6);
+    --glass-border-strong: hsl(0 0% 100% / 0.85);
+    --glass-blur: 28px;
+    --glass-saturate: 190%;
+    --glass-shadow: 0 14px 48px -10px hsl(222 47% 11% / 0.28);
+    --glass-highlight: hsl(0 0% 100% / 0.75);
+  }
+
+  /* Dark mode glass */
+  html.glass.dark {
+    --glass-bg: hsl(222 47% 14% / 0.55);
+    --glass-bg-strong: hsl(222 47% 14% / 0.72);
+    --glass-border: hsl(0 0% 100% / 0.12);
+    --glass-border-strong: hsl(0 0% 100% / 0.22);
+    --glass-shadow: 0 14px 40px -8px hsl(0 0% 0% / 0.55);
+    --glass-highlight: hsl(0 0% 100% / 0.18);
+    --glass-aurora:
+      radial-gradient(900px 500px at 8% -10%, hsl(217 91% 45% / 0.45), transparent 60%),
+      radial-gradient(700px 600px at 105% 10%, hsl(280 80% 50% / 0.35), transparent 60%),
+      radial-gradient(800px 500px at 50% 110%, hsl(190 90% 45% / 0.35), transparent 60%);
+  }
+
+  /* Painted aurora behind admin layout */
+  html.glass .glass-stage {
+    position: relative;
+    background-color: hsl(var(--background));
+    background-image: var(--glass-aurora);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  /* Standard frosted surface — used for cards, dialogs, popovers. */
+  .glass-surface {
+    /* No-op when .glass is not on <html> */
+  }
+  html.glass .glass-surface {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border) !important;
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 1px 0 0 var(--glass-highlight);
+  }
+
+  /* Slightly more opaque variant (sidebars, headers, popovers). */
+  html.glass .glass-panel {
+    background: var(--glass-bg-strong) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-color: var(--glass-border-strong) !important;
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 1px 0 0 var(--glass-highlight);
+  }
+
+  /* Apply to whole admin panel: every Card / dialog / popover / sheet
+     becomes glass automatically without touching every component. */
+  html.glass .glass-scope [data-slot="card"],
+  html.glass .glass-scope .surface-card,
+  html.glass .glass-scope .stat-tile {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border) !important;
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 1px 0 0 var(--glass-highlight) !important;
+  }
+
+  /* Dialog / popover / dropdown / sheet content — radix uses role attrs */
+  html.glass [role="dialog"] > div[class*="bg-background"],
+  html.glass [role="dialog"][class*="bg-background"],
+  html.glass [data-radix-popper-content-wrapper] > * {
+    background: var(--glass-bg-strong) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-color: var(--glass-border-strong) !important;
+  }
+
+  /* Reduce harsh borders on inputs inside glass to keep airy look */
+  html.glass .glass-scope input,
+  html.glass .glass-scope textarea,
+  html.glass .glass-scope select,
+  html.glass .glass-scope [role="combobox"] {
+    background: hsl(0 0% 100% / 0.45);
+    border-color: var(--glass-border);
+    backdrop-filter: blur(8px);
+  }
+  html.glass.dark .glass-scope input,
+  html.glass.dark .glass-scope textarea,
+  html.glass.dark .glass-scope select,
+  html.glass.dark .glass-scope [role="combobox"] {
+    background: hsl(222 47% 14% / 0.5);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html.glass .glass-surface,
+  html.glass .glass-panel,
+  html.glass .glass-scope [data-slot="card"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: hsl(var(--card)) !important;
+  }
+}
+
