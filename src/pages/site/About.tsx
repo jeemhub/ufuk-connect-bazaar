@@ -3,6 +3,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import logo from "@/assets/logo.png";
+import { sanitizeHTML } from "@/components/admin/RichTextEditor";
 
 type Page = {
   title_ar: string;
