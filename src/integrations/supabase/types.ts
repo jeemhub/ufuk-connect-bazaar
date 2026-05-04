@@ -882,6 +882,10 @@ export type Database = {
           sales_perms: Json
         }[]
       }
+      admin_restore_table: {
+        Args: { _rows: Json; _table: string; _truncate?: boolean }
+        Returns: number
+      }
       admin_set_blocked: {
         Args: { _blocked: boolean; _user_id: string }
         Returns: undefined

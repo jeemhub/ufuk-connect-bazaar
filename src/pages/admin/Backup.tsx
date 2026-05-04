@@ -208,16 +208,16 @@ export default function Backup() {
       }
 
       let i = 0;
-      // Delete child tables first (reverse order), then insert parents first.
+      // Delete child tables first (reverse order) using the admin RPC,
+      // which bypasses RLS safely for this admin-only operation.
       setImportStatus(ar ? "حذف البيانات القديمة…" : "Clearing old data…");
       for (const t of [...tablesInFile].reverse()) {
-        const { error } = await (supabase as any)
-          .from(t.key)
-          .delete()
-          .not("id", "is", null);
-        if (error && !/no rows/i.test(error.message)) {
-          // If table has no `id` column (push_subscriptions etc. — none of ours here without id),
-          // we still continue; report once.
+        const { error } = await (supabase as any).rpc("admin_restore_table", {
+          _table: t.key,
+          _rows: [],
+          _truncate: true,
+        });
+        if (error) {
           console.warn(`Delete on ${t.key}:`, error.message);
         }
       }
@@ -229,11 +229,14 @@ export default function Backup() {
         const ws = wb.Sheets[t.key];
         const rows = sheetToRows(ws);
         if (rows.length > 0) {
-          // Insert in chunks
-          const CHUNK = 200;
+          // Insert in chunks via the admin RPC (bypasses RLS for restore).
+          const CHUNK = 500;
           for (let j = 0; j < rows.length; j += CHUNK) {
             const chunk = rows.slice(j, j + CHUNK);
-            const { error } = await (supabase as any).from(t.key).insert(chunk);
+            const { error } = await (supabase as any).rpc(
+              "admin_restore_table",
+              { _table: t.key, _rows: chunk, _truncate: false }
+            );
             if (error) throw new Error(`${t.key}: ${error.message}`);
           }
         }
