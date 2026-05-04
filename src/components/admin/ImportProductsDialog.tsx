@@ -95,64 +95,42 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
       incoming.set(name, Number.isFinite(stockNum) ? stockNum : 0);
     }
 
-    const names = Array.from(incoming.keys());
     let updated = 0, inserted = 0, fail = 0;
 
     try {
-      // Fetch existing products by name_data in chunks
-      const existing = new Map<string, string>(); // name_data -> id
-      const lookupChunk = 300;
-      for (let i = 0; i < names.length; i += lookupChunk) {
-        const slice = names.slice(i, i + lookupChunk);
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, name_data")
-          .in("name_data", slice);
-        if (error) throw error;
-        (data ?? []).forEach((p: any) => { if (p.name_data) existing.set(p.name_data, p.id); });
-      }
+      // Send everything in parallel chunks to a single bulk RPC.
+      // The RPC does the diff (update existing stock vs. insert new) in one SQL pass per chunk.
+      const items = Array.from(incoming, ([name_data, stock]) => ({ name_data, stock }));
+      const CHUNK = 1000;
+      const CONCURRENCY = 4;
+      const chunks: typeof items[] = [];
+      for (let i = 0; i < items.length; i += CHUNK) chunks.push(items.slice(i, i + CHUNK));
 
-      const toUpdate: { id: string; stock: number }[] = [];
-      const toInsert: any[] = [];
-      incoming.forEach((stock, name) => {
-        const id = existing.get(name);
-        if (id) toUpdate.push({ id, stock });
-        else toInsert.push({
-          name_ar: "",
-          name_en: "",
-          name_data: name,
-          stock,
-          price_iqd: 0,
-          price_wholesale_iqd: 0,
-          price_dealer_iqd: 0,
-          brand: null,
-          category_id: null,
-          subcategory: null,
-          image_url: null,
-          is_active: true,
+      let doneChunks = 0;
+      const runChunk = async (chunk: typeof items) => {
+        const { data, error } = await supabase.rpc("bulk_upsert_products_by_name_data", {
+          items: chunk as any,
         });
-      });
+        if (error) { fail += chunk.length; }
+        else {
+          const row: any = Array.isArray(data) ? data[0] : data;
+          updated += Number(row?.updated_count ?? 0);
+          inserted += Number(row?.inserted_count ?? 0);
+        }
+        doneChunks++;
+        setProgress(Math.round((doneChunks / Math.max(1, chunks.length)) * 100));
+      };
 
-      const total = toUpdate.length + toInsert.length;
-      let done = 0;
-
-      // Update existing one-by-one (stock only)
-      for (const u of toUpdate) {
-        const { error } = await supabase.from("products").update({ stock: u.stock }).eq("id", u.id);
-        if (error) fail++; else updated++;
-        done++;
-        setProgress(Math.round((done / Math.max(1, total)) * 100));
-      }
-
-      // Insert new in batches
-      const batchSize = 200;
-      for (let i = 0; i < toInsert.length; i += batchSize) {
-        const batch = toInsert.slice(i, i + batchSize);
-        const { error } = await supabase.from("products").insert(batch);
-        if (error) fail += batch.length; else inserted += batch.length;
-        done += batch.length;
-        setProgress(Math.round((done / Math.max(1, total)) * 100));
-      }
+      // Pool of workers
+      let cursor = 0;
+      await Promise.all(
+        Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, async () => {
+          while (cursor < chunks.length) {
+            const idx = cursor++;
+            await runChunk(chunks[idx]);
+          }
+        })
+      );
     } catch (e: any) {
       toast.error(e?.message || (ar ? "فشل الاستيراد" : "Import failed"));
       setImporting(false);

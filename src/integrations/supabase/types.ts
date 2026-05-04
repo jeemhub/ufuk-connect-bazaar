@@ -908,6 +908,13 @@ export type Database = {
         Args: { _user_id: string; _verified: boolean }
         Returns: undefined
       }
+      bulk_upsert_products_by_name_data: {
+        Args: { items: Json }
+        Returns: {
+          inserted_count: number
+          updated_count: number
+        }[]
+      }
       get_blog_like_count: { Args: { _post_id: string }; Returns: number }
       get_my_sales_permissions: {
         Args: never
