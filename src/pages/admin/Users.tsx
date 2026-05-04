@@ -74,6 +74,50 @@ export default function Users() {
   const [salesEnabled, setSalesEnabled] = useState(false);
   const [salesPermsForm, setSalesPermsForm] = useState<SalesPerms>({});
   const [savingSales, setSavingSales] = useState(false);
+  const [search, setSearch] = useState("");
+  type FilterKey = "customer" | "wholesale" | "dealer" | "sales" | "verified" | "blocked";
+  const [filters, setFilters] = useState<Record<FilterKey, boolean>>({
+    customer: false, wholesale: false, dealer: false, sales: false, verified: false, blocked: false,
+  });
+  const toggleFilter = (k: FilterKey) =>
+    setFilters((f) => ({ ...f, [k]: !f[k] }));
+  const clearFilters = () => {
+    setFilters({ customer: false, wholesale: false, dealer: false, sales: false, verified: false, blocked: false });
+    setSearch("");
+  };
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const anyTier = filters.customer || filters.wholesale || filters.dealer;
+    return rows.filter((u) => {
+      if (q) {
+        const hay = `${u.full_name ?? ""} ${u.email ?? ""} ${u.phone ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const tier = pricingRole(u.roles);
+      if (anyTier) {
+        const ok =
+          (filters.customer && tier === "customer") ||
+          (filters.wholesale && tier === "wholesale") ||
+          (filters.dealer && tier === "dealer");
+        if (!ok) return false;
+      }
+      if (filters.sales && !u.roles.includes("sales")) return false;
+      if (filters.verified && !u.is_verified) return false;
+      if (filters.blocked && !u.is_blocked) return false;
+      return true;
+    });
+  }, [rows, search, filters]);
+
+  const filterChips: { key: FilterKey; label: string; icon: typeof UserIcon }[] = [
+    { key: "customer",  label: "المفرد",   icon: UserIcon },
+    { key: "wholesale", label: "الجملة",   icon: Store },
+    { key: "dealer",    label: "وكالة",    icon: Briefcase },
+    { key: "sales",     label: "مبيعات",   icon: Headset },
+    { key: "verified",  label: "موثق",     icon: BadgeCheck },
+    { key: "blocked",   label: "محظورين",  icon: Ban },
+  ];
+  const activeCount = Object.values(filters).filter(Boolean).length + (search ? 1 : 0);
 
   async function load() {
     setLoading(true);
