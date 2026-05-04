@@ -95,7 +95,7 @@ export default function AboutPage() {
           <article
             dir={lang === "ar" ? "rtl" : "ltr"}
             className="prose prose-lg max-w-none text-foreground/90 [&_h1]:text-3xl [&_h2]:text-2xl [&_h3]:text-xl [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-primary [&_a]:underline [&_img]:rounded-xl [&_img]:my-6 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:ps-6 [&_ol]:ps-6"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }}
           />
         ) : (
           <div className="rounded-xl border border-dashed py-16 text-center text-muted-foreground">
