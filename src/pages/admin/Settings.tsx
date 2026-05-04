@@ -11,6 +11,7 @@ import {
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { GlassThemeSettings } from "@/components/admin/GlassThemeSettings";
 
 const initialZones = [
   { gov: "البصرة", fee: 5000, on: true },
@@ -47,6 +48,8 @@ export default function Settings() {
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("settings_title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("settings_subtitle")}</p>
       </div>
+
+      <GlassThemeSettings />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="surface-card p-5 lg:col-span-2">
