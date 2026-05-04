@@ -304,6 +304,19 @@
   html.glass.dark .glass-scope [role="combobox"] {
     background: hsl(222 47% 14% / 0.5);
   }
+
+  /* Sidebar (shadcn) — keep brand color but turn it into a frosted panel */
+  html.glass .glass-scope [data-sidebar="sidebar"] {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--sidebar-background) / 0.78),
+      hsl(var(--sidebar-background) / 0.65)
+    ) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-color: var(--glass-border) !important;
+    box-shadow: var(--glass-shadow);
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
