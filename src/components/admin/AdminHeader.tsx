@@ -1,4 +1,4 @@
-import { Search, Languages, Home, Sparkles } from "lucide-react";
+import { Search, Languages, Home, Sparkles, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { useGlassTheme } from "@/hooks/useGlassTheme";
 
 export function AdminHeader() {
   const { t, lang, toggle } = useLanguage();
-  const { enabled: glassOn, setEnabled: setGlassOn } = useGlassTheme();
+  const { enabled: glassOn, setEnabled: setGlassOn, dark, setDark } = useGlassTheme();
   const ar = lang === "ar";
 
   return (
@@ -27,6 +27,25 @@ export function AdminHeader() {
 
       <div className="ms-auto flex items-center gap-2">
         <TooltipProvider delayDuration={250}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setDark(!dark)}
+                aria-pressed={dark}
+                aria-label={ar ? "تبديل الوضع الداكن" : "Toggle dark mode"}
+                className="h-9 w-9"
+              >
+                {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {dark
+                ? (ar ? "الوضع الفاتح" : "Light mode")
+                : (ar ? "الوضع الداكن" : "Dark mode")}
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
