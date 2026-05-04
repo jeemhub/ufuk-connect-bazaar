@@ -84,37 +84,85 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
   const handleImport = async () => {
     if (!validRows.length) { toast.error(ar ? "لا توجد صفوف صالحة" : "No valid rows"); return; }
     setImporting(true); setProgress(0);
-    let ok = 0, fail = 0;
-    const payloads = validRows.map(r => {
+
+    // Build map: name_data -> stock (last value wins if duplicates)
+    const incoming = new Map<string, number>();
+    for (const r of validRows) {
       const name = String(r[nameCol - 1] ?? "").trim();
+      if (!name) continue;
       const stockRaw = r[stockCol - 1];
       const stockNum = parseInt(String(stockRaw ?? "0").replace(/[^\d-]/g, ""), 10);
-      return {
-        name_ar: "",
-        name_en: "",
-        name_data: name,
-        stock: Number.isFinite(stockNum) ? stockNum : 0,
-        price_iqd: 0,
-        price_wholesale_iqd: 0,
-        price_dealer_iqd: 0,
-        brand: null,
-        category_id: null,
-        subcategory: null,
-        image_url: "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=800&q=80",
-        is_active: true,
-      };
-    });
-    const batchSize = 200;
-    for (let i = 0; i < payloads.length; i += batchSize) {
-      const batch = payloads.slice(i, i + batchSize);
-      const { error } = await supabase.from("products").insert(batch);
-      if (error) fail += batch.length;
-      else ok += batch.length;
-      setProgress(Math.round(((i + batch.length) / payloads.length) * 100));
+      incoming.set(name, Number.isFinite(stockNum) ? stockNum : 0);
     }
+
+    const names = Array.from(incoming.keys());
+    let updated = 0, inserted = 0, fail = 0;
+
+    try {
+      // Fetch existing products by name_data in chunks
+      const existing = new Map<string, string>(); // name_data -> id
+      const lookupChunk = 300;
+      for (let i = 0; i < names.length; i += lookupChunk) {
+        const slice = names.slice(i, i + lookupChunk);
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, name_data")
+          .in("name_data", slice);
+        if (error) throw error;
+        (data ?? []).forEach((p: any) => { if (p.name_data) existing.set(p.name_data, p.id); });
+      }
+
+      const toUpdate: { id: string; stock: number }[] = [];
+      const toInsert: any[] = [];
+      incoming.forEach((stock, name) => {
+        const id = existing.get(name);
+        if (id) toUpdate.push({ id, stock });
+        else toInsert.push({
+          name_ar: "",
+          name_en: "",
+          name_data: name,
+          stock,
+          price_iqd: 0,
+          price_wholesale_iqd: 0,
+          price_dealer_iqd: 0,
+          brand: null,
+          category_id: null,
+          subcategory: null,
+          image_url: null,
+          is_active: true,
+        });
+      });
+
+      const total = toUpdate.length + toInsert.length;
+      let done = 0;
+
+      // Update existing one-by-one (stock only)
+      for (const u of toUpdate) {
+        const { error } = await supabase.from("products").update({ stock: u.stock }).eq("id", u.id);
+        if (error) fail++; else updated++;
+        done++;
+        setProgress(Math.round((done / Math.max(1, total)) * 100));
+      }
+
+      // Insert new in batches
+      const batchSize = 200;
+      for (let i = 0; i < toInsert.length; i += batchSize) {
+        const batch = toInsert.slice(i, i + batchSize);
+        const { error } = await supabase.from("products").insert(batch);
+        if (error) fail += batch.length; else inserted += batch.length;
+        done += batch.length;
+        setProgress(Math.round((done / Math.max(1, total)) * 100));
+      }
+    } catch (e: any) {
+      toast.error(e?.message || (ar ? "فشل الاستيراد" : "Import failed"));
+      setImporting(false);
+      return;
+    }
+
     setImporting(false);
-    if (ok > 0) toast.success(ar ? `تم استيراد ${ok} منتج` : `Imported ${ok} products`);
-    if (fail > 0) toast.error(ar ? `فشل استيراد ${fail} منتج` : `Failed: ${fail}`);
+    if (updated > 0) toast.success(ar ? `تم تحديث ${updated} منتج` : `Updated ${updated} products`);
+    if (inserted > 0) toast.success(ar ? `تم إضافة ${inserted} منتج جديد` : `Added ${inserted} new products`);
+    if (fail > 0) toast.error(ar ? `فشل ${fail}` : `Failed: ${fail}`);
     onDone();
     onOpenChange(false);
     reset();
