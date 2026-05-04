@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_preferences: {
+        Row: {
+          accent_color: string
+          dark_mode: boolean
+          glass_enabled: boolean
+          glass_intensity: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent_color?: string
+          dark_mode?: boolean
+          glass_enabled?: boolean
+          glass_intensity?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent_color?: string
+          dark_mode?: boolean
+          glass_enabled?: boolean
+          glass_intensity?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_comments: {
         Row: {
           body: string
