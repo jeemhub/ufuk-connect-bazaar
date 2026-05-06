@@ -38,6 +38,7 @@ export function AdminSidebar() {
     { to: "/admin/security", icon: ShieldCheck, label: t("nav_security"), show: isAdmin },
     { to: "/admin/backup", icon: Database, label: lang === "ar" ? "النسخ الاحتياطية" : "Backups", show: isAdmin },
     { to: "/admin/settings", icon: Settings, label: t("nav_settings"), show: isAdmin },
+    { to: "/admin/preferences", icon: Palette, label: lang === "ar" ? "تفضيلاتي" : "My Preferences", show: !isAdmin },
   ].filter((i) => i.show);
 
   return (
