@@ -367,7 +367,10 @@ export default function Products() {
               <Input id="priceDealer" name="priceDealer" type="number" min="0" defaultValue={editing?.priceDealer ?? 0} />
             </div>
             <div className="flex items-center justify-between rounded-md border border-border p-3 md:col-span-2">
-              <Label htmlFor="is_active" className="cursor-pointer">Active / مفعّل</Label>
+              <div>
+                <Label htmlFor="is_active" className="cursor-pointer">{lang === "ar" ? "إظهار للعملاء" : "Visible to customers"}</Label>
+                <p className="mt-1 text-xs text-muted-foreground">{lang === "ar" ? "عند الإطفاء يتم إخفاء المنتج عن الموقع" : "When off, product is hidden from the site"}</p>
+              </div>
               <Switch id="is_active" name="is_active" defaultChecked={editing?.is_active ?? true} />
             </div>
 
