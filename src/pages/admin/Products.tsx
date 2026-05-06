@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dropzone } from "@/components/ui/dropzone";
 
-const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"] as const;
+// Brands are loaded from the database (see useBrands below)
 
 type EditState = (Product & {
   is_active?: boolean;
