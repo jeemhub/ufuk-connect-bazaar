@@ -31,6 +31,8 @@ type EditState = (Product & {
 export default function Products() {
   const { t, lang } = useLanguage();
   const { rows, loading, refetch } = useAdminProducts();
+  const { brands: brandRows } = useBrands({ activeOnly: false });
+  const brands = useMemo(() => (brandRows ?? []).map((b) => b.name), [brandRows]);
   const list = useMemo(
     () => rows.map((r) => ({
       ...dbToProduct(r),
