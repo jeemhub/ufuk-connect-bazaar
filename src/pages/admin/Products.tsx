@@ -106,15 +106,36 @@ export default function Products() {
 
   const [searchParams] = useSearchParams();
   const lowStockOnly = searchParams.get("filter") === "low_stock";
+  const [missingFilters, setMissingFilters] = useState({
+    noDesc: false,
+    noName: false,
+    noImage: false,
+    hidden: false,
+  });
+
+  const isMissingImage = (url?: string) => !url || url.includes("unsplash.com/photo-1606904825846");
 
   const filtered = useMemo(() => list.filter((p) => {
     const q = search.toLowerCase();
     const matches = !q || p.nameAr.includes(search) || p.nameEn.toLowerCase().includes(q);
-    return matches
-      && (brand === "all" || p.brand === brand)
-      && (cat === "all" || p.category === cat)
-      && (!lowStockOnly || p.stock < 5);
-  }), [list, search, brand, cat, lowStockOnly]);
+    if (!matches) return false;
+    if (brand !== "all" && p.brand !== brand) return false;
+    if (cat !== "all" && p.category !== cat) return false;
+    if (lowStockOnly && p.stock >= 5) return false;
+    if (missingFilters.noDesc && (p.descAr?.trim() || p.descEn?.trim())) return false;
+    if (missingFilters.noName && (p.nameAr?.trim() && p.nameEn?.trim())) return false;
+    if (missingFilters.noImage && !isMissingImage(p.image)) return false;
+    if (missingFilters.hidden && p.is_active) return false;
+    return true;
+  }), [list, search, brand, cat, lowStockOnly, missingFilters]);
+
+  async function toggleVisibility(p: Product & { is_active?: boolean }) {
+    const next = !p.is_active;
+    const { error } = await supabase.from("products").update({ is_active: next }).eq("id", p.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next ? (lang === "ar" ? "تم إظهار المنتج" : "Product shown") : (lang === "ar" ? "تم إخفاء المنتج" : "Product hidden"));
+    refetch();
+  }
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
