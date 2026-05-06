@@ -1,17 +1,22 @@
-import { Search, Languages, Home, Sparkles, Moon, Sun } from "lucide-react";
+import { Search, Languages, Home, Sparkles, Moon, Sun, LogOut, User as UserIcon, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { NotificationBell } from "@/components/site/NotificationBell";
 import { useGlassTheme } from "@/hooks/useGlassTheme";
+import { useAuth } from "@/auth/AuthProvider";
 
 export function AdminHeader() {
   const { t, lang, toggle } = useLanguage();
   const { enabled: glassOn, setEnabled: setGlassOn, dark, setDark } = useGlassTheme();
+  const { user, isAdmin, fullName, avatarUrl, signOut } = useAuth();
   const ar = lang === "ar";
+  const initials = (fullName || user?.email || "A").trim().slice(0, 2).toUpperCase();
 
   return (
     <header className="glass-panel sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border bg-card/80 px-4 backdrop-blur-md md:px-6">
