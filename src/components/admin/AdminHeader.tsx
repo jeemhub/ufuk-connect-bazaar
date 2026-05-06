@@ -85,9 +85,39 @@ export function AdminHeader() {
           </span>
         </Button>
         <NotificationBell />
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-primary-foreground">
-          A
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={ar ? "حسابي" : "Account"}
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-transform hover:scale-105"
+            >
+              <Avatar className="h-9 w-9">
+                {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? ""} /> : null}
+                <AvatarFallback className="bg-gradient-brand text-sm font-bold text-primary-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem asChild>
+              <Link to="/account"><UserIcon className="me-2 h-4 w-4" />{t("my_account")}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/"><Home className="me-2 h-4 w-4" />{t("back_to_site")}</Link>
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link to="/admin"><ShieldCheck className="me-2 h-4 w-4" />{t("admin_panel")}</Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => signOut()}>
+              <LogOut className="me-2 h-4 w-4" />{t("sign_out")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
