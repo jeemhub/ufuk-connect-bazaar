@@ -94,6 +94,7 @@ const App = () => (
                       <Route path="security" element={<ProtectedRoute requireAdmin><Security /></ProtectedRoute>} />
                       <Route path="backup" element={<ProtectedRoute requireAdmin><AdminBackup /></ProtectedRoute>} />
                       <Route path="settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
+                      <Route path="preferences" element={<ProtectedRoute><Preferences /></ProtectedRoute>} />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                   </Routes>
