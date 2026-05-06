@@ -274,15 +274,27 @@ export default function Products() {
                 <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">…</td></tr>
               )}
               {!loading && filtered.map((p) => (
-                <tr key={p.id} className="border-t border-border hover:bg-secondary/30">
+                <tr key={p.id} className={`border-t border-border hover:bg-secondary/30 ${!p.is_active ? "opacity-60" : ""}`}>
                   <td className="px-4 py-3"><img src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" /></td>
-                  <td className="px-4 py-3"><div className="font-medium">{lang === "ar" ? p.nameAr : p.nameEn}</div></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{lang === "ar" ? p.nameAr : p.nameEn}</span>
+                      {!p.is_active && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <EyeOff className="h-3 w-3" />{lang === "ar" ? "مخفي" : "Hidden"}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3">{p.brand}</td>
                   <td className="px-4 py-3 text-muted-foreground">{p.subcategory}</td>
                   <td className="px-4 py-3 font-semibold">{formatIqd(p.priceIqd)} {t("currency_iqd")}</td>
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => toggleVisibility(p)} className="h-8 w-8 hover:text-primary" title={p.is_active ? (lang === "ar" ? "إخفاء" : "Hide") : (lang === "ar" ? "إظهار" : "Show")}>
+                        {p.is_active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="h-8 w-8 hover:text-primary"><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => remove(p.id)} className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
