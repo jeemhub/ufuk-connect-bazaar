@@ -1,17 +1,22 @@
-import { Search, Languages, Home, Sparkles, Moon, Sun } from "lucide-react";
+import { Search, Languages, Home, Sparkles, Moon, Sun, LogOut, User as UserIcon, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { NotificationBell } from "@/components/site/NotificationBell";
 import { useGlassTheme } from "@/hooks/useGlassTheme";
+import { useAuth } from "@/auth/AuthProvider";
 
 export function AdminHeader() {
   const { t, lang, toggle } = useLanguage();
   const { enabled: glassOn, setEnabled: setGlassOn, dark, setDark } = useGlassTheme();
+  const { user, isAdmin, fullName, avatarUrl, signOut } = useAuth();
   const ar = lang === "ar";
+  const initials = (fullName || user?.email || "A").trim().slice(0, 2).toUpperCase();
 
   return (
     <header className="glass-panel sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border bg-card/80 px-4 backdrop-blur-md md:px-6">
@@ -80,9 +85,39 @@ export function AdminHeader() {
           </span>
         </Button>
         <NotificationBell />
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-primary-foreground">
-          A
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={ar ? "حسابي" : "Account"}
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-transform hover:scale-105"
+            >
+              <Avatar className="h-9 w-9">
+                {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? ""} /> : null}
+                <AvatarFallback className="bg-gradient-brand text-sm font-bold text-primary-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem asChild>
+              <Link to="/account"><UserIcon className="me-2 h-4 w-4" />{t("my_account")}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/"><Home className="me-2 h-4 w-4" />{t("back_to_site")}</Link>
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link to="/admin"><ShieldCheck className="me-2 h-4 w-4" />{t("admin_panel")}</Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => signOut()}>
+              <LogOut className="me-2 h-4 w-4" />{t("sign_out")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
