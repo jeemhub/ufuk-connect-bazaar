@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
