@@ -228,6 +228,31 @@ export default function Products() {
             {filtered.length} / {list.length}
           </div>
         </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { key: "noName" as const, label: lang === "ar" ? "بدون اسم" : "No name", icon: Type },
+            { key: "noDesc" as const, label: lang === "ar" ? "بدون وصف" : "No description", icon: FileQuestion },
+            { key: "noImage" as const, label: lang === "ar" ? "بدون صورة" : "No image", icon: ImageOff },
+            { key: "hidden" as const, label: lang === "ar" ? "المخفية" : "Hidden", icon: EyeOff },
+          ].map(({ key, label, icon: Icon }) => {
+            const active = missingFilters[key];
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMissingFilters((s) => ({ ...s, [key]: !s[key] }))}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-secondary"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="surface-card overflow-hidden">
