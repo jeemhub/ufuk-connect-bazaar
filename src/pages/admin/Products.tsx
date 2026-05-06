@@ -14,6 +14,7 @@ import { formatIqd, categories, Product } from "@/data/mockData";
 import { StockBadge } from "@/components/admin/StatusBadge";
 import { ImageCropper } from "@/components/admin/ImageCropper";
 import { useAdminProducts, dbToProduct, type AdminProductRow } from "@/hooks/useProducts";
+import { useBrands } from "@/hooks/useBrands";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dropzone } from "@/components/ui/dropzone";
