@@ -14,11 +14,12 @@ import { formatIqd, categories, Product } from "@/data/mockData";
 import { StockBadge } from "@/components/admin/StatusBadge";
 import { ImageCropper } from "@/components/admin/ImageCropper";
 import { useAdminProducts, dbToProduct, type AdminProductRow } from "@/hooks/useProducts";
+import { useBrands } from "@/hooks/useBrands";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dropzone } from "@/components/ui/dropzone";
 
-const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"] as const;
+// Brands are loaded from the database (see useBrands below)
 
 type EditState = (Product & {
   is_active?: boolean;
@@ -30,6 +31,8 @@ type EditState = (Product & {
 export default function Products() {
   const { t, lang } = useLanguage();
   const { rows, loading, refetch } = useAdminProducts();
+  const { brands: brandRows } = useBrands({ activeOnly: false });
+  const brands = useMemo(() => (brandRows ?? []).map((b) => b.name), [brandRows]);
   const list = useMemo(
     () => rows.map((r) => ({
       ...dbToProduct(r),
