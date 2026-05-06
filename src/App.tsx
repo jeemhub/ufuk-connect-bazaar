@@ -35,6 +35,7 @@ const Categories = lazy(() => import("./pages/admin/Categories"));
 const Orders = lazy(() => import("./pages/admin/Orders"));
 const Users = lazy(() => import("./pages/admin/Users"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
+const Preferences = lazy(() => import("./pages/admin/Preferences"));
 const Security = lazy(() => import("./pages/admin/Security"));
 const Quotes = lazy(() => import("./pages/admin/Quotes"));
 const AdminBlog = lazy(() => import("./pages/admin/Blog"));
