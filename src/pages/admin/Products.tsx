@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,15 +106,36 @@ export default function Products() {
 
   const [searchParams] = useSearchParams();
   const lowStockOnly = searchParams.get("filter") === "low_stock";
+  const [missingFilters, setMissingFilters] = useState({
+    noDesc: false,
+    noName: false,
+    noImage: false,
+    hidden: false,
+  });
+
+  const isMissingImage = (url?: string) => !url || url.includes("unsplash.com/photo-1606904825846");
 
   const filtered = useMemo(() => list.filter((p) => {
     const q = search.toLowerCase();
     const matches = !q || p.nameAr.includes(search) || p.nameEn.toLowerCase().includes(q);
-    return matches
-      && (brand === "all" || p.brand === brand)
-      && (cat === "all" || p.category === cat)
-      && (!lowStockOnly || p.stock < 5);
-  }), [list, search, brand, cat, lowStockOnly]);
+    if (!matches) return false;
+    if (brand !== "all" && p.brand !== brand) return false;
+    if (cat !== "all" && p.category !== cat) return false;
+    if (lowStockOnly && p.stock >= 5) return false;
+    if (missingFilters.noDesc && (p.descAr?.trim() || p.descEn?.trim())) return false;
+    if (missingFilters.noName && (p.nameAr?.trim() && p.nameEn?.trim())) return false;
+    if (missingFilters.noImage && !isMissingImage(p.image)) return false;
+    if (missingFilters.hidden && p.is_active) return false;
+    return true;
+  }), [list, search, brand, cat, lowStockOnly, missingFilters]);
+
+  async function toggleVisibility(p: Product & { is_active?: boolean }) {
+    const next = !p.is_active;
+    const { error } = await supabase.from("products").update({ is_active: next }).eq("id", p.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next ? (lang === "ar" ? "تم إظهار المنتج" : "Product shown") : (lang === "ar" ? "تم إخفاء المنتج" : "Product hidden"));
+    refetch();
+  }
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
@@ -207,6 +228,31 @@ export default function Products() {
             {filtered.length} / {list.length}
           </div>
         </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { key: "noName" as const, label: lang === "ar" ? "بدون اسم" : "No name", icon: Type },
+            { key: "noDesc" as const, label: lang === "ar" ? "بدون وصف" : "No description", icon: FileQuestion },
+            { key: "noImage" as const, label: lang === "ar" ? "بدون صورة" : "No image", icon: ImageOff },
+            { key: "hidden" as const, label: lang === "ar" ? "المخفية" : "Hidden", icon: EyeOff },
+          ].map(({ key, label, icon: Icon }) => {
+            const active = missingFilters[key];
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMissingFilters((s) => ({ ...s, [key]: !s[key] }))}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-secondary"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="surface-card overflow-hidden">
@@ -228,15 +274,27 @@ export default function Products() {
                 <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">…</td></tr>
               )}
               {!loading && filtered.map((p) => (
-                <tr key={p.id} className="border-t border-border hover:bg-secondary/30">
+                <tr key={p.id} className={`border-t border-border hover:bg-secondary/30 ${!p.is_active ? "opacity-60" : ""}`}>
                   <td className="px-4 py-3"><img src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" /></td>
-                  <td className="px-4 py-3"><div className="font-medium">{lang === "ar" ? p.nameAr : p.nameEn}</div></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{lang === "ar" ? p.nameAr : p.nameEn}</span>
+                      {!p.is_active && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <EyeOff className="h-3 w-3" />{lang === "ar" ? "مخفي" : "Hidden"}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3">{p.brand}</td>
                   <td className="px-4 py-3 text-muted-foreground">{p.subcategory}</td>
                   <td className="px-4 py-3 font-semibold">{formatIqd(p.priceIqd)} {t("currency_iqd")}</td>
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => toggleVisibility(p)} className="h-8 w-8 hover:text-primary" title={p.is_active ? (lang === "ar" ? "إخفاء" : "Hide") : (lang === "ar" ? "إظهار" : "Show")}>
+                        {p.is_active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="h-8 w-8 hover:text-primary"><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => remove(p.id)} className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
@@ -309,7 +367,10 @@ export default function Products() {
               <Input id="priceDealer" name="priceDealer" type="number" min="0" defaultValue={editing?.priceDealer ?? 0} />
             </div>
             <div className="flex items-center justify-between rounded-md border border-border p-3 md:col-span-2">
-              <Label htmlFor="is_active" className="cursor-pointer">Active / مفعّل</Label>
+              <div>
+                <Label htmlFor="is_active" className="cursor-pointer">{lang === "ar" ? "إظهار للعملاء" : "Visible to customers"}</Label>
+                <p className="mt-1 text-xs text-muted-foreground">{lang === "ar" ? "عند الإطفاء يتم إخفاء المنتج عن الموقع" : "When off, product is hidden from the site"}</p>
+              </div>
               <Switch id="is_active" name="is_active" defaultChecked={editing?.is_active ?? true} />
             </div>
 
