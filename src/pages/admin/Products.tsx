@@ -46,11 +46,16 @@ export default function Products() {
     [rows]
   );
   const [catMap, setCatMap] = useState<Record<string, string>>({}); // key -> uuid
+  const [catRows, setCatRows] = useState<{ id: string; key: string; name_ar: string; name_en: string }[]>([]);
+  const [subRows, setSubRows] = useState<{ id: string; category_id: string; name_ar: string; name_en: string }[]>([]);
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState<string>("all");
   const [cat, setCat] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EditState>(null);
+  const [formCat, setFormCat] = useState<string>("__none__"); // selected category key in dialog
+  const [formSubs, setFormSubs] = useState<string[]>([]);
+  const [subPopOpen, setSubPopOpen] = useState(false);
   const [datasheet, setDatasheet] = useState<{ url: string; name: string } | null>(null);
   const [imageSrc, setImageSrc] = useState<string>("");
   const [rawImage, setRawImage] = useState<string>("");
@@ -59,13 +64,20 @@ export default function Products() {
   const [importOpen, setImportOpen] = useState(false);
   const imgInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    supabase.from("categories").select("id,key").then(({ data }) => {
-      const map: Record<string, string> = {};
-      (data ?? []).forEach((c: { id: string; key: string }) => { map[c.key] = c.id; });
-      setCatMap(map);
-    });
-  }, []);
+  async function loadCatsAndSubs() {
+    const [{ data: cats }, { data: subs }] = await Promise.all([
+      supabase.from("categories").select("id,key,name_ar,name_en").order("sort", { ascending: true }),
+      supabase.from("subcategories").select("id,category_id,name_ar,name_en"),
+    ]);
+    const list = (cats ?? []) as { id: string; key: string; name_ar: string; name_en: string }[];
+    setCatRows(list);
+    const map: Record<string, string> = {};
+    list.forEach((c) => { map[c.key] = c.id; });
+    setCatMap(map);
+    setSubRows((subs ?? []) as { id: string; category_id: string; name_ar: string; name_en: string }[]);
+  }
+
+  useEffect(() => { loadCatsAndSubs(); }, []);
 
   useEffect(() => {
     if (open) {
