@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, CircuitBoard, Gauge, HelpCircle, Lightbulb, RefreshCw, Sun, TriangleAlert, XCircle, Zap } from "lucide-react";
+import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, CircuitBoard, Gauge, HelpCircle, Lightbulb, Lightbulb as Bulb, RefreshCw, Sun, TriangleAlert, Wrench, XCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -385,6 +385,38 @@ export default function SolarCalculator() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* نصائح هندسية */}
+              <div className={cn(CARD, "p-5")}>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-amber-600">
+                  <Wrench className="h-5 w-5" /> نصائح هندسية لحل المشاكل
+                </h3>
+                <div className="space-y-3">
+                  {result.recommendations.map((r, i) => {
+                    const styles =
+                      r.level === "critical"
+                        ? "border-red-500/40 bg-red-500/5"
+                        : r.level === "warn"
+                        ? "border-amber-500/40 bg-amber-500/10"
+                        : "border-emerald-500/30 bg-emerald-500/5";
+                    const iconColor =
+                      r.level === "critical"
+                        ? "text-red-500"
+                        : r.level === "warn"
+                        ? "text-amber-600"
+                        : "text-emerald-600";
+                    return (
+                      <div key={i} className={cn("flex gap-3 rounded-lg border p-3", styles)}>
+                        <Bulb className={cn("h-5 w-5 shrink-0 mt-0.5", iconColor)} />
+                        <div>
+                          <div className="text-sm font-bold text-slate-900">{r.title}</div>
+                          <div className="mt-1 text-xs leading-relaxed text-slate-700">{r.body}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
