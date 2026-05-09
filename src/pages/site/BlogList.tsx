@@ -53,7 +53,7 @@ export default function BlogList() {
                   </p>
                 )}
                 <div className="mt-3 text-xs text-muted-foreground">
-                  {new Date(p.published_at ?? p.created_at).toLocaleDateString(lang === "ar" ? "ar" : "en")}
+                  {new Date(p.published_at ?? p.created_at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en")}
                 </div>
               </div>
             </Link>
