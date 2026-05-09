@@ -182,7 +182,108 @@ export function calcSolar(input: SolarInput): SolarResult {
   if (checks.some((c) => c.level === "error")) status = "error";
   else if (checks.some((c) => c.level === "warn")) status = "warn";
 
-  return { bankVoltage, bankAh, bankWh, usableWh, loadWatts, runtimeHours, runtimeH, runtimeM, status, checks };
+  // ===== توليد نصائح هندسية مدروسة =====
+  const recommendations: SolarResult["recommendations"] = [];
+
+  // فولطية البنك ≠ فولطية العاكس
+  if (!vMatch) {
+    if (bankVoltage > input.inverterVoltage) {
+      recommendations.push({
+        level: "critical",
+        title: "فولطية البنك أعلى من العاكس — خطر تلف فوري",
+        body: `بنك ${bankVoltage}V سيُتلف عاكس ${input.inverterVoltage}V عند التشغيل. الحلول: (1) استبدل العاكس بآخر يعمل على ${bankVoltage}V، أو (2) أعد ربط البطاريات على التوازي بدلاً من التوالي لتخفيض الفولطية، أو (3) قلل عدد بطاريات السلسلة.`,
+      });
+    } else {
+      const need = Math.ceil(input.inverterVoltage / bankVoltage);
+      recommendations.push({
+        level: "critical",
+        title: "فولطية البنك أقل من العاكس — العاكس لن يعمل",
+        body: `يحتاج العاكس ${input.inverterVoltage}V بينما البنك ${bankVoltage}V. أضف بطاريات على التوالي حتى تصل للفولطية المطلوبة (تقريباً ${need} بطارية ${bankVoltage}V على التوالي).`,
+      });
+    }
+  }
+
+  // الحمل > قدرة العاكس
+  if (!loadOk && loadWatts > 0) {
+    const suggestedInverter = Math.ceil((loadWatts * 1.25) / 100) * 100; // +25% هامش
+    recommendations.push({
+      level: "critical",
+      title: "الحمل يتجاوز قدرة العاكس",
+      body: `الحمل ${Math.round(loadWatts)}W أكبر من قدرة العاكس ${input.inverterPowerW}W. الحلول: (1) استبدل العاكس بقدرة لا تقل عن ${suggestedInverter}W (مع هامش 25%)، أو (2) قلّل الأحمال المشغّلة في نفس الوقت إلى أقل من ${input.inverterPowerW}W.`,
+    });
+  }
+
+  // العاكس أكبر بكثير من البنك
+  if (input.inverterPowerW > advisoryMaxInverter) {
+    const neededAh = Math.ceil((input.inverterPowerW / (bankVoltage * 0.2)) / 10) * 10;
+    recommendations.push({
+      level: "warn",
+      title: "العاكس أكبر بكثير من البطاريات (تيار سحب مرتفع)",
+      body: `لتشغيل عاكس ${input.inverterPowerW}W على ${bankVoltage}V بأمان (C/5)، يُفضّل بنك سعته ≥ ${neededAh}Ah. أضف بطاريات على التوازي لرفع السعة، أو شغّل أحمالاً أقل من ${Math.round(advisoryMaxInverter)}W فقط.`,
+    });
+  } else if (input.inverterPowerW > recommendedMaxInverter) {
+    recommendations.push({
+      level: "tip",
+      title: "العاكس أعلى قليلاً من الحد المثالي",
+      body: `الحد المثالي لبنكك ≈ ${Math.round(recommendedMaxInverter)}W (C/5). المنظومة تعمل عند أحمال متوسطة، لكن تجنّب تشغيل أحمال قريبة من قدرة العاكس لفترات طويلة لإطالة عمر البطاريات.`,
+    });
+  }
+
+  // معدل تفريغ مرتفع (Peukert)
+  if (dischargeRateC > 0.2 && loadWatts > 0) {
+    recommendations.push({
+      level: "warn",
+      title: "معدل تفريغ مرتفع يقلّل السعة الفعلية",
+      body: `تفريغ بمعدل ${(dischargeRateC).toFixed(2)}C أعلى من 0.2C يُسبّب فقد سعة (ظاهرة Peukert) وارتفاع حرارة. الحلول: زيادة عدد البطاريات على التوازي لتقليل التيار لكل بطارية، أو تقليل الأحمال.`,
+    });
+  }
+
+  // تحذيرات تكوين البطاريات
+  for (const w of warnings) {
+    if (w.level === "error" && w.label.includes("التوازي")) {
+      recommendations.push({
+        level: "critical",
+        title: "بطاريات التوازي مختلفة الفولطية",
+        body: "وحّد فولطية كل البطاريات على التوازي قبل التوصيل، وإلا سيحصل تيار اندفاع عالٍ يتلف البطاريات والكوابل. استخدم بطاريات من نفس النوع والشركة والعمر إن أمكن.",
+      });
+    }
+    if (w.level === "warn" && w.label.includes("التوالي")) {
+      recommendations.push({
+        level: "warn",
+        title: "بطاريات التوالي مختلفة السعة",
+        body: "في التوالي يمر نفس التيار في كل بطارية، فالأصغر سعةً تُفرَّغ أولاً وقد تُتلف. استخدم بطاريات بنفس السعة (Ah) ونفس العمر للحصول على أداء آمن.",
+      });
+    }
+    if (w.label.includes("توالي/توازي")) {
+      recommendations.push({
+        level: "critical",
+        title: "تكوين توالي/توازي غير متطابق",
+        body: "تأكد أن عدد البطاريات = عدد التوالي × عدد التوازي، وأن جميع السلاسل تعطي نفس الفولطية قبل ربطها على التوازي.",
+      });
+    }
+  }
+
+  // وقت تشغيل قصير
+  if (runtimeHours > 0 && runtimeHours < 2 && loadWatts > 0) {
+    const targetWh = loadWatts * 4 / dod; // هدف 4 ساعات
+    const extraAh = Math.max(0, Math.ceil((targetWh / bankVoltage - bankAh) / 10) * 10);
+    recommendations.push({
+      level: "tip",
+      title: "وقت التشغيل قصير",
+      body: `لتمديد التشغيل إلى ~4 ساعات تحت نفس الحمل، يلزم بنك أكبر بحوالي ${extraAh}Ah إضافية على ${bankVoltage}V (إضافة بطاريات على التوازي).`,
+    });
+  }
+
+  // كل شيء سليم
+  if (recommendations.length === 0 && status === "ok") {
+    recommendations.push({
+      level: "tip",
+      title: "المنظومة متوازنة هندسياً ✅",
+      body: `تطابق فولطي ممتاز، الحمل ضمن قدرة العاكس، والبنك مناسب للعاكس. للحفاظ على عمر البطاريات: لا تتجاوز عمق تفريغ ${Math.round(dod * 100)}%، وتجنّب الأحمال القصوى المستمرة، وتفقّد الوصلات دورياً.`,
+    });
+  }
+
+  return { bankVoltage, bankAh, bankWh, usableWh, loadWatts, runtimeHours, runtimeH, runtimeM, status, checks, recommendations };
 }
 
 export { toLatinDigits } from "@/lib/digits";
