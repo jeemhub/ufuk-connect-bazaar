@@ -28,6 +28,7 @@ export interface SolarResult {
   runtimeM: number;
   status: "ok" | "warn" | "error";
   checks: { label: string; ok: boolean; level: "ok" | "warn" | "error"; detail?: string }[];
+  recommendations: { title: string; body: string; level: "tip" | "warn" | "critical" }[];
 }
 
 interface BankComputation {
