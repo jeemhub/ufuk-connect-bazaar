@@ -197,28 +197,68 @@ export default function SolarCalculator() {
               <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-600">
                 <Battery className="h-5 w-5" /> معلومات البطاريات
               </h2>
-              <div className="grid gap-5 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label className="text-slate-700">عدد البطاريات</Label>
-                  <Input type="number" min={1} value={batteryCount} onChange={(e) => setBatteryCount(Math.max(1, +e.target.value))}
-                    className="border-slate-300 bg-white text-slate-900" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-700">فولطية البطارية</Label>
-                  <Select value={String(batteryVoltage)} onValueChange={(v) => setBatteryVoltage(+v as 2 | 6 | 12 | 24)}>
-                    <SelectTrigger className="border-slate-300 bg-white text-slate-900"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-white text-slate-900">
-                      {[2, 6, 12, 24].map((v) => <SelectItem key={v} value={String(v)}>{v}V</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
                   <Label className="flex items-center gap-2 text-slate-700">
-                    سعة البطارية (Ah) <Hint text="السعة بالأمبير/ساعة لبطارية واحدة — مذكورة على البطارية." />
+                    قائمة البطاريات <Hint text="أضف كل بطارية على حدة بفولطيتها وسعتها. الحساب يأخذ كل بطارية بشكل مستقل وفق طريقة الربط." />
                   </Label>
-                  <Input type="number" value={batteryAh} onChange={(e) => setBatteryAh(+e.target.value)}
-                    className="border-slate-300 bg-white text-slate-900" />
+                  <Button
+                    type="button"
+                    onClick={addBattery}
+                    disabled={connection === "single"}
+                    className="bg-amber-500 text-slate-900 hover:bg-amber-400"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4" /> إضافة بطارية
+                  </Button>
                 </div>
+
+                <div className="space-y-2">
+                  {effectiveBatteries().map((b, i) => (
+                    <div key={i} className="grid grid-cols-12 items-end gap-3 rounded-xl border border-slate-300 bg-slate-50 p-3">
+                      <div className="col-span-2 text-center">
+                        <div className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/15 text-sm font-bold text-amber-700">
+                          #{i + 1}
+                        </div>
+                      </div>
+                      <div className="col-span-4 space-y-1">
+                        <Label className="text-xs text-slate-600">الفولطية</Label>
+                        <Select value={String(b.voltage)} onValueChange={(v) => updateBattery(i, { voltage: +v })}>
+                          <SelectTrigger className="border-slate-300 bg-white text-slate-900 h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-white text-slate-900">
+                            {[2, 6, 12, 24].map((v) => <SelectItem key={v} value={String(v)}>{v}V</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-4 space-y-1">
+                        <Label className="text-xs text-slate-600">السعة (Ah)</Label>
+                        <Input
+                          type="number"
+                          value={b.ah}
+                          onChange={(e) => updateBattery(i, { ah: +e.target.value })}
+                          className="border-slate-300 bg-white text-slate-900 h-9"
+                        />
+                      </div>
+                      <div className="col-span-2 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeBattery(i)}
+                          disabled={batteries.length <= 1 || connection === "single"}
+                          className="h-9 w-9 border-red-200 text-red-500 hover:bg-red-50"
+                          aria-label="حذف"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {connection === "single" && batteries.length > 1 && (
+                  <p className="text-xs text-amber-700">وضع "بطارية واحدة" مفعّل — سيُستخدم البطارية الأولى فقط.</p>
+                )}
               </div>
 
               <div className="mt-6">
