@@ -178,7 +178,7 @@ export default function Products() {
       finalImage = uploaded;
     }
 
-    const categoryKey = String(f.get("category") || "");
+    const categoryKey = formCat;
     const brandValue = String(f.get("brand") || "");
     const payload = {
       name_ar: String(f.get("nameAr") || ""),
@@ -188,7 +188,7 @@ export default function Products() {
       desc_en: String(f.get("descEn") || "") || null,
       brand: brandValue && brandValue !== "__none__" ? brandValue : null,
       category_id: categoryKey && categoryKey !== "__none__" ? (catMap[categoryKey] ?? null) : null,
-      subcategory: String(f.get("subcategory") || "") || null,
+      subcategory: formSubs.length ? formSubs.join(", ") : null,
       price_iqd: Number(f.get("priceIqd") || 0),
       price_wholesale_iqd: Number(f.get("priceWholesale") || 0),
       price_dealer_iqd: Number(f.get("priceDealer") || 0),
