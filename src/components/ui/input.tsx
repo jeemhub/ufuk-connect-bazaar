@@ -8,6 +8,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
     return (
       <input
         type={type}
+        lang="en"
         onWheel={(e) => {
           if (isNumber) {
             (e.currentTarget as HTMLInputElement).blur();
