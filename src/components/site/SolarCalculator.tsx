@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { calcSolar, ConnectionType, SolarInput, SolarResult } from "@/lib/solarCalc";
 import { WiringDiagram } from "@/components/site/SolarWiringDiagram";
 
-const CARD = "rounded-2xl border border-amber-500/20 bg-[#111827] shadow-[0_0_30px_-15px_rgba(245,158,11,0.5)]";
+const CARD = "rounded-2xl border border-amber-500/20 bg-white shadow-[0_0_30px_-15px_rgba(245,158,11,0.5)]";
 
 function Hint({ text }: { text: string }) {
   return (
@@ -36,14 +36,14 @@ const ConnectionOption = ({
       "rounded-xl border p-3 text-right transition-all",
       current === value
         ? "border-amber-400 bg-amber-500/10 shadow-[0_0_20px_-5px_rgba(245,158,11,0.6)]"
-        : "border-slate-700 bg-slate-900/50 hover:border-amber-500/40"
+        : "border-slate-300 bg-slate-50 hover:border-amber-500/40"
     )}
   >
     <div className="flex items-center justify-between gap-2">
       <CircuitBoard className="h-5 w-5 text-amber-400" />
-      <div className="font-bold text-slate-100">{label}</div>
+      <div className="font-bold text-slate-900">{label}</div>
     </div>
-    <div className="mt-1 text-xs text-slate-400">{hint}</div>
+    <div className="mt-1 text-xs text-slate-500">{hint}</div>
   </button>
 );
 
@@ -91,7 +91,7 @@ export default function SolarCalculator() {
   const back = () => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s));
 
   return (
-    <div dir="rtl" lang="en" className="min-h-screen bg-[#0A0E1A] text-slate-100" style={{ fontFamily: "'Cairo', system-ui, sans-serif", fontVariantNumeric: "lining-nums tabular-nums", fontFeatureSettings: '"lnum"' }}>
+    <div dir="rtl" lang="en" className="min-h-screen bg-[#F8FAFC] text-slate-900" style={{ fontFamily: "'Cairo', system-ui, sans-serif", fontVariantNumeric: "lining-nums tabular-nums", fontFeatureSettings: '"lnum"' }}>
       <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
       <style>{`
         .solar-glow:hover { box-shadow: 0 0 30px -5px rgba(245,158,11,0.7), 0 0 60px -20px rgba(245,158,11,0.5); }
@@ -113,18 +113,18 @@ export default function SolarCalculator() {
               <Sun className="h-8 w-8" />
             </div>
             <h1 className="text-3xl font-bold text-amber-400 md:text-4xl">حاسبة منظومات الطاقة الشمسية</h1>
-            <p className="mt-2 text-sm text-slate-400">احسب وقت تشغيل منظومتك الشمسية بدقة هندسية</p>
+            <p className="mt-2 text-sm text-slate-500">احسب وقت تشغيل منظومتك الشمسية بدقة هندسية</p>
           </div>
 
           {/* Progress */}
           <div className="mb-6">
-            <div className="mb-2 flex justify-between text-xs text-slate-400">
+            <div className="mb-2 flex justify-between text-xs text-slate-500">
               <span className={cn(step >= 1 && "text-amber-400")}>1. العاكس</span>
               <span className={cn(step >= 2 && "text-amber-400")}>2. البطاريات</span>
               <span className={cn(step >= 3 && "text-amber-400")}>3. الأحمال</span>
               <span className={cn(step >= 4 && "text-amber-400")}>4. النتائج</span>
             </div>
-            <Progress value={progress} className="h-2 bg-slate-800 [transform:scaleX(-1)] [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:to-amber-600" />
+            <Progress value={progress} className="h-2 bg-slate-200 [transform:scaleX(-1)] [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:to-amber-600" />
           </div>
 
           {/* STEP 1 */}
@@ -135,14 +135,14 @@ export default function SolarCalculator() {
               </h2>
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-slate-200">
+                  <Label className="flex items-center gap-2 text-slate-700">
                     قدرة العاكس (واط) <Hint text="القدرة الاسمية للعاكس بالواط — مكتوبة عادة على ملصق الجهاز." />
                   </Label>
                   <Input type="number" value={inverterPowerW} onChange={(e) => setInverterPowerW(+e.target.value)}
-                    className="border-slate-700 bg-slate-900/60 text-slate-100" />
+                    className="border-slate-300 bg-white text-slate-900" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-slate-200">
+                  <Label className="flex items-center gap-2 text-slate-700">
                     نظام فولطية العاكس <Hint text="فولطية الإدخال DC للعاكس من بنك البطاريات." />
                   </Label>
                   <RadioGroup
@@ -156,7 +156,7 @@ export default function SolarCalculator() {
                           "cursor-pointer rounded-lg border p-3 text-center transition-all",
                           inverterVoltage === v
                             ? "border-amber-400 bg-amber-500/10 text-amber-300 shadow-[0_0_15px_-5px_rgba(245,158,11,0.6)]"
-                            : "border-slate-700 bg-slate-900/50 text-slate-300"
+                            : "border-slate-300 bg-slate-50 text-slate-600"
                         )}
                       >
                         <RadioGroupItem id={`iv-${v}`} value={String(v)} className="sr-only" />
@@ -183,30 +183,30 @@ export default function SolarCalculator() {
               </h2>
               <div className="grid gap-5 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label className="text-slate-200">عدد البطاريات</Label>
+                  <Label className="text-slate-700">عدد البطاريات</Label>
                   <Input type="number" min={1} value={batteryCount} onChange={(e) => setBatteryCount(Math.max(1, +e.target.value))}
-                    className="border-slate-700 bg-slate-900/60 text-slate-100" />
+                    className="border-slate-300 bg-white text-slate-900" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-200">فولطية البطارية</Label>
+                  <Label className="text-slate-700">فولطية البطارية</Label>
                   <Select value={String(batteryVoltage)} onValueChange={(v) => setBatteryVoltage(+v as 2 | 6 | 12 | 24)}>
-                    <SelectTrigger className="border-slate-700 bg-slate-900/60 text-slate-100"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-slate-900 text-slate-100">
+                    <SelectTrigger className="border-slate-300 bg-white text-slate-900"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-white text-slate-900">
                       {[2, 6, 12, 24].map((v) => <SelectItem key={v} value={String(v)}>{v}V</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-slate-200">
+                  <Label className="flex items-center gap-2 text-slate-700">
                     سعة البطارية (Ah) <Hint text="السعة بالأمبير/ساعة لبطارية واحدة — مذكورة على البطارية." />
                   </Label>
                   <Input type="number" value={batteryAh} onChange={(e) => setBatteryAh(+e.target.value)}
-                    className="border-slate-700 bg-slate-900/60 text-slate-100" />
+                    className="border-slate-300 bg-white text-slate-900" />
                 </div>
               </div>
 
               <div className="mt-6">
-                <Label className="mb-3 flex items-center gap-2 text-slate-200">
+                <Label className="mb-3 flex items-center gap-2 text-slate-700">
                   طريقة الربط <Hint text="توالي يزيد الفولطية، توازي يزيد السعة، توالي/توازي يزيد الاثنين." />
                 </Label>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -218,22 +218,22 @@ export default function SolarCalculator() {
               </div>
 
               {connection === "series-parallel" && (
-                <div className="mt-5 grid gap-4 rounded-xl border border-amber-500/20 bg-slate-900/40 p-4 sm:grid-cols-2">
+                <div className="mt-5 grid gap-4 rounded-xl border border-amber-500/20 bg-slate-50 p-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-slate-200">عدد بطاريات التوالي (Rows)</Label>
+                    <Label className="text-slate-700">عدد بطاريات التوالي (Rows)</Label>
                     <Input type="number" min={1} value={rows} onChange={(e) => setRows(Math.max(1, +e.target.value))}
-                      className="border-slate-700 bg-slate-900/60 text-slate-100" />
+                      className="border-slate-300 bg-white text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">عدد فروع التوازي (Cols)</Label>
+                    <Label className="text-slate-700">عدد فروع التوازي (Cols)</Label>
                     <Input type="number" min={1} value={cols} onChange={(e) => setCols(Math.max(1, +e.target.value))}
-                      className="border-slate-700 bg-slate-900/60 text-slate-100" />
+                      className="border-slate-300 bg-white text-slate-900" />
                   </div>
                 </div>
               )}
 
               <div className="mt-6 flex justify-between">
-                <Button variant="outline" onClick={back} className="border-slate-700 bg-transparent text-slate-200">
+                <Button variant="outline" onClick={back} className="border-slate-300 bg-transparent text-slate-700">
                   <ChevronRight className="h-4 w-4" /> السابق
                 </Button>
                 <Button onClick={next} className="bg-amber-500 text-slate-900 hover:bg-amber-400 solar-glow">
@@ -253,35 +253,35 @@ export default function SolarCalculator() {
                 <button
                   type="button"
                   onClick={() => setUseWatts(false)}
-                  className={cn("rounded-lg px-3 py-1.5 text-sm transition", !useWatts ? "bg-amber-500 text-slate-900" : "bg-slate-800 text-slate-300")}
+                  className={cn("rounded-lg px-3 py-1.5 text-sm transition", !useWatts ? "bg-amber-500 text-slate-900" : "bg-slate-200 text-slate-600")}
                 >أمبير</button>
                 <button
                   type="button"
                   onClick={() => setUseWatts(true)}
-                  className={cn("rounded-lg px-3 py-1.5 text-sm transition", useWatts ? "bg-amber-500 text-slate-900" : "bg-slate-800 text-slate-300")}
+                  className={cn("rounded-lg px-3 py-1.5 text-sm transition", useWatts ? "bg-amber-500 text-slate-900" : "bg-slate-200 text-slate-600")}
                 >واط</button>
               </div>
 
               {!useWatts ? (
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-slate-200">
+                  <Label className="flex items-center gap-2 text-slate-700">
                     إجمالي الأحمال (أمبير على 220V) <Hint text="إجمالي التيار المسحوب من مخرج العاكس على فولطية AC الثابتة 220V. القدرة = أمبير × 220." />
                   </Label>
                   <Input type="number" value={loadAmps} onChange={(e) => setLoadAmps(+e.target.value)}
-                    className="border-slate-700 bg-slate-900/60 text-slate-100" />
+                    className="border-slate-300 bg-white text-slate-900" />
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-slate-200">
+                  <Label className="flex items-center gap-2 text-slate-700">
                     إجمالي الأحمال (واط) <Hint text="مجموع استهلاك الأجهزة بالواط — سيتم تحويله تلقائياً." />
                   </Label>
                   <Input type="number" value={loadWattsInput} onChange={(e) => setLoadWattsInput(+e.target.value)}
-                    className="border-slate-700 bg-slate-900/60 text-slate-100" />
+                    className="border-slate-300 bg-white text-slate-900" />
                 </div>
               )}
 
               <div className="mt-6 flex justify-between">
-                <Button variant="outline" onClick={back} className="border-slate-700 bg-transparent text-slate-200">
+                <Button variant="outline" onClick={back} className="border-slate-300 bg-transparent text-slate-700">
                   <ChevronRight className="h-4 w-4" /> السابق
                 </Button>
                 <Button onClick={handleCalc} className="bg-gradient-to-r from-amber-400 to-amber-600 text-slate-900 hover:from-amber-300 hover:to-amber-500 solar-glow">
@@ -324,8 +324,8 @@ export default function SolarCalculator() {
                         : c.level === "warn" ? <TriangleAlert className="h-5 w-5 shrink-0 text-amber-400" />
                         : <XCircle className="h-5 w-5 shrink-0 text-red-400" />}
                       <div>
-                        <div className="text-sm font-semibold text-slate-100">{c.label}</div>
-                        {c.detail && <div className="mt-1 text-xs text-slate-400">{c.detail}</div>}
+                        <div className="text-sm font-semibold text-slate-900">{c.label}</div>
+                        {c.detail && <div className="mt-1 text-xs text-slate-500">{c.detail}</div>}
                       </div>
                     </div>
                   ))}
@@ -344,7 +344,7 @@ export default function SolarCalculator() {
                   bankVoltage={result.bankVoltage}
                   bankAh={result.bankAh}
                 />
-                <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-400">
+                <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
                   <span><span className="inline-block h-2 w-4 bg-red-500 align-middle" /> موجب +</span>
                   <span><span className="inline-block h-2 w-4 bg-slate-400 align-middle" /> سالب −</span>
                   <span><span className="inline-block h-2 w-4 bg-emerald-500 align-middle" /> خرج AC</span>
@@ -368,8 +368,8 @@ function ResultCard({ icon, title, value, sub }: { icon: React.ReactNode; title:
   return (
     <div className={cn(CARD, "p-5 transition-transform hover:-translate-y-1")}>
       <div className="mb-2 flex items-center gap-2 text-amber-400">{icon}<span className="text-sm">{title}</span></div>
-      <div className="text-2xl font-bold text-slate-100">{value}</div>
-      {sub && <div className="mt-1 text-xs text-slate-400">{sub}</div>}
+      <div className="text-2xl font-bold text-slate-900">{value}</div>
+      {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
     </div>
   );
 }
