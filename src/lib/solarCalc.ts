@@ -1,15 +1,18 @@
 export type ConnectionType = "single" | "series" | "parallel" | "series-parallel";
 export type BatteryChemistry = "lead" | "lithium";
 
+export interface BatterySpec {
+  voltage: number; // V
+  ah: number;      // Ah
+}
+
 export interface SolarInput {
   inverterPowerW: number;
   inverterVoltage: 12 | 24 | 36 | 48;
-  batteryCount: number;
-  batteryVoltage: 2 | 6 | 12 | 24;
-  batteryAh: number;
+  batteries: BatterySpec[];
   connection: ConnectionType;
-  rows?: number; // for series-parallel: series count (rows)
-  cols?: number; // for series-parallel: parallel count (cols)
+  rows?: number; // series count per string (for series-parallel)
+  cols?: number; // number of parallel strings (for series-parallel)
   loadAmps: number;
   chemistry?: BatteryChemistry;
 }
@@ -27,22 +30,93 @@ export interface SolarResult {
   checks: { label: string; ok: boolean; level: "ok" | "warn" | "error"; detail?: string }[];
 }
 
-export function computeBank(input: SolarInput): { bankVoltage: number; bankAh: number } {
-  const { batteryVoltage, batteryAh, batteryCount, connection, rows = 1, cols = 1 } = input;
+interface BankComputation {
+  bankVoltage: number;
+  bankAh: number;
+  warnings: { label: string; detail: string; level: "warn" | "error" }[];
+}
+
+export function computeBank(input: SolarInput): BankComputation {
+  const { batteries, connection, rows = 1, cols = 1 } = input;
+  const warnings: BankComputation["warnings"] = [];
+  const list = batteries.filter((b) => b.voltage > 0 && b.ah > 0);
+
+  if (list.length === 0) return { bankVoltage: 0, bankAh: 0, warnings };
+
+  const allSameV = list.every((b) => b.voltage === list[0].voltage);
+  const allSameAh = list.every((b) => b.ah === list[0].ah);
+
   switch (connection) {
-    case "single":
-      return { bankVoltage: batteryVoltage, bankAh: batteryAh };
-    case "series":
-      return { bankVoltage: batteryVoltage * batteryCount, bankAh: batteryAh };
-    case "parallel":
-      return { bankVoltage: batteryVoltage, bankAh: batteryAh * batteryCount };
-    case "series-parallel":
-      return { bankVoltage: batteryVoltage * rows, bankAh: batteryAh * cols };
+    case "single": {
+      if (list.length > 1) {
+        warnings.push({
+          label: "وضع البطارية الواحدة",
+          detail: "تم تجاهل البطاريات الإضافية لأن وضع التوصيل = بطارية واحدة.",
+          level: "warn",
+        });
+      }
+      return { bankVoltage: list[0].voltage, bankAh: list[0].ah, warnings };
+    }
+    case "series": {
+      const v = list.reduce((s, b) => s + b.voltage, 0);
+      const ah = Math.min(...list.map((b) => b.ah));
+      if (!allSameAh) {
+        warnings.push({
+          label: "البطاريات على التوالي يجب أن تكون متساوية بالسعة (Ah)",
+          detail: "في التوصيل على التوالي يمر نفس التيار في كل البطاريات، فإن اختلفت السعة ستحدد البطارية الأصغر سعة البنك وقد تتلف الأخرى.",
+          level: "warn",
+        });
+      }
+      return { bankVoltage: v, bankAh: ah, warnings };
+    }
+    case "parallel": {
+      const ah = list.reduce((s, b) => s + b.ah, 0);
+      if (!allSameV) {
+        warnings.push({
+          label: "البطاريات على التوازي يجب أن تكون متساوية بالفولطية",
+          detail: "ربط بطاريات بفولطيات مختلفة على التوازي يسبب تيارات اندفاع كبيرة وتلف فوري للبطاريات.",
+          level: "error",
+        });
+      }
+      return { bankVoltage: list[0].voltage, bankAh: ah, warnings };
+    }
+    case "series-parallel": {
+      const need = rows * cols;
+      if (list.length !== need) {
+        warnings.push({
+          label: `عدد البطاريات (${list.length}) لا يطابق توالي/توازي (${rows}×${cols} = ${need})`,
+          detail: "في توالي/توازي يجب أن يكون عدد البطاريات = عدد التوالي × عدد فروع التوازي.",
+          level: "error",
+        });
+      }
+      // Group sequentially into `cols` parallel strings of `rows` series batteries
+      const stringsV: number[] = [];
+      const stringsAh: number[] = [];
+      for (let c = 0; c < cols; c++) {
+        const slice = list.slice(c * rows, c * rows + rows);
+        if (slice.length === 0) continue;
+        stringsV.push(slice.reduce((s, b) => s + b.voltage, 0));
+        stringsAh.push(Math.min(...slice.map((b) => b.ah)));
+      }
+      const stringsAllSameV = stringsV.every((v) => v === stringsV[0]);
+      if (!stringsAllSameV) {
+        warnings.push({
+          label: "فروع التوازي يجب أن تكون بنفس الفولطية",
+          detail: "كل سلسلة (Series String) يجب أن تعطي نفس الفولطية قبل ربطها على التوازي مع باقي السلاسل.",
+          level: "error",
+        });
+      }
+      return {
+        bankVoltage: stringsV[0] ?? 0,
+        bankAh: stringsAh.reduce((s, a) => s + a, 0),
+        warnings,
+      };
+    }
   }
 }
 
 export function calcSolar(input: SolarInput): SolarResult {
-  const { bankVoltage, bankAh } = computeBank(input);
+  const { bankVoltage, bankAh, warnings } = computeBank(input);
   const bankWh = bankVoltage * bankAh;
   const dod = (input.chemistry ?? "lead") === "lithium" ? 0.9 : 0.8;
   const usableWh = bankWh * dod;
@@ -60,6 +134,11 @@ export function calcSolar(input: SolarInput): SolarResult {
   const runtimeM = Math.round((runtimeHours - runtimeH) * 60);
 
   const checks: SolarResult["checks"] = [];
+
+  // 0. Battery configuration warnings
+  for (const w of warnings) {
+    checks.push({ label: w.label, ok: false, level: w.level, detail: w.detail });
+  }
 
   // 1. Voltage match
   const vMatch = bankVoltage === input.inverterVoltage;
