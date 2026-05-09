@@ -17,7 +17,7 @@ function Hint({ text }: { text: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" className="text-amber-500/70 hover:text-amber-400" aria-label="مساعدة">
+        <button type="button" className="text-amber-500/70 hover:text-amber-600" aria-label="مساعدة">
           <HelpCircle className="h-3.5 w-3.5" />
         </button>
       </TooltipTrigger>
@@ -40,7 +40,7 @@ const ConnectionOption = ({
     )}
   >
     <div className="flex items-center justify-between gap-2">
-      <CircuitBoard className="h-5 w-5 text-amber-400" />
+      <CircuitBoard className="h-5 w-5 text-amber-600" />
       <div className="font-bold text-slate-900">{label}</div>
     </div>
     <div className="mt-1 text-xs text-slate-500">{hint}</div>
@@ -112,17 +112,17 @@ export default function SolarCalculator() {
             <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-900 shadow-[0_0_40px_-5px_rgba(245,158,11,0.6)]">
               <Sun className="h-8 w-8" />
             </div>
-            <h1 className="text-3xl font-bold text-amber-400 md:text-4xl">حاسبة منظومات الطاقة الشمسية</h1>
+            <h1 className="text-3xl font-bold text-amber-600 md:text-4xl">حاسبة منظومات الطاقة الشمسية</h1>
             <p className="mt-2 text-sm text-slate-500">احسب وقت تشغيل منظومتك الشمسية بدقة هندسية</p>
           </div>
 
           {/* Progress */}
           <div className="mb-6">
             <div className="mb-2 flex justify-between text-xs text-slate-500">
-              <span className={cn(step >= 1 && "text-amber-400")}>1. العاكس</span>
-              <span className={cn(step >= 2 && "text-amber-400")}>2. البطاريات</span>
-              <span className={cn(step >= 3 && "text-amber-400")}>3. الأحمال</span>
-              <span className={cn(step >= 4 && "text-amber-400")}>4. النتائج</span>
+              <span className={cn(step >= 1 && "text-amber-600")}>1. العاكس</span>
+              <span className={cn(step >= 2 && "text-amber-600")}>2. البطاريات</span>
+              <span className={cn(step >= 3 && "text-amber-600")}>3. الأحمال</span>
+              <span className={cn(step >= 4 && "text-amber-600")}>4. النتائج</span>
             </div>
             <Progress value={progress} className="h-2 bg-slate-200 [transform:scaleX(-1)] [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:to-amber-600" />
           </div>
@@ -130,7 +130,7 @@ export default function SolarCalculator() {
           {/* STEP 1 */}
           {step === 1 && (
             <div className={cn(CARD, "p-6 reveal-up")}>
-              <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-400">
+              <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-600">
                 <Bolt className="h-5 w-5" /> معلومات العاكس
               </h2>
               <div className="grid gap-5 md:grid-cols-2">
@@ -155,7 +155,7 @@ export default function SolarCalculator() {
                         className={cn(
                           "cursor-pointer rounded-lg border p-3 text-center transition-all",
                           inverterVoltage === v
-                            ? "border-amber-400 bg-amber-500/10 text-amber-300 shadow-[0_0_15px_-5px_rgba(245,158,11,0.6)]"
+                            ? "border-amber-400 bg-amber-500/10 text-amber-700 shadow-[0_0_15px_-5px_rgba(245,158,11,0.6)]"
                             : "border-slate-300 bg-slate-50 text-slate-600"
                         )}
                       >
@@ -178,7 +178,7 @@ export default function SolarCalculator() {
           {/* STEP 2 */}
           {step === 2 && (
             <div className={cn(CARD, "p-6 reveal-up")}>
-              <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-400">
+              <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-600">
                 <Battery className="h-5 w-5" /> معلومات البطاريات
               </h2>
               <div className="grid gap-5 md:grid-cols-3">
@@ -246,7 +246,7 @@ export default function SolarCalculator() {
           {/* STEP 3 */}
           {step === 3 && (
             <div className={cn(CARD, "p-6 reveal-up")}>
-              <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-400">
+              <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-600">
                 <Zap className="h-5 w-5" /> الأحمال
               </h2>
               <div className="mb-4 flex items-center gap-3">
@@ -309,7 +309,7 @@ export default function SolarCalculator() {
 
               <div className={cn(CARD, "p-5")}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-amber-400">حالة المنظومة</h3>
+                  <h3 className="text-lg font-bold text-amber-600">حالة المنظومة</h3>
                   <StatusBadge status={result.status} />
                 </div>
                 <div className="space-y-2">
@@ -321,7 +321,7 @@ export default function SolarCalculator() {
                       c.level === "error" && "border-red-500/40 bg-red-500/10",
                     )}>
                       {c.level === "ok" ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
-                        : c.level === "warn" ? <TriangleAlert className="h-5 w-5 shrink-0 text-amber-400" />
+                        : c.level === "warn" ? <TriangleAlert className="h-5 w-5 shrink-0 text-amber-600" />
                         : <XCircle className="h-5 w-5 shrink-0 text-red-400" />}
                       <div>
                         <div className="text-sm font-semibold text-slate-900">{c.label}</div>
@@ -333,7 +333,7 @@ export default function SolarCalculator() {
               </div>
 
               <div className={cn(CARD, "p-5")}>
-                <h3 className="mb-3 text-lg font-bold text-amber-400">المخطط الكهربائي</h3>
+                <h3 className="mb-3 text-lg font-bold text-amber-600">المخطط الكهربائي</h3>
                 <WiringDiagram
                   count={connection === "series-parallel" ? rows * cols : (connection === "single" ? 1 : batteryCount)}
                   connection={connection}
@@ -352,7 +352,7 @@ export default function SolarCalculator() {
               </div>
 
               <div className="flex justify-center">
-                <Button onClick={reset} variant="outline" className="border-amber-500/40 bg-transparent text-amber-300 hover:bg-amber-500/10">
+                <Button onClick={reset} variant="outline" className="border-amber-500/40 bg-transparent text-amber-700 hover:bg-amber-500/10">
                   <RefreshCw className="h-4 w-4" /> إعادة الحساب
                 </Button>
               </div>
@@ -367,7 +367,7 @@ export default function SolarCalculator() {
 function ResultCard({ icon, title, value, sub }: { icon: React.ReactNode; title: string; value: string; sub?: string }) {
   return (
     <div className={cn(CARD, "p-5 transition-transform hover:-translate-y-1")}>
-      <div className="mb-2 flex items-center gap-2 text-amber-400">{icon}<span className="text-sm">{title}</span></div>
+      <div className="mb-2 flex items-center gap-2 text-amber-600">{icon}<span className="text-sm">{title}</span></div>
       <div className="text-2xl font-bold text-slate-900">{value}</div>
       {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
     </div>
@@ -377,7 +377,7 @@ function ResultCard({ icon, title, value, sub }: { icon: React.ReactNode; title:
 function StatusBadge({ status }: { status: "ok" | "warn" | "error" }) {
   const map = {
     ok: { label: "✅ سليمة", cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40" },
-    warn: { label: "⚠️ تحذير", cls: "bg-amber-500/15 text-amber-300 border-amber-500/40" },
+    warn: { label: "⚠️ تحذير", cls: "bg-amber-500/15 text-amber-700 border-amber-500/40" },
     error: { label: "❌ خطأ", cls: "bg-red-500/15 text-red-300 border-red-500/40" },
   };
   const s = map[status];
