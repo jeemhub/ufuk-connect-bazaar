@@ -265,7 +265,7 @@ export default function SolarCalculator() {
               {!useWatts ? (
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-slate-200">
-                    إجمالي الأحمال (أمبير) <Hint text="مجموع التيار المسحوب من البنك بالأمبير." />
+                    إجمالي الأحمال (أمبير على 220V) <Hint text="إجمالي التيار المسحوب من مخرج العاكس على فولطية AC الثابتة 220V. القدرة = أمبير × 220." />
                   </Label>
                   <Input type="number" value={loadAmps} onChange={(e) => setLoadAmps(+e.target.value)}
                     className="border-slate-700 bg-slate-900/60 text-slate-100" />
