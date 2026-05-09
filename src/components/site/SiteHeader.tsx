@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck, ShoppingCart } from "lucide-react";
+import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck, ShoppingCart, Wrench } from "lucide-react";
 import { useCart } from "@/cart/CartContext";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -176,6 +176,9 @@ export function SiteHeader() {
                 <DropdownMenuContent align="end" className="w-56 rounded-xl border-white/40 bg-white/80 backdrop-blur-2xl">
                   <DropdownMenuItem asChild>
                     <Link to="/account"><UserIcon className="me-2 h-4 w-4" />{t("my_account")}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/tools"><Wrench className="me-2 h-4 w-4" />{lang === "ar" ? "الأدوات" : "Tools"}</Link>
                   </DropdownMenuItem>
                   {(isAdmin || isSales) && (
                     <>
