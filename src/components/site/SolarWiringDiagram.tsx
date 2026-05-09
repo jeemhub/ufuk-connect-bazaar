@@ -33,13 +33,13 @@ function Battery({ x, y, label }: { x: number; y: number; label?: string }) {
       {/* − terminal stub */}
       <rect x={NEG_OFFSET - 6} y={-6} width={12} height={6} rx={1} fill={NEG_COLOR} />
       {/* body */}
-      <rect width={BATTERY_W} height={BATTERY_H} rx={6} fill="#1f2937" stroke="#F59E0B" strokeWidth={1.5} />
+      <rect width={BATTERY_W} height={BATTERY_H} rx={6} fill="#FEF3C7" stroke="#F59E0B" strokeWidth={1.5} />
       <text x={POS_OFFSET} y={14} textAnchor="middle" fill={POS_COLOR} fontSize="11" fontWeight="700">+</text>
       <text x={NEG_OFFSET} y={14} textAnchor="middle" fill={NEG_COLOR} fontSize="13" fontWeight="700">−</text>
       <text x={BATTERY_W / 2} y={BATTERY_H / 2 + 4} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="700">
         {label ?? "BAT"}
       </text>
-      <text x={BATTERY_W / 2} y={BATTERY_H - 8} textAnchor="middle" fill="#64748b" fontSize="8">BATTERY</text>
+      <text x={BATTERY_W / 2} y={BATTERY_H - 8} textAnchor="middle" fill="#475569" fontSize="8">BATTERY</text>
     </g>
   );
 }
@@ -47,10 +47,10 @@ function Battery({ x, y, label }: { x: number; y: number; label?: string }) {
 function Inverter({ x, y }: { x: number; y: number }) {
   return (
     <g transform={`translate(${x},${y})`}>
-      <rect width={100} height={120} rx={8} fill="#0f172a" stroke="#3B82F6" strokeWidth={2} />
+      <rect width={100} height={120} rx={8} fill="#F1F5F9" stroke="#3B82F6" strokeWidth={2} />
       <text x={50} y={26} textAnchor="middle" fill="#3B82F6" fontSize="11" fontWeight="700">INVERTER</text>
       <text x={50} y={68} textAnchor="middle" fill="#fbbf24" fontSize="26" fontWeight="700">⚡</text>
-      <text x={50} y={100} textAnchor="middle" fill="#9ca3af" fontSize="10">العاكس</text>
+      <text x={50} y={100} textAnchor="middle" fill="#475569" fontSize="10">العاكس</text>
       {/* DC input markers */}
       <text x={-6} y={36} textAnchor="end" fill={POS_COLOR} fontSize="9" fontWeight="700">+DC</text>
       <text x={-6} y={92} textAnchor="end" fill={NEG_COLOR} fontSize="9" fontWeight="700">−DC</text>
@@ -63,9 +63,9 @@ function Inverter({ x, y }: { x: number; y: number }) {
 function Load({ x, y }: { x: number; y: number }) {
   return (
     <g transform={`translate(${x},${y})`}>
-      <circle cx={28} cy={28} r={26} fill="#0f172a" stroke={AC_COLOR} strokeWidth={2} />
+      <circle cx={28} cy={28} r={26} fill="#F1F5F9" stroke={AC_COLOR} strokeWidth={2} />
       <text x={28} y={36} textAnchor="middle" fontSize="22">💡</text>
-      <text x={28} y={70} textAnchor="middle" fill="#9ca3af" fontSize="10">الحمل 220V</text>
+      <text x={28} y={70} textAnchor="middle" fill="#475569" fontSize="10">الحمل 220V</text>
     </g>
   );
 }
@@ -222,12 +222,12 @@ export function WiringDiagram({ count, connection, rows = 1, cols = 1, batteryAh
   }`;
 
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-amber-500/20 bg-[#0A0E1A] p-4">
+    <div className="w-full overflow-x-auto rounded-xl border border-amber-500/20 bg-[#F8FAFC] p-4">
       <style>{`@keyframes solar-flow { to { stroke-dashoffset: -20; } }`}</style>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ minWidth: 640 }}>
         <defs>
           <pattern id="solargrid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" strokeWidth="0.5" />
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#E2E8F0" strokeWidth="0.5" />
           </pattern>
         </defs>
         <rect width={width} height={height} fill="url(#solargrid)" />
@@ -264,7 +264,7 @@ export function WiringDiagram({ count, connection, rows = 1, cols = 1, batteryAh
           البنك: {bankVoltage}V — {bankAh}Ah
         </text>
         {extra > 0 && (
-          <text x={padding} y={height - 14} fill="#9ca3af" fontSize="11">
+          <text x={padding} y={height - 14} fill="#475569" fontSize="11">
             + {extra} بطارية إضافية
           </text>
         )}
