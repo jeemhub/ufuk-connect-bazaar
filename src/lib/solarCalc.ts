@@ -150,24 +150,9 @@ export function calcSolar(input: SolarInput): SolarResult {
     detail: vMatch ? undefined : "يجب أن تتطابق فولطية بنك البطاريات مع نظام فولطية العاكس وإلا قد يتلف العاكس.",
   });
 
-  // 2. Inverter sizing vs battery bank (C/5 recommended, C/2 advisory limit)
+  // 2. Inverter sizing vs battery bank (used internally for recommendations only)
   const recommendedMaxInverter = bankAh * bankVoltage * 0.2; // C/5
   const advisoryMaxInverter = bankAh * bankVoltage * 0.5;    // C/2
-  let invLevel: "ok" | "warn" | "error" = "ok";
-  let invDetail: string | undefined;
-  if (input.inverterPowerW > advisoryMaxInverter) {
-    invLevel = "warn";
-    invDetail = "العاكس أكبر من الموصى به للبطاريات، لكن المنظومة تعمل إذا كان الحمل الفعلي منخفضاً.";
-  } else if (input.inverterPowerW > recommendedMaxInverter) {
-    invLevel = "warn";
-    invDetail = `قدرة العاكس أعلى من الحد الموصى به (${Math.round(recommendedMaxInverter)}W ≈ C/5)، لكن المنظومة تعمل عند أحمال منخفضة.`;
-  }
-  checks.push({
-    label: `ملاءمة قدرة العاكس (${input.inverterPowerW}W) لبنك البطاريات (موصى به حتى ${Math.round(recommendedMaxInverter)}W)`,
-    ok: invLevel === "ok",
-    level: invLevel,
-    detail: invDetail,
-  });
 
   // 3. Load within inverter
   const loadOk = loadWatts > 0 && loadWatts < input.inverterPowerW;
