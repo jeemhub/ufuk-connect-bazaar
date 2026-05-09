@@ -52,9 +52,10 @@ export default function SolarCalculator() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [inverterPowerW, setInverterPowerW] = useState<number>(2000);
   const [inverterVoltage, setInverterVoltage] = useState<12 | 24 | 36 | 48>(24);
-  const [batteryCount, setBatteryCount] = useState<number>(2);
-  const [batteryVoltage, setBatteryVoltage] = useState<2 | 6 | 12 | 24>(12);
-  const [batteryAh, setBatteryAh] = useState<number>(200);
+  const [batteries, setBatteries] = useState<BatterySpec[]>([
+    { voltage: 12, ah: 200 },
+    { voltage: 12, ah: 200 },
+  ]);
   const [connection, setConnection] = useState<ConnectionType>("series");
   const [rows, setRows] = useState<number>(2);
   const [cols, setCols] = useState<number>(2);
@@ -65,15 +66,29 @@ export default function SolarCalculator() {
 
   const progress = step === 4 ? 100 : ((step - 1) / 3) * 100;
 
+  const effectiveBatteries = (): BatterySpec[] => {
+    if (connection === "single") return batteries.slice(0, 1);
+    return batteries;
+  };
+
+  const addBattery = () => {
+    const last = batteries[batteries.length - 1] ?? { voltage: 12, ah: 200 };
+    setBatteries([...batteries, { ...last }]);
+  };
+  const removeBattery = (i: number) => {
+    if (batteries.length <= 1) return;
+    setBatteries(batteries.filter((_, idx) => idx !== i));
+  };
+  const updateBattery = (i: number, patch: Partial<BatterySpec>) => {
+    setBatteries(batteries.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+  };
+
   const buildInput = (): SolarInput => {
-    // الحمل دائماً على 220V AC، فالتحويل من واط إلى أمبير يتم على 220
     const finalLoadAmps = useWatts ? loadWattsInput / 220 : loadAmps;
     return {
       inverterPowerW,
       inverterVoltage,
-      batteryCount: connection === "series-parallel" ? rows * cols : (connection === "single" ? 1 : batteryCount),
-      batteryVoltage,
-      batteryAh,
+      batteries: effectiveBatteries(),
       connection,
       rows,
       cols,
