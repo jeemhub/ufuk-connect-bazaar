@@ -83,27 +83,12 @@ export default function SolarCalculator() {
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
 
-      // Header with logo + brand
-      const headerH = 28;
-      pdf.setFillColor(245, 158, 11);
-      pdf.rect(0, 0, pageW, headerH, "F");
-      try {
-        pdf.addImage(logoUrl, "PNG", 8, 4, 20, 20);
-      } catch {
-        // ignore if logo fails
-      }
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFontSize(16);
-      pdf.text("Ufuk Albasra - Solar Calculator", pageW - 8, 13, { align: "right" });
-      pdf.setFontSize(10);
-      pdf.text(new Date().toLocaleString("en-GB"), pageW - 8, 22, { align: "right" });
-
-      // Body image
+      // Body image (no top header banner)
       const marginX = 8;
       const availW = pageW - marginX * 2;
       const ratio = canvas.height / canvas.width;
       const imgH = availW * ratio;
-      let y = headerH + 4;
+      let y = 10;
       let remaining = imgH;
       let srcY = 0;
       const maxBodyH = pageH - y - 12;
@@ -140,8 +125,7 @@ export default function SolarCalculator() {
         pdf.setPage(i);
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
-        pdf.text("Ufuk Albasra | افق البصرة - ufukalbasra.com", pageW / 2, pageH - 6, { align: "center" });
-        pdf.text(`${i}/${pageCount}`, pageW - 8, pageH - 6, { align: "right" });
+        pdf.text("ufukalbasra.com", pageW / 2, pageH - 6, { align: "center" });
       }
 
       pdf.save(`ufuk-solar-report-${Date.now()}.pdf`);
