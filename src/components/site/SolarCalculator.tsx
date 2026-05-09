@@ -95,7 +95,7 @@ export default function SolarCalculator() {
   const back = () => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s));
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#0A0E1A] text-slate-100" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
+    <div dir="rtl" lang="en" className="min-h-screen bg-[#0A0E1A] text-slate-100" style={{ fontFamily: "'Cairo', system-ui, sans-serif", fontVariantNumeric: "lining-nums tabular-nums", fontFeatureSettings: '"lnum"' }}>
       <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
       <style>{`
         .solar-glow:hover { box-shadow: 0 0 30px -5px rgba(245,158,11,0.7), 0 0 60px -20px rgba(245,158,11,0.5); }
