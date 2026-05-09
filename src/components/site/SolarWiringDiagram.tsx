@@ -241,9 +241,17 @@ export function WiringDiagram({ batteries, connection, rows = 1, cols = 1, bankV
         <path d={negToInv} fill="none" stroke={NEG_COLOR} strokeWidth={2.6} style={flowStyle} />
 
         {/* batteries */}
-        {cells.flat().map((b, i) => (
-          <Battery key={i} x={b.x} y={b.y} label={`${batteryAh}Ah`} />
-        ))}
+        {cells.flat().map((b, i) => {
+          const spec = batteries[i] ?? batteries[batteries.length - 1];
+          return (
+            <Battery
+              key={i}
+              x={b.x}
+              y={b.y}
+              label={spec ? `${spec.voltage}V ${spec.ah}Ah` : ""}
+            />
+          );
+        })}
 
         <Inverter x={inverterX} y={invY} />
 
