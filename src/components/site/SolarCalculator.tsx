@@ -65,12 +65,8 @@ export default function SolarCalculator() {
   const progress = step === 4 ? 100 : ((step - 1) / 3) * 100;
 
   const buildInput = (): SolarInput => {
-    const tempBankV =
-      connection === "single" ? batteryVoltage
-      : connection === "series" ? batteryVoltage * batteryCount
-      : connection === "parallel" ? batteryVoltage
-      : batteryVoltage * rows;
-    const finalLoadAmps = useWatts ? loadWattsInput / Math.max(tempBankV, 1) : loadAmps;
+    // الحمل دائماً على 220V AC، فالتحويل من واط إلى أمبير يتم على 220
+    const finalLoadAmps = useWatts ? loadWattsInput / 220 : loadAmps;
     return {
       inverterPowerW,
       inverterVoltage,

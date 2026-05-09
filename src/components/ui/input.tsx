@@ -9,6 +9,8 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       <input
         type={type}
         lang="en"
+        dir={isNumber ? "ltr" : undefined}
+        style={isNumber ? { fontVariantNumeric: "lining-nums tabular-nums", fontFeatureSettings: '"lnum"' } : undefined}
         onWheel={(e) => {
           if (isNumber) {
             (e.currentTarget as HTMLInputElement).blur();

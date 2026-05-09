@@ -47,7 +47,9 @@ export function calcSolar(input: SolarInput): SolarResult {
   const dod = (input.chemistry ?? "lead") === "lithium" ? 0.9 : 0.8;
   const usableWh = bankWh * dod;
 
-  const loadWatts = input.loadAmps * bankVoltage;
+  // الحمل دائماً على 220 فولت AC
+  const AC_VOLTAGE = 220;
+  const loadWatts = input.loadAmps * AC_VOLTAGE;
 
   let runtimeHours = loadWatts > 0 ? usableWh / loadWatts : 0;
   // Peukert simplified: discharge rate > 0.1C
