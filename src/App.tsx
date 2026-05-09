@@ -27,6 +27,7 @@ const AboutPage = lazy(() => import("@/pages/site/About"));
 const ProjectsPage = lazy(() => import("@/pages/site/ProjectsPage"));
 const ProjectDetail = lazy(() => import("@/pages/site/ProjectDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ToolsPage = lazy(() => import("./pages/site/Tools"));
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
 const DashboardSwitch = lazy(() => import("./pages/admin/DashboardSwitch"));
@@ -71,6 +72,7 @@ const App = () => (
                       <Route path="/about" element={<AboutPage />} />
                       <Route path="/projects" element={<ProjectsPage />} />
                       <Route path="/projects/:slug" element={<ProjectDetail />} />
+                      <Route path="/tools" element={<ToolsPage />} />
                     </Route>
                     <Route path="/auth" element={<AuthPage />} />
                     <Route
