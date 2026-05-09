@@ -84,6 +84,9 @@ export default function Products() {
       setDatasheet(editing?.datasheetUrl ? { url: editing.datasheetUrl, name: editing.datasheetName ?? "datasheet.pdf" } : null);
       setImageSrc(editing?.image ?? "");
       setRawImage("");
+      setFormCat(editing?.category ?? "__none__");
+      const subStr = (editing?.subcategory ?? "").trim();
+      setFormSubs(subStr ? subStr.split(",").map((s) => s.trim()).filter(Boolean) : []);
     }
   }, [open, editing]);
 
