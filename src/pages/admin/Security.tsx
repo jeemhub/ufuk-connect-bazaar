@@ -59,7 +59,7 @@ export default function Security() {
   }
 
   const sessionStarted = session?.user?.last_sign_in_at
-    ? new Date(session.user.last_sign_in_at).toLocaleString(lang === "ar" ? "ar-IQ" : "en-US")
+    ? new Date(session.user.last_sign_in_at).toLocaleString(lang === "ar" ? "ar-IQ-u-nu-latn" : "en-US")
     : "—";
 
   return (
@@ -149,7 +149,7 @@ export default function Security() {
                       <td className="py-3">
                         {h.success ? <Badge className="bg-success text-success-foreground">OK</Badge> : <Badge variant="destructive">{t("sec_event_failed")}</Badge>}
                       </td>
-                      <td className="py-3 text-muted-foreground">{new Date(h.created_at).toLocaleString(lang === "ar" ? "ar-IQ" : "en-US")}</td>
+                      <td className="py-3 text-muted-foreground">{new Date(h.created_at).toLocaleString(lang === "ar" ? "ar-IQ-u-nu-latn" : "en-US")}</td>
                       <td className="py-3 max-w-[300px] truncate font-mono text-xs text-muted-foreground">{h.user_agent || "—"}</td>
                     </tr>
                   ))}

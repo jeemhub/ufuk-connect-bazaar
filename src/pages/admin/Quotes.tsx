@@ -48,7 +48,7 @@ export default function Quotes() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <CardTitle className="text-lg">{q.full_name}</CardTitle>
-                    <CardDescription>{new Date(q.created_at).toLocaleString(lang === "ar" ? "ar-IQ" : "en-US")}</CardDescription>
+                    <CardDescription>{new Date(q.created_at).toLocaleString(lang === "ar" ? "ar-IQ-u-nu-latn" : "en-US")}</CardDescription>
                   </div>
                   <Badge variant={q.status === "new" ? "default" : "secondary"}>
                     {q.status === "new" ? t("quote_status_new") : q.status === "contacted" ? t("quote_status_contacted") : t("quote_status_closed")}
