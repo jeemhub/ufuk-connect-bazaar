@@ -198,21 +198,8 @@ export function calcSolar(input: SolarInput): SolarResult {
     });
   }
 
-  // العاكس أكبر بكثير من البنك
-  if (input.inverterPowerW > advisoryMaxInverter) {
-    const neededAh = Math.ceil((input.inverterPowerW / (bankVoltage * 0.2)) / 10) * 10;
-    recommendations.push({
-      level: "warn",
-      title: "العاكس أكبر بكثير من البطاريات (تيار سحب مرتفع)",
-      body: `لتشغيل عاكس ${input.inverterPowerW}W على ${bankVoltage}V بأمان (C/5)، يُفضّل بنك سعته ≥ ${neededAh}Ah. أضف بطاريات على التوازي لرفع السعة، أو شغّل أحمالاً أقل من ${Math.round(advisoryMaxInverter)}W فقط.`,
-    });
-  } else if (input.inverterPowerW > recommendedMaxInverter) {
-    recommendations.push({
-      level: "tip",
-      title: "العاكس أعلى قليلاً من الحد المثالي",
-      body: `الحد المثالي لبنكك ≈ ${Math.round(recommendedMaxInverter)}W (C/5). المنظومة تعمل عند أحمال متوسطة، لكن تجنّب تشغيل أحمال قريبة من قدرة العاكس لفترات طويلة لإطالة عمر البطاريات.`,
-    });
-  }
+  // (تم تعطيل تحذير ملاءمة قدرة العاكس مع البنك بناءً على طلب — لا يظهر للمستخدم)
+  void recommendedMaxInverter; void advisoryMaxInverter;
 
   // معدل تفريغ مرتفع (Peukert)
   if (dischargeRateC > 0.2 && loadWatts > 0) {
