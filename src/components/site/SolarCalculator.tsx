@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, CircuitBoard, Gauge, HelpCircle, Lightbulb, Lightbulb as Bulb, RefreshCw, Sun, TriangleAlert, Wrench, XCircle, Zap } from "lucide-react";
+import { useRef, useState } from "react";
+import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, CircuitBoard, Download, Gauge, HelpCircle, Lightbulb, Lightbulb as Bulb, RefreshCw, Sun, TriangleAlert, Wrench, XCircle, Zap } from "lucide-react";
+import logoUrl from "@/assets/logo.png";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
