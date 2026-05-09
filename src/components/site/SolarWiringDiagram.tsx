@@ -1,12 +1,10 @@
-import { ConnectionType } from "@/lib/solarCalc";
+import { BatterySpec, ConnectionType } from "@/lib/solarCalc";
 
 interface Props {
-  count: number;
+  batteries: BatterySpec[];
   connection: ConnectionType;
   rows?: number;
   cols?: number;
-  batteryVoltage: number;
-  batteryAh: number;
   bankVoltage: number;
   bankAh: number;
 }
