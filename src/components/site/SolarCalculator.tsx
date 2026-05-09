@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { calcSolar, ConnectionType, SolarInput, SolarResult, toArabicDigits } from "@/lib/solarCalc";
+import { calcSolar, ConnectionType, SolarInput, SolarResult } from "@/lib/solarCalc";
 import { WiringDiagram } from "@/components/site/SolarWiringDiagram";
 
 const CARD = "rounded-2xl border border-amber-500/20 bg-[#111827] shadow-[0_0_30px_-15px_rgba(245,158,11,0.5)]";
@@ -299,15 +299,15 @@ export default function SolarCalculator() {
           {step === 4 && result && (
             <div className="space-y-5 reveal-up">
               <div className="grid gap-4 md:grid-cols-3">
-                <ResultCard icon={<Battery className="h-5 w-5" />} title="فولطية البنك" value={`${toArabicDigits(result.bankVoltage)} V`} />
-                <ResultCard icon={<Gauge className="h-5 w-5" />} title="سعة البنك" value={`${toArabicDigits(result.bankAh)} Ah`} sub={`${toArabicDigits(Math.round(result.bankWh))} Wh`} />
+                <ResultCard icon={<Battery className="h-5 w-5" />} title="فولطية البنك" value={`${result.bankVoltage} V`} />
+                <ResultCard icon={<Gauge className="h-5 w-5" />} title="سعة البنك" value={`${result.bankAh} Ah`} sub={`${Math.round(result.bankWh)} Wh`} />
                 <ResultCard
                   icon={<Lightbulb className="h-5 w-5" />}
                   title="وقت التشغيل الفعلي"
                   value={result.runtimeHours > 0 && isFinite(result.runtimeHours)
-                    ? `${toArabicDigits(result.runtimeH)} ساعة و ${toArabicDigits(result.runtimeM)} دقيقة`
+                    ? `${result.runtimeH} ساعة و ${result.runtimeM} دقيقة`
                     : "—"}
-                  sub={`الحمل: ${toArabicDigits(Math.round(result.loadWatts))} W`}
+                  sub={`الحمل: ${Math.round(result.loadWatts)} W`}
                 />
               </div>
 
