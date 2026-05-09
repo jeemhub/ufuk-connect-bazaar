@@ -98,7 +98,7 @@ export default function ProjectDetail() {
           <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" />{t("project_location")}: <strong className="text-foreground">{p.location}</strong></span>
         )}
         {p.completed_at && (
-          <span className="inline-flex items-center gap-1.5"><Calendar className="h-4 w-4" />{t("project_completed")}: <strong className="text-foreground">{new Date(p.completed_at).toLocaleDateString(lang === "ar" ? "ar" : "en")}</strong></span>
+          <span className="inline-flex items-center gap-1.5"><Calendar className="h-4 w-4" />{t("project_completed")}: <strong className="text-foreground">{new Date(p.completed_at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en")}</strong></span>
         )}
       </div>
 

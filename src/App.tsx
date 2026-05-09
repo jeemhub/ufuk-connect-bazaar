@@ -1,9 +1,10 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { normalizeLatinDigits } from "@/lib/digits";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { ProtectedRoute } from "@/auth/ProtectedRoute";
@@ -47,67 +48,95 @@ const AdminBackup = lazy(() => import("./pages/admin/Backup"));
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <CartDrawer />
-              <AppShell>
-                <Suspense fallback={null}>
-                  <Routes>
-                    <Route element={<SiteLayout />}>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/products" element={<ProductsPage />} />
-                      <Route path="/products/:id" element={<ProductDetail />} />
-                      <Route path="/quote" element={<QuotePage />} />
-                      <Route path="/blog" element={<BlogList />} />
-                      <Route path="/blog/:slug" element={<BlogPost />} />
-                      <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-                      <Route path="/brands" element={<BrandsPage />} />
-                      <Route path="/about" element={<AboutPage />} />
-                      <Route path="/projects" element={<ProjectsPage />} />
-                      <Route path="/projects/:slug" element={<ProjectDetail />} />
-                      <Route path="/tools" element={<ToolsPage />} />
-                    </Route>
-                    <Route path="/auth" element={<AuthPage />} />
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute requireStaff>
-                          <AdminLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route index element={<DashboardSwitch />} />
-                      <Route path="products" element={<ProtectedRoute requirePerm="can_manage_products"><Products /></ProtectedRoute>} />
-                      <Route path="categories" element={<ProtectedRoute requirePerm="can_manage_categories"><Categories /></ProtectedRoute>} />
-                      <Route path="brands" element={<ProtectedRoute requirePerm="can_manage_brands"><AdminBrands /></ProtectedRoute>} />
-                      <Route path="blog" element={<ProtectedRoute requirePerm="can_manage_blog"><AdminBlog /></ProtectedRoute>} />
-                      <Route path="projects" element={<ProtectedRoute requirePerm="can_manage_projects"><AdminProjects /></ProtectedRoute>} />
-                      <Route path="about" element={<ProtectedRoute requireAdmin><AdminAbout /></ProtectedRoute>} />
-                      <Route path="orders" element={<ProtectedRoute requirePerm="can_manage_orders"><Orders /></ProtectedRoute>} />
-                      <Route path="users" element={<ProtectedRoute requireAdmin><Users /></ProtectedRoute>} />
-                      <Route path="quotes" element={<ProtectedRoute requirePerm="can_manage_quotes"><Quotes /></ProtectedRoute>} />
-                      <Route path="security" element={<ProtectedRoute requireAdmin><Security /></ProtectedRoute>} />
-                      <Route path="backup" element={<ProtectedRoute requireAdmin><AdminBackup /></ProtectedRoute>} />
-                      <Route path="settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
-                      <Route path="preferences" element={<ProtectedRoute requireStaff><Preferences /></ProtectedRoute>} />
-                    </Route>
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </AppShell>
-            </TooltipProvider>
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </LanguageProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    const handleBeforeInput = (event: InputEvent) => {
+      if (!event.data) return;
+      const normalized = normalizeLatinDigits(event.data);
+      if (normalized === event.data) return;
+
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+        event.preventDefault();
+        target.setRangeText(normalized, target.selectionStart ?? 0, target.selectionEnd ?? 0, "end");
+        target.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+      }
+
+      if (target.isContentEditable) {
+        event.preventDefault();
+        document.execCommand("insertText", false, normalized);
+      }
+    };
+
+    document.addEventListener("beforeinput", handleBeforeInput as EventListener);
+    return () => document.removeEventListener("beforeinput", handleBeforeInput as EventListener);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <CartProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <CartDrawer />
+                <AppShell>
+                  <Suspense fallback={null}>
+                    <Routes>
+                      <Route element={<SiteLayout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/products" element={<ProductsPage />} />
+                        <Route path="/products/:id" element={<ProductDetail />} />
+                        <Route path="/quote" element={<QuotePage />} />
+                        <Route path="/blog" element={<BlogList />} />
+                        <Route path="/blog/:slug" element={<BlogPost />} />
+                        <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+                        <Route path="/brands" element={<BrandsPage />} />
+                        <Route path="/about" element={<AboutPage />} />
+                        <Route path="/projects" element={<ProjectsPage />} />
+                        <Route path="/projects/:slug" element={<ProjectDetail />} />
+                        <Route path="/tools" element={<ToolsPage />} />
+                      </Route>
+                      <Route path="/auth" element={<AuthPage />} />
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute requireStaff>
+                            <AdminLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route index element={<DashboardSwitch />} />
+                        <Route path="products" element={<ProtectedRoute requirePerm="can_manage_products"><Products /></ProtectedRoute>} />
+                        <Route path="categories" element={<ProtectedRoute requirePerm="can_manage_categories"><Categories /></ProtectedRoute>} />
+                        <Route path="brands" element={<ProtectedRoute requirePerm="can_manage_brands"><AdminBrands /></ProtectedRoute>} />
+                        <Route path="blog" element={<ProtectedRoute requirePerm="can_manage_blog"><AdminBlog /></ProtectedRoute>} />
+                        <Route path="projects" element={<ProtectedRoute requirePerm="can_manage_projects"><AdminProjects /></ProtectedRoute>} />
+                        <Route path="about" element={<ProtectedRoute requireAdmin><AdminAbout /></ProtectedRoute>} />
+                        <Route path="orders" element={<ProtectedRoute requirePerm="can_manage_orders"><Orders /></ProtectedRoute>} />
+                        <Route path="users" element={<ProtectedRoute requireAdmin><Users /></ProtectedRoute>} />
+                        <Route path="quotes" element={<ProtectedRoute requirePerm="can_manage_quotes"><Quotes /></ProtectedRoute>} />
+                        <Route path="security" element={<ProtectedRoute requireAdmin><Security /></ProtectedRoute>} />
+                        <Route path="backup" element={<ProtectedRoute requireAdmin><AdminBackup /></ProtectedRoute>} />
+                        <Route path="settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
+                        <Route path="preferences" element={<ProtectedRoute requireStaff><Preferences /></ProtectedRoute>} />
+                      </Route>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </AppShell>
+              </TooltipProvider>
+            </CartProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </LanguageProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

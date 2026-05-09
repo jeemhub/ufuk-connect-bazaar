@@ -172,7 +172,7 @@ export default function Orders() {
                   </td>
                   <td className="px-4 py-3 font-mono text-xs">{o.customer_phone}</td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(o.created_at).toLocaleDateString(ar ? "ar-IQ" : "en-US")}
+                    {new Date(o.created_at).toLocaleDateString(ar ? "ar-IQ-u-nu-latn" : "en-US")}
                   </td>
                   <td className="px-4 py-3 font-semibold">{formatIqd(o.total_iqd)} {t("currency_iqd")}</td>
                   <td className="px-4 py-3">

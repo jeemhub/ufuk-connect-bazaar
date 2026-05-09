@@ -1,16 +1,38 @@
 import * as React from "react";
 
+import { normalizeLatinDigits } from "@/lib/digits";
 import { cn } from "@/lib/utils";
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, onWheel, ...props }, ref) => {
+  ({ className, type, onWheel, onChange, value, defaultValue, inputMode, pattern, style, ...props }, ref) => {
     const isNumber = type === "number";
+    const shouldNormalize = type !== "file";
+    const normalizedValue = shouldNormalize && typeof value === "string" ? normalizeLatinDigits(value) : value;
+    const normalizedDefaultValue =
+      shouldNormalize && typeof defaultValue === "string" ? normalizeLatinDigits(defaultValue) : defaultValue;
+
     return (
       <input
-        type={type}
+        type={isNumber ? "text" : type}
         lang="en"
         dir={isNumber ? "ltr" : undefined}
-        style={isNumber ? { fontVariantNumeric: "lining-nums tabular-nums", fontFeatureSettings: '"lnum"' } : undefined}
+        inputMode={isNumber ? inputMode ?? "decimal" : inputMode}
+        pattern={isNumber ? pattern ?? "[0-9]*[.,]?[0-9]*" : pattern}
+        value={normalizedValue}
+        defaultValue={normalizedDefaultValue}
+        style={{
+          ...style,
+          fontVariantNumeric: "lining-nums tabular-nums",
+          fontFeatureSettings: '"lnum"',
+          fontLanguageOverride: "ENG",
+        }}
+        onChange={(e) => {
+          if (shouldNormalize) {
+            const normalized = normalizeLatinDigits(e.currentTarget.value);
+            if (normalized !== e.currentTarget.value) e.currentTarget.value = normalized;
+          }
+          onChange?.(e);
+        }}
         onWheel={(e) => {
           if (isNumber) {
             (e.currentTarget as HTMLInputElement).blur();

@@ -105,7 +105,4 @@ export function calcSolar(input: SolarInput): SolarResult {
   return { bankVoltage, bankAh, bankWh, usableWh, loadWatts, runtimeHours, runtimeH, runtimeM, status, checks };
 }
 
-export function toArabicDigits(n: number | string): string {
-  const map = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-  return String(n).replace(/\d/g, (d) => map[+d]);
-}
+export { toLatinDigits } from "@/lib/digits";

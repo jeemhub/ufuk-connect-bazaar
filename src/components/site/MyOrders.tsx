@@ -161,7 +161,7 @@ export function MyOrders() {
                     <div className="flex flex-col">
                       <span className="font-mono text-sm font-bold">{o.order_no}</span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(o.created_at).toLocaleString(ar ? "ar-IQ" : "en-US")}
+                        {new Date(o.created_at).toLocaleString(ar ? "ar-IQ-u-nu-latn" : "en-US")}
                       </span>
                     </div>
                     <Badge variant="outline" className={`border font-semibold ${meta.className}`}>

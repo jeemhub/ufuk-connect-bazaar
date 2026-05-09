@@ -39,7 +39,7 @@ export function CountUp({ end, duration = 1800, suffix = "", prefix = "", classN
   return (
     <span ref={ref} className={className}>
       {prefix}
-      {val.toLocaleString()}
+      {val.toLocaleString("en-US")}
       {suffix}
     </span>
   );

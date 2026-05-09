@@ -519,7 +519,7 @@ export default function AccountPage() {
                             </div>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(l.created_at).toLocaleString(lang === "ar" ? "ar-IQ" : "en-US")}
+                            {new Date(l.created_at).toLocaleString(lang === "ar" ? "ar-IQ-u-nu-latn" : "en-US")}
                           </div>
                         </div>
                       );

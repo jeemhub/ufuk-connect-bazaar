@@ -188,7 +188,7 @@ export default function BlogPostPage() {
 
       <h1 className="text-3xl md:text-4xl font-extrabold leading-tight mb-3">{title}</h1>
       <div className="text-sm text-muted-foreground mb-6">
-        {new Date(post.published_at ?? post.created_at).toLocaleDateString(lang === "ar" ? "ar" : "en")}
+        {new Date(post.published_at ?? post.created_at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en")}
       </div>
 
       <div className="prose prose-lg max-w-none whitespace-pre-wrap text-foreground/90 leading-relaxed">
