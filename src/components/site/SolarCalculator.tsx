@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { calcSolar, ConnectionType, SolarInput, SolarResult } from "@/lib/solarCalc";
+import { BatterySpec, calcSolar, ConnectionType, SolarInput, SolarResult } from "@/lib/solarCalc";
+import { Plus, Trash2 } from "lucide-react";
 import { WiringDiagram } from "@/components/site/SolarWiringDiagram";
 
 const CARD = "rounded-2xl border border-amber-500/20 bg-white shadow-[0_0_30px_-15px_rgba(245,158,11,0.5)]";
