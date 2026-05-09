@@ -124,7 +124,7 @@ export default function SolarCalculator() {
               <span className={cn(step >= 3 && "text-amber-400")}>3. الأحمال</span>
               <span className={cn(step >= 4 && "text-amber-400")}>4. النتائج</span>
             </div>
-            <Progress value={progress} className="h-2 bg-slate-800 [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:to-amber-600" />
+            <Progress value={progress} className="h-2 bg-slate-800 [transform:scaleX(-1)] [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:to-amber-600" />
           </div>
 
           {/* STEP 1 */}
