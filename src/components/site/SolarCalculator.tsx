@@ -547,7 +547,13 @@ export default function SolarCalculator() {
                 </div>
               </div>
 
-              <div className="flex justify-center">
+              </div>
+              {/* end reportRef */}
+
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button onClick={downloadPdf} disabled={downloading} className="bg-amber-500 text-slate-900 hover:bg-amber-400 solar-glow">
+                  <Download className="h-4 w-4" /> {downloading ? "جارٍ التحضير..." : "تنزيل التقرير PDF"}
+                </Button>
                 <Button onClick={reset} variant="outline" className="border-amber-500/40 bg-transparent text-amber-700 hover:bg-amber-500/10">
                   <RefreshCw className="h-4 w-4" /> إعادة الحساب
                 </Button>
