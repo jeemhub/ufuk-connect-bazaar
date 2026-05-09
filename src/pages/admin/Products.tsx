@@ -361,14 +361,89 @@ export default function Products() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="category">{t("product_category")}</Label>
-              <select id="category" name="category" defaultValue={editing?.category ?? "__none__"} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <select
+                id="category"
+                value={formCat}
+                onChange={(e) => { setFormCat(e.target.value); setFormSubs([]); }}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
                 <option value="__none__">{lang === "ar" ? "بدون قسم" : "No category"}</option>
-                {categories.map((c) => <option key={c.key} value={c.key}>{lang === "ar" ? c.ar : c.en}</option>)}
+                {catRows.map((c) => <option key={c.key} value={c.key}>{lang === "ar" ? c.name_ar : c.name_en}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="subcategory">{t("subcategories")}</Label>
-              <Input id="subcategory" name="subcategory" defaultValue={editing?.subcategory} />
+              <Label>{t("subcategories")}</Label>
+              {(() => {
+                const catId = formCat !== "__none__" ? catMap[formCat] : null;
+                const available = catId ? subRows.filter((s) => s.category_id === catId) : [];
+                const labelFor = (s: { name_ar: string; name_en: string }) => (lang === "ar" ? s.name_ar : s.name_en) || s.name_en || s.name_ar;
+                const summary = formSubs.length === 0
+                  ? (lang === "ar" ? "اختر فئات فرعية" : "Select subcategories")
+                  : formSubs.length <= 2
+                  ? formSubs.join("، ")
+                  : `${formSubs.slice(0, 2).join("، ")} +${formSubs.length - 2}`;
+                const toggle = (name: string) =>
+                  setFormSubs((prev) => prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]);
+                return (
+                  <Popover open={subPopOpen} onOpenChange={setSubPopOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={!catId}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <span className={formSubs.length ? "" : "text-muted-foreground"}>
+                          {catId ? summary : (lang === "ar" ? "اختر القسم أولاً" : "Pick a category first")}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <div className="max-h-64 overflow-y-auto p-1">
+                        {available.length === 0 ? (
+                          <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+                            {lang === "ar" ? "لا توجد فئات فرعية لهذا القسم. أضفها من صفحة الأقسام." : "No subcategories for this category. Add them in Categories page."}
+                          </div>
+                        ) : (
+                          available.map((s) => {
+                            const name = labelFor(s);
+                            const checked = formSubs.includes(name);
+                            return (
+                              <button
+                                type="button"
+                                key={s.id}
+                                onClick={() => toggle(name)}
+                                className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <Checkbox checked={checked} className="pointer-events-none" />
+                                <span className="flex-1 text-start">{name}</span>
+                                {checked && <Check className="h-4 w-4 text-primary" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                );
+              })()}
+              {formSubs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {formSubs.map((s) => (
+                    <span key={s} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs">
+                      {s}
+                      <button
+                        type="button"
+                        onClick={() => setFormSubs((prev) => prev.filter((x) => x !== s))}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="remove"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="priceIqd">{t("price_retail")} ({t("currency_iqd")})</Label>
