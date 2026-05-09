@@ -444,7 +444,7 @@ export default function Users() {
                     <div className="font-semibold">{h.product_name || t("quote_general")}</div>
                     <Badge variant="outline" className="text-[10px]">{h.status}</Badge>
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString()}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("en-US")}</div>
                   {h.message && <div className="mt-2 whitespace-pre-wrap text-foreground/80">{h.message}</div>}
                 </li>
               ))}

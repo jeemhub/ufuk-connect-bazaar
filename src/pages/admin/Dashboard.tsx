@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   const stats = [
     { label: t("stat_revenue"), value: `${formatIqd(totalRevenue)} ${t("currency_iqd")}`, change: "+12.4%", icon: DollarSign, color: "text-primary", bg: "bg-primary/10", href: "/admin/orders" },
-    { label: t("stat_visitors"), value: visitors.last7.toLocaleString(), change: `${visitors.unique7} فريد`, icon: Users, color: "text-primary", bg: "bg-primary/10", href: "/admin/users" },
+    { label: t("stat_visitors"), value: visitors.last7.toLocaleString("en-US"), change: `${visitors.unique7} فريد`, icon: Users, color: "text-primary", bg: "bg-primary/10", href: "/admin/users" },
     { label: t("stat_pending"), value: String(pendingOrders), change: "+3", icon: ShoppingBag, color: "text-warning", bg: "bg-warning/10", href: "/admin/orders?status=pending" },
     { label: t("stat_low_stock"), value: String(lowStock), change: "!", icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10", href: "/admin/products?filter=low_stock" },
   ];
