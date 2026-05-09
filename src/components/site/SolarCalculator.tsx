@@ -391,12 +391,10 @@ export default function SolarCalculator() {
               <div className={cn(CARD, "p-5")}>
                 <h3 className="mb-3 text-lg font-bold text-amber-600">المخطط الكهربائي</h3>
                 <WiringDiagram
-                  count={connection === "series-parallel" ? rows * cols : (connection === "single" ? 1 : batteryCount)}
+                  batteries={effectiveBatteries()}
                   connection={connection}
                   rows={rows}
                   cols={cols}
-                  batteryVoltage={batteryVoltage}
-                  batteryAh={batteryAh}
                   bankVoltage={result.bankVoltage}
                   bankAh={result.bankAh}
                 />
