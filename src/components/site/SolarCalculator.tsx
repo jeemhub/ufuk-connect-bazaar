@@ -436,6 +436,30 @@ export default function SolarCalculator() {
           {/* RESULTS */}
           {step === 4 && result && (
             <div className="space-y-5 reveal-up">
+              <div ref={reportRef} dir="rtl" className="space-y-5 bg-white p-3">
+                <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-50 p-4">
+                  <img src={logoUrl} alt="افق البصرة" className="h-12 w-auto" crossOrigin="anonymous" />
+                  <div className="text-left">
+                    <div className="text-base font-bold text-amber-700">افق البصرة | Ufuk Albasra</div>
+                    <div className="text-xs text-slate-600">تقرير حاسبة الطاقة الشمسية</div>
+                    <div className="text-xs text-slate-500">{new Date().toLocaleString("en-GB")}</div>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <div className="mb-2 font-bold text-slate-900">مدخلات المنظومة</div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div>قدرة العاكس: <b>{inverterPowerW}W</b></div>
+                    <div>فولطية العاكس: <b>{inverterVoltage}V</b></div>
+                    <div>طريقة الربط: <b>{connection}</b></div>
+                    <div>عدد البطاريات: <b>{effectiveBatteries().length}</b></div>
+                    <div className="sm:col-span-2">
+                      البطاريات: {effectiveBatteries().map((b, i) => `#${i + 1} ${b.voltage}V/${b.ah}Ah`).join("، ")}
+                    </div>
+                    <div>
+                      الحمل: <b>{useWatts ? `${loadWattsInput}W` : `${loadAmps}A × 220V = ${loadAmps * 220}W`}</b>
+                    </div>
+                  </div>
+                </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <ResultCard icon={<Battery className="h-5 w-5" />} title="فولطية البنك" value={`${result.bankVoltage} V`} />
                 <ResultCard icon={<Gauge className="h-5 w-5" />} title="سعة البنك" value={`${result.bankAh} Ah`} sub={`${Math.round(result.bankWh)} Wh`} />
