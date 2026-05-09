@@ -83,27 +83,12 @@ export default function SolarCalculator() {
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
 
-      // Header with logo + brand
-      const headerH = 28;
-      pdf.setFillColor(245, 158, 11);
-      pdf.rect(0, 0, pageW, headerH, "F");
-      try {
-        pdf.addImage(logoUrl, "PNG", 8, 4, 20, 20);
-      } catch {
-        // ignore if logo fails
-      }
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFontSize(16);
-      pdf.text("Ufuk Albasra - Solar Calculator", pageW - 8, 13, { align: "right" });
-      pdf.setFontSize(10);
-      pdf.text(new Date().toLocaleString("en-GB"), pageW - 8, 22, { align: "right" });
-
-      // Body image
+      // Body image (no top header banner)
       const marginX = 8;
       const availW = pageW - marginX * 2;
       const ratio = canvas.height / canvas.width;
       const imgH = availW * ratio;
-      let y = headerH + 4;
+      let y = 10;
       let remaining = imgH;
       let srcY = 0;
       const maxBodyH = pageH - y - 12;
