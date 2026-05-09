@@ -66,6 +66,89 @@ export default function SolarCalculator() {
   const [useWatts, setUseWatts] = useState(false);
   const [loadWattsInput, setLoadWattsInput] = useState<number>(500);
   const [result, setResult] = useState<SolarResult | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const downloadPdf = async () => {
+    if (!reportRef.current || !result) return;
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+
+      // Header with logo + brand
+      const headerH = 28;
+      pdf.setFillColor(245, 158, 11);
+      pdf.rect(0, 0, pageW, headerH, "F");
+      try {
+        pdf.addImage(logoUrl, "PNG", 8, 4, 20, 20);
+      } catch {
+        // ignore if logo fails
+      }
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(16);
+      pdf.text("Ufuk Albasra - Solar Calculator", pageW - 8, 13, { align: "right" });
+      pdf.setFontSize(10);
+      pdf.text(new Date().toLocaleString("en-GB"), pageW - 8, 22, { align: "right" });
+
+      // Body image
+      const marginX = 8;
+      const availW = pageW - marginX * 2;
+      const ratio = canvas.height / canvas.width;
+      const imgH = availW * ratio;
+      let y = headerH + 4;
+      let remaining = imgH;
+      let srcY = 0;
+      const maxBodyH = pageH - y - 12;
+
+      if (imgH <= maxBodyH) {
+        pdf.addImage(imgData, "JPEG", marginX, y, availW, imgH);
+      } else {
+        // Slice into pages
+        const pxPerMm = canvas.width / availW;
+        while (remaining > 0) {
+          const sliceMm = Math.min(maxBodyH, remaining);
+          const slicePx = sliceMm * pxPerMm;
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = slicePx;
+          const ctx = sliceCanvas.getContext("2d")!;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+          ctx.drawImage(canvas, 0, srcY, canvas.width, slicePx, 0, 0, canvas.width, slicePx);
+          const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.95);
+          pdf.addImage(sliceData, "JPEG", marginX, y, availW, sliceMm);
+          srcY += slicePx;
+          remaining -= sliceMm;
+          if (remaining > 0) {
+            pdf.addPage();
+            y = 10;
+          }
+        }
+      }
+
+      // Footer
+      const pageCount = pdf.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text("Ufuk Albasra | افق البصرة - ufukalbasra.com", pageW / 2, pageH - 6, { align: "center" });
+        pdf.text(`${i}/${pageCount}`, pageW - 8, pageH - 6, { align: "right" });
+      }
+
+      pdf.save(`ufuk-solar-report-${Date.now()}.pdf`);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const progress = step === 4 ? 100 : ((step - 1) / 3) * 100;
 
