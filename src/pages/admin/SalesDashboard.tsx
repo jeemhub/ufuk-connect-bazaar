@@ -18,7 +18,7 @@ export default function SalesDashboard() {
   const { fullName, salesPerms } = useAuth();
   const [stats, setStats] = useState<Record<string, { value: string; sub?: string }>>({});
 
-  const fmt = (n: number) => n.toLocaleString(lang === "ar" ? "ar-EG" : "en-US");
+  const fmt = (n: number) => n.toLocaleString(lang === "ar" ? "ar-EG-u-nu-latn" : "en-US");
 
   const tiles: TileDef[] = [
     {
