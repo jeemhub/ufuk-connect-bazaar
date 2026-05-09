@@ -1,12 +1,10 @@
-import { ConnectionType } from "@/lib/solarCalc";
+import { BatterySpec, ConnectionType } from "@/lib/solarCalc";
 
 interface Props {
-  count: number;
+  batteries: BatterySpec[];
   connection: ConnectionType;
   rows?: number;
   cols?: number;
-  batteryVoltage: number;
-  batteryAh: number;
   bankVoltage: number;
   bankAh: number;
 }
@@ -72,7 +70,8 @@ function Load({ x, y }: { x: number; y: number }) {
 
 interface Term { x: number; y: number }
 
-export function WiringDiagram({ count, connection, rows = 1, cols = 1, batteryAh, bankVoltage, bankAh }: Props) {
+export function WiringDiagram({ batteries, connection, rows = 1, cols = 1, bankVoltage, bankAh }: Props) {
+  const count = batteries.length;
   const maxRender = 8;
 
   // Determine layout
@@ -242,9 +241,17 @@ export function WiringDiagram({ count, connection, rows = 1, cols = 1, batteryAh
         <path d={negToInv} fill="none" stroke={NEG_COLOR} strokeWidth={2.6} style={flowStyle} />
 
         {/* batteries */}
-        {cells.flat().map((b, i) => (
-          <Battery key={i} x={b.x} y={b.y} label={`${batteryAh}Ah`} />
-        ))}
+        {cells.flat().map((b, i) => {
+          const spec = batteries[i] ?? batteries[batteries.length - 1];
+          return (
+            <Battery
+              key={i}
+              x={b.x}
+              y={b.y}
+              label={spec ? `${spec.voltage}V ${spec.ah}Ah` : ""}
+            />
+          );
+        })}
 
         <Inverter x={inverterX} y={invY} />
 

@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { calcSolar, ConnectionType, SolarInput, SolarResult } from "@/lib/solarCalc";
+import { BatterySpec, calcSolar, ConnectionType, SolarInput, SolarResult } from "@/lib/solarCalc";
+import { Plus, Trash2 } from "lucide-react";
 import { WiringDiagram } from "@/components/site/SolarWiringDiagram";
 
 const CARD = "rounded-2xl border border-amber-500/20 bg-white shadow-[0_0_30px_-15px_rgba(245,158,11,0.5)]";
@@ -51,9 +52,10 @@ export default function SolarCalculator() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [inverterPowerW, setInverterPowerW] = useState<number>(2000);
   const [inverterVoltage, setInverterVoltage] = useState<12 | 24 | 36 | 48>(24);
-  const [batteryCount, setBatteryCount] = useState<number>(2);
-  const [batteryVoltage, setBatteryVoltage] = useState<2 | 6 | 12 | 24>(12);
-  const [batteryAh, setBatteryAh] = useState<number>(200);
+  const [batteries, setBatteries] = useState<BatterySpec[]>([
+    { voltage: 12, ah: 200 },
+    { voltage: 12, ah: 200 },
+  ]);
   const [connection, setConnection] = useState<ConnectionType>("series");
   const [rows, setRows] = useState<number>(2);
   const [cols, setCols] = useState<number>(2);
@@ -64,15 +66,29 @@ export default function SolarCalculator() {
 
   const progress = step === 4 ? 100 : ((step - 1) / 3) * 100;
 
+  const effectiveBatteries = (): BatterySpec[] => {
+    if (connection === "single") return batteries.slice(0, 1);
+    return batteries;
+  };
+
+  const addBattery = () => {
+    const last = batteries[batteries.length - 1] ?? { voltage: 12, ah: 200 };
+    setBatteries([...batteries, { ...last }]);
+  };
+  const removeBattery = (i: number) => {
+    if (batteries.length <= 1) return;
+    setBatteries(batteries.filter((_, idx) => idx !== i));
+  };
+  const updateBattery = (i: number, patch: Partial<BatterySpec>) => {
+    setBatteries(batteries.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+  };
+
   const buildInput = (): SolarInput => {
-    // الحمل دائماً على 220V AC، فالتحويل من واط إلى أمبير يتم على 220
     const finalLoadAmps = useWatts ? loadWattsInput / 220 : loadAmps;
     return {
       inverterPowerW,
       inverterVoltage,
-      batteryCount: connection === "series-parallel" ? rows * cols : (connection === "single" ? 1 : batteryCount),
-      batteryVoltage,
-      batteryAh,
+      batteries: effectiveBatteries(),
       connection,
       rows,
       cols,
@@ -181,28 +197,68 @@ export default function SolarCalculator() {
               <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-amber-600">
                 <Battery className="h-5 w-5" /> معلومات البطاريات
               </h2>
-              <div className="grid gap-5 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label className="text-slate-700">عدد البطاريات</Label>
-                  <Input type="number" min={1} value={batteryCount} onChange={(e) => setBatteryCount(Math.max(1, +e.target.value))}
-                    className="border-slate-300 bg-white text-slate-900" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-700">فولطية البطارية</Label>
-                  <Select value={String(batteryVoltage)} onValueChange={(v) => setBatteryVoltage(+v as 2 | 6 | 12 | 24)}>
-                    <SelectTrigger className="border-slate-300 bg-white text-slate-900"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-white text-slate-900">
-                      {[2, 6, 12, 24].map((v) => <SelectItem key={v} value={String(v)}>{v}V</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
                   <Label className="flex items-center gap-2 text-slate-700">
-                    سعة البطارية (Ah) <Hint text="السعة بالأمبير/ساعة لبطارية واحدة — مذكورة على البطارية." />
+                    قائمة البطاريات <Hint text="أضف كل بطارية على حدة بفولطيتها وسعتها. الحساب يأخذ كل بطارية بشكل مستقل وفق طريقة الربط." />
                   </Label>
-                  <Input type="number" value={batteryAh} onChange={(e) => setBatteryAh(+e.target.value)}
-                    className="border-slate-300 bg-white text-slate-900" />
+                  <Button
+                    type="button"
+                    onClick={addBattery}
+                    disabled={connection === "single"}
+                    className="bg-amber-500 text-slate-900 hover:bg-amber-400"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4" /> إضافة بطارية
+                  </Button>
                 </div>
+
+                <div className="space-y-2">
+                  {effectiveBatteries().map((b, i) => (
+                    <div key={i} className="grid grid-cols-12 items-end gap-3 rounded-xl border border-slate-300 bg-slate-50 p-3">
+                      <div className="col-span-2 text-center">
+                        <div className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/15 text-sm font-bold text-amber-700">
+                          #{i + 1}
+                        </div>
+                      </div>
+                      <div className="col-span-4 space-y-1">
+                        <Label className="text-xs text-slate-600">الفولطية</Label>
+                        <Select value={String(b.voltage)} onValueChange={(v) => updateBattery(i, { voltage: +v })}>
+                          <SelectTrigger className="border-slate-300 bg-white text-slate-900 h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-white text-slate-900">
+                            {[2, 6, 12, 24].map((v) => <SelectItem key={v} value={String(v)}>{v}V</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-4 space-y-1">
+                        <Label className="text-xs text-slate-600">السعة (Ah)</Label>
+                        <Input
+                          type="number"
+                          value={b.ah}
+                          onChange={(e) => updateBattery(i, { ah: +e.target.value })}
+                          className="border-slate-300 bg-white text-slate-900 h-9"
+                        />
+                      </div>
+                      <div className="col-span-2 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeBattery(i)}
+                          disabled={batteries.length <= 1 || connection === "single"}
+                          className="h-9 w-9 border-red-200 text-red-500 hover:bg-red-50"
+                          aria-label="حذف"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {connection === "single" && batteries.length > 1 && (
+                  <p className="text-xs text-amber-700">وضع "بطارية واحدة" مفعّل — سيُستخدم البطارية الأولى فقط.</p>
+                )}
               </div>
 
               <div className="mt-6">
@@ -335,12 +391,10 @@ export default function SolarCalculator() {
               <div className={cn(CARD, "p-5")}>
                 <h3 className="mb-3 text-lg font-bold text-amber-600">المخطط الكهربائي</h3>
                 <WiringDiagram
-                  count={connection === "series-parallel" ? rows * cols : (connection === "single" ? 1 : batteryCount)}
+                  batteries={effectiveBatteries()}
                   connection={connection}
                   rows={rows}
                   cols={cols}
-                  batteryVoltage={batteryVoltage}
-                  batteryAh={batteryAh}
                   bankVoltage={result.bankVoltage}
                   bankAh={result.bankAh}
                 />
