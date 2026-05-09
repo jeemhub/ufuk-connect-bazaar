@@ -226,7 +226,7 @@ export default function SolarCalculator() {
                         <Select value={String(b.voltage)} onValueChange={(v) => updateBattery(i, { voltage: +v })}>
                           <SelectTrigger className="border-slate-300 bg-white text-slate-900 h-9"><SelectValue /></SelectTrigger>
                           <SelectContent className="bg-white text-slate-900">
-                            {[2, 6, 12, 24].map((v) => <SelectItem key={v} value={String(v)}>{v}V</SelectItem>)}
+                            {[2, 6, 12, 24, 48].map((v) => <SelectItem key={v} value={String(v)}>{v}V</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
