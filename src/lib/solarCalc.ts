@@ -70,20 +70,20 @@ export function calcSolar(input: SolarInput): SolarResult {
     detail: vMatch ? undefined : "يجب أن تتطابق فولطية بنك البطاريات مع نظام فولطية العاكس وإلا قد يتلف العاكس.",
   });
 
-  // 2. Inverter sizing vs battery bank
-  const fiveHourPower = bankWh * 0.2; // 5h discharge
-  const halfBankPower = bankWh * 0.5;
+  // 2. Inverter sizing vs battery bank (C/5 recommended, C/2 advisory limit)
+  const recommendedMaxInverter = bankAh * bankVoltage * 0.2; // C/5
+  const advisoryMaxInverter = bankAh * bankVoltage * 0.5;    // C/2
   let invLevel: "ok" | "warn" | "error" = "ok";
   let invDetail: string | undefined;
-  if (input.inverterPowerW > halfBankPower) {
-    invLevel = "error";
-    invDetail = "قدرة العاكس كبيرة جداً مقارنة ببنك البطاريات (تفريغ سريع جداً).";
-  } else if (input.inverterPowerW > fiveHourPower) {
+  if (input.inverterPowerW > advisoryMaxInverter) {
     invLevel = "warn";
-    invDetail = "قدرة العاكس أعلى من معدل التفريغ المثالي (5 ساعات). البطاريات قد تستهلك بسرعة.";
+    invDetail = "العاكس أكبر من الموصى به للبطاريات، لكن المنظومة تعمل إذا كان الحمل الفعلي منخفضاً.";
+  } else if (input.inverterPowerW > recommendedMaxInverter) {
+    invLevel = "warn";
+    invDetail = `قدرة العاكس أعلى من الحد الموصى به (${Math.round(recommendedMaxInverter)}W ≈ C/5)، لكن المنظومة تعمل عند أحمال منخفضة.`;
   }
   checks.push({
-    label: `ملاءمة قدرة العاكس (${input.inverterPowerW}W) لسعة البنك (${Math.round(bankWh)}Wh)`,
+    label: `ملاءمة قدرة العاكس (${input.inverterPowerW}W) لبنك البطاريات (موصى به حتى ${Math.round(recommendedMaxInverter)}W)`,
     ok: invLevel === "ok",
     level: invLevel,
     detail: invDetail,
