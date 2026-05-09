@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, CircuitBoard, Gauge, HelpCircle, Lightbulb, RefreshCw, Sun, TriangleAlert, XCircle, Zap } from "lucide-react";
+import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, CircuitBoard, Gauge, HelpCircle, Lightbulb, Lightbulb as Bulb, RefreshCw, Sun, TriangleAlert, Wrench, XCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
