@@ -70,7 +70,8 @@ function Load({ x, y }: { x: number; y: number }) {
 
 interface Term { x: number; y: number }
 
-export function WiringDiagram({ count, connection, rows = 1, cols = 1, batteryAh, bankVoltage, bankAh }: Props) {
+export function WiringDiagram({ batteries, connection, rows = 1, cols = 1, bankVoltage, bankAh }: Props) {
+  const count = batteries.length;
   const maxRender = 8;
 
   // Determine layout
