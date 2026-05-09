@@ -125,8 +125,7 @@ export default function SolarCalculator() {
         pdf.setPage(i);
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
-        pdf.text("Ufuk Albasra | افق البصرة - ufukalbasra.com", pageW / 2, pageH - 6, { align: "center" });
-        pdf.text(`${i}/${pageCount}`, pageW - 8, pageH - 6, { align: "right" });
+        pdf.text("ufukalbasra.com", pageW / 2, pageH - 6, { align: "center" });
       }
 
       pdf.save(`ufuk-solar-report-${Date.now()}.pdf`);
