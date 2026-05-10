@@ -42,6 +42,18 @@ export default function Quotes() {
       .then(({ data }) => { setList((data as Quote[]) || []); setLoading(false); });
   }, [t]);
 
+  const isAr = lang === "ar";
+
+  async function handleDelete(id: string) {
+    const { error } = await supabase.from("quote_requests").delete().eq("id", id);
+    if (error) {
+      toast({ title: isAr ? "فشل الحذف" : "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    setList((prev) => prev.filter((x) => x.id !== id));
+    toast({ title: isAr ? "تم حذف الطلب" : "Request deleted" });
+  }
+
   return (
     <div className="space-y-6">
       <div>
