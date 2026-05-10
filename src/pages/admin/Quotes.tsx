@@ -99,6 +99,8 @@ export default function Quotes() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                </div>
+                  </AlertDialog>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> <a href={`tel:${q.phone}`} className="font-medium hover:text-primary">{q.phone}</a></div>
