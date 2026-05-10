@@ -59,8 +59,8 @@ export default function Quotes() {
       <div>
         <h1 className="text-2xl font-bold md:text-3xl">{t("quotes_title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("quotes_subtitle")}</p>
-      </div>
-
+                </div>
+              </CardHeader>
       {loading ? (
         <div className="flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="me-2 h-4 w-4 animate-spin" /> {t("auth_loading")}</div>
       ) : list.length === 0 ? (
