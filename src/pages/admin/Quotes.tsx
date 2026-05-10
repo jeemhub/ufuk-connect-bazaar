@@ -78,7 +78,27 @@ export default function Quotes() {
                   <Badge variant={q.status === "new" ? "default" : "secondary"}>
                     {q.status === "new" ? t("quote_status_new") : q.status === "contacted" ? t("quote_status_contacted") : t("quote_status_closed")}
                   </Badge>
-                </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive" aria-label={isAr ? "حذف" : "Delete"}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{isAr ? "حذف طلب السعر؟" : "Delete quote request?"}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {isAr ? "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الطلب نهائياً." : "This action cannot be undone. The request will be permanently deleted."}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{isAr ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(q.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          {isAr ? "حذف" : "Delete"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> <a href={`tel:${q.phone}`} className="font-medium hover:text-primary">{q.phone}</a></div>
