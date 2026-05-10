@@ -11,6 +11,7 @@ export function ProductCard({ product }: { product: Product }) {
   const { t, lang } = useLanguage();
   const { pricingTier } = useAuth();
   const name = lang === "ar" ? product.nameAr : product.nameEn;
+  const showStock = pricingTier === "dealer" || pricingTier === "wholesale";
   const stockBadge = product.stock === 0 ? "out" : product.stock < 5 ? "low" : "in";
 
   const tierPrice =
@@ -43,14 +44,18 @@ export function ProductCard({ product }: { product: Product }) {
           <Badge variant="secondary" className="rounded-full border border-border/50 bg-background/85 px-2.5 py-0.5 text-[10px] font-bold backdrop-blur-sm">
             {product.brand}
           </Badge>
-          {stockBadge === "out" && (
+          {showStock && stockBadge === "out" && (
             <Badge variant="destructive" className="rounded-full text-[10px]">{t("out_of_stock")}</Badge>
           )}
-          {stockBadge === "low" && (
-            <Badge className="rounded-full bg-warning text-[10px] text-warning-foreground">{t("low_stock")}</Badge>
+          {showStock && stockBadge === "low" && (
+            <Badge className="rounded-full bg-warning text-[10px] text-warning-foreground">
+              {lang === "ar" ? `متبقي ${product.stock}` : `${product.stock} left`}
+            </Badge>
           )}
-          {stockBadge === "in" && (
-            <Badge className="rounded-full bg-success/90 text-[10px] text-success-foreground backdrop-blur-sm">{t("in_stock")}</Badge>
+          {showStock && stockBadge === "in" && (
+            <Badge className="rounded-full bg-success/90 text-[10px] text-success-foreground backdrop-blur-sm">
+              {lang === "ar" ? `المخزون: ${product.stock}` : `Stock: ${product.stock}`}
+            </Badge>
           )}
         </div>
         {/* Hover arrow */}
