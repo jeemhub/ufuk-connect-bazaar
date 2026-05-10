@@ -1,9 +1,22 @@
 import { useEffect, useState } from "react";
-import { Mail, Phone, Building2, Loader2, Paperclip } from "lucide-react";
+import { Mail, Phone, Building2, Loader2, Paperclip, Trash2 } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 interface Quote {
   id: string;
@@ -29,6 +42,18 @@ export default function Quotes() {
       .then(({ data }) => { setList((data as Quote[]) || []); setLoading(false); });
   }, [t]);
 
+  const isAr = lang === "ar";
+
+  async function handleDelete(id: string) {
+    const { error } = await supabase.from("quote_requests").delete().eq("id", id);
+    if (error) {
+      toast({ title: isAr ? "فشل الحذف" : "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    setList((prev) => prev.filter((x) => x.id !== id));
+    toast({ title: isAr ? "تم حذف الطلب" : "Request deleted" });
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -53,6 +78,27 @@ export default function Quotes() {
                   <Badge variant={q.status === "new" ? "default" : "secondary"}>
                     {q.status === "new" ? t("quote_status_new") : q.status === "contacted" ? t("quote_status_contacted") : t("quote_status_closed")}
                   </Badge>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive" aria-label={isAr ? "حذف" : "Delete"}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{isAr ? "حذف طلب السعر؟" : "Delete quote request?"}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {isAr ? "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الطلب نهائياً." : "This action cannot be undone. The request will be permanently deleted."}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{isAr ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(q.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          {isAr ? "حذف" : "Delete"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
