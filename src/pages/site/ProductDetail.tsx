@@ -73,15 +73,21 @@ export default function ProductDetail() {
                   {product.brand}
                 </Badge>
               </div>
-              <div className="absolute top-4 end-4">
-                {!inStock ? (
-                  <Badge variant="destructive" className="rounded-full">{t("out_of_stock")}</Badge>
-                ) : product.stock < 5 ? (
-                  <Badge className="rounded-full bg-warning text-warning-foreground">{t("low_stock")}</Badge>
-                ) : (
-                  <Badge className="rounded-full bg-success text-success-foreground">{t("in_stock")}</Badge>
-                )}
-              </div>
+              {(pricingTier === "dealer" || pricingTier === "wholesale") && (
+                <div className="absolute top-4 end-4">
+                  {!inStock ? (
+                    <Badge variant="destructive" className="rounded-full">{t("out_of_stock")}</Badge>
+                  ) : product.stock < 5 ? (
+                    <Badge className="rounded-full bg-warning text-warning-foreground">
+                      {lang === "ar" ? `متبقي ${product.stock}` : `${product.stock} left`}
+                    </Badge>
+                  ) : (
+                    <Badge className="rounded-full bg-success text-success-foreground">
+                      {lang === "ar" ? `المخزون: ${product.stock}` : `Stock: ${product.stock}`}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
