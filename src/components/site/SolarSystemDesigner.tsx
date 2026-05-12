@@ -1,0 +1,723 @@
+import { useMemo, useState } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, Download, Sun, TriangleAlert, XCircle, Zap, Leaf, Snowflake, Flame } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
+
+// ───────── Engineering constants
+const INVERTER_EFF = 0.90;
+const WIRING_LOSS = 0.03;
+const DOD = { lithium: 0.80, leadacid: 0.50 } as const;
+const TEMP = { summer: 0.80, moderate: 0.90, winter: 0.97 } as const;
+const CHARGE_EFF = { lithium: 0.97, leadacid: 0.85 } as const;
+const PANEL_WATT = 615;
+const PEAK_SUN_HOURS = 5.5;
+const PANEL_EFF = 0.80;
+
+type SystemType = "battery" | "full";
+type BattType = "lithium" | "leadacid";
+type Season = "summer" | "moderate" | "winter";
+
+// ───────── Must product database
+type LithiumOpt = { model: string; kwh: number; voltage: number; ah: number; maxCurrent: number; maxInverter: number };
+const LITHIUM_OPTIONS: LithiumOpt[] = [
+  { model: "Must LP1600 SE — 5kWh", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100, maxInverter: 5 },
+  { model: "Must LP3000 PRO — 5kWh module", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100, maxInverter: 5 },
+  { model: "Must LP3000 PRO — 10kWh (2 modules)", kwh: 10.24, voltage: 48, ah: 200, maxCurrent: 200, maxInverter: 10 },
+  { model: "Must LP3000 PRO — 15kWh (3 modules)", kwh: 15.36, voltage: 48, ah: 300, maxCurrent: 200, maxInverter: 10 },
+];
+const LEADACID = { model: "Must 12V/200Ah", voltage: 12, ah: 200, kwh: 12 * 200 / 1000 };
+
+type Inverter = {
+  model: string; power: number; voltage: 12 | 24 | 48;
+  maxPanels: number; maxPVwatt: number; minBattAh: number;
+  mppt?: string; dualMPPT?: boolean; note: string;
+};
+const INVERTERS: Inverter[] = [
+  { model: "Must PV1900 EXP — 1kW", power: 1000, voltage: 12, maxPanels: 1, maxPVwatt: 615, minBattAh: 100, note: "للأحمال الصغيرة جداً" },
+  { model: "Must PV1900 EXP — 4kW", power: 4000, voltage: 24, maxPanels: 6, maxPVwatt: 3690, minBattAh: 100, mppt: "90~430V", note: "مناسب للمنازل الصغيرة" },
+  { model: "Must PV1900 EXP — 6kW", power: 6000, voltage: 48, maxPanels: 10, maxPVwatt: 6150, minBattAh: 200, mppt: "150~450V", note: "مناسب للمنازل المتوسطة" },
+  { model: "Must PV1900M EXP — 8kW", power: 8000, voltage: 48, maxPanels: 14, maxPVwatt: 8000, minBattAh: 200, mppt: "150~450V", dualMPPT: true, note: "مناسب للمنازل الكبيرة" },
+  { model: "Must PV1900M EXP — 10kW", power: 10000, voltage: 48, maxPanels: 16, maxPVwatt: 10000, minBattAh: 300, mppt: "150~450V", dualMPPT: true, note: "مناسب للمنشآت التجارية" },
+  { model: "Must PV1900M EXP — 12kW Single Phase", power: 12000, voltage: 48, maxPanels: 20, maxPVwatt: 12000, minBattAh: 400, mppt: "150~450V", dualMPPT: true, note: "للمنشآت الكبيرة" },
+];
+
+// ───────── Battery selection
+type BatteryConfig = {
+  label: "موصى به" | "اقتصادي" | "متميز";
+  model: string;
+  voltage: number;
+  ah: number;
+  kwh: number;
+  qty: number;
+  maxCurrent?: number;
+  connection?: string;
+};
+
+function pickLithiumConfigs(requiredWh: number): BatteryConfig[] {
+  // Find smallest single-option meeting requirement
+  const ordered = [...LITHIUM_OPTIONS].sort((a, b) => a.kwh - b.kwh);
+  const sufficient = ordered.filter((o) => o.kwh * 1000 >= requiredWh);
+  const recommended = sufficient[0] ?? ordered[ordered.length - 1];
+
+  // Economy: stack the smallest module to reach requirement
+  const small = ordered[0];
+  const qtyEconomy = Math.max(1, Math.ceil(requiredWh / (small.kwh * 1000)));
+  const economy: BatteryConfig = {
+    label: "اقتصادي",
+    model: small.model,
+    voltage: small.voltage,
+    ah: small.ah * qtyEconomy,
+    kwh: small.kwh * qtyEconomy,
+    qty: qtyEconomy,
+    maxCurrent: small.maxCurrent * qtyEconomy,
+    connection: qtyEconomy > 1 ? "توازي" : "—",
+  };
+
+  const rec: BatteryConfig = {
+    label: "موصى به",
+    model: recommended.model,
+    voltage: recommended.voltage,
+    ah: recommended.ah,
+    kwh: recommended.kwh,
+    qty: 1,
+    maxCurrent: recommended.maxCurrent,
+    connection: "—",
+  };
+
+  // Premium: next size up if available
+  const idx = ordered.findIndex((o) => o.model === recommended.model);
+  const premiumOpt = ordered[idx + 1] ?? recommended;
+  const premium: BatteryConfig = {
+    label: "متميز",
+    model: premiumOpt.model,
+    voltage: premiumOpt.voltage,
+    ah: premiumOpt.ah,
+    kwh: premiumOpt.kwh,
+    qty: 1,
+    maxCurrent: premiumOpt.maxCurrent,
+    connection: "—",
+  };
+
+  return [rec, economy, premium];
+}
+
+function pickLeadAcidConfig(requiredWh: number, targetVoltage: 12 | 24 | 48): BatteryConfig {
+  const seriesCount = targetVoltage / LEADACID.voltage; // 4 for 48V
+  const onePackWh = LEADACID.voltage * LEADACID.ah * seriesCount;
+  const parallelStrings = Math.max(1, Math.ceil(requiredWh / onePackWh));
+  const totalQty = seriesCount * parallelStrings;
+  return {
+    label: "موصى به",
+    model: LEADACID.model,
+    voltage: targetVoltage,
+    ah: LEADACID.ah * parallelStrings,
+    kwh: (onePackWh * parallelStrings) / 1000,
+    qty: totalQty,
+    connection: `${seriesCount} على التوالي × ${parallelStrings} توازي`,
+  };
+}
+
+// ───────── UI helpers
+const CARD = "rounded-2xl border border-amber-500/30 bg-slate-900/60 backdrop-blur p-5 text-slate-100";
+const STAT = "rounded-xl border border-amber-500/20 bg-slate-800/60 p-4";
+
+function StepIndicator({ step }: { step: number }) {
+  const steps = ["النوع", "الأحمال", "البطاريات", "العاكس والألواح", "النتائج"];
+  return (
+    <div className="mb-6">
+      <Progress value={(step / 5) * 100} className="h-2 bg-slate-800" />
+      <div className="mt-3 flex justify-between text-xs text-slate-400">
+        {steps.map((s, i) => (
+          <div key={s} className={cn("text-center transition-colors", i + 1 <= step && "text-amber-400 font-bold")}>
+            {i + 1}. {s}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function SolarSystemDesigner() {
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [systemType, setSystemType] = useState<SystemType>("full");
+
+  const [nightHours, setNightHours] = useState(6);
+  const [nightAmps, setNightAmps] = useState(10);
+  const [dayAmps, setDayAmps] = useState(15);
+  const [dayHours, setDayHours] = useState(5);
+  const [battType, setBattType] = useState<BattType>("lithium");
+  const [season, setSeason] = useState<Season>("summer");
+
+  const [chosenBattery, setChosenBattery] = useState<BatteryConfig | null>(null);
+  const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
+
+  // ───────── Calculations
+  const calc = useMemo(() => {
+    const nightLoadW = nightAmps * 220;
+    const nightLoadActual = nightLoadW / INVERTER_EFF / (1 - WIRING_LOSS);
+    const nightEnergyNeeded_Wh = nightLoadActual * nightHours;
+
+    const requiredBankWh = nightEnergyNeeded_Wh / DOD[battType] / TEMP[season] / CHARGE_EFF[battType];
+
+    // Battery options
+    let batteryOptions: BatteryConfig[] = [];
+    if (battType === "lithium") {
+      batteryOptions = pickLithiumConfigs(requiredBankWh);
+    } else {
+      // Need to know inverter voltage; default 48V for big, 24V for small
+      const tentativeVoltage: 12 | 24 | 48 = nightLoadW > 3000 ? 48 : nightLoadW > 1500 ? 24 : 12;
+      batteryOptions = [pickLeadAcidConfig(requiredBankWh, tentativeVoltage)];
+    }
+
+    const selectedBattery = chosenBattery ?? batteryOptions[0];
+
+    // Inverter sizing
+    const peakAmps = Math.max(nightAmps, systemType === "full" ? dayAmps : 0);
+    const peakLoadW = peakAmps * 220 * 1.25;
+
+    const invCandidates = INVERTERS.filter(
+      (i) => i.power >= peakLoadW && i.voltage === selectedBattery.voltage,
+    );
+    const inverter = invCandidates[0] ?? INVERTERS.find((i) => i.power >= peakLoadW) ?? INVERTERS[INVERTERS.length - 1];
+
+    // Panel sizing
+    let panelsNeeded = 0;
+    let panelsCapped = 0;
+    let totalPVneeded_Wh = 0;
+    if (systemType === "full") {
+      const dayEnergyNeeded_Wh = (dayAmps * 220 * dayHours) / INVERTER_EFF;
+      const batteryRechargeWh = nightEnergyNeeded_Wh / CHARGE_EFF[battType];
+      totalPVneeded_Wh = dayEnergyNeeded_Wh + batteryRechargeWh;
+      panelsNeeded = Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF));
+      panelsCapped = Math.min(panelsNeeded, inverter.maxPanels);
+    }
+
+    // Available energy after losses
+    const availableWh = selectedBattery.kwh * 1000 * DOD[battType] * TEMP[season];
+    const actualNightRuntimeMin = (availableWh / nightLoadActual) * 60;
+
+    // Theoretical (no losses) runtime
+    const theoreticalMin = ((selectedBattery.kwh * 1000) / nightLoadW) * 60;
+
+    // Validations
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const oks: string[] = [];
+
+    if (selectedBattery.voltage !== inverter.voltage) errors.push("فولطية البطاريات لا تطابق فولطية العاكس");
+    else oks.push("توافق فولطية العاكس مع البطاريات");
+
+    if (peakLoadW > inverter.power * 1.25) errors.push("الحمل الذروي يتجاوز قدرة العاكس");
+    else oks.push("الحمل ضمن طاقة العاكس");
+
+    if (systemType === "full") {
+      if (panelsNeeded > inverter.maxPanels) warnings.push(`عدد الألواح المطلوب (${panelsNeeded}) يتجاوز حد العاكس (${inverter.maxPanels})`);
+      else oks.push("عدد الألواح ضمن حد MPPT");
+    }
+
+    if (battType === "leadacid" && selectedBattery.ah < inverter.minBattAh) {
+      warnings.push(`سعة البطاريات أقل من الموصى به للعاكس (${inverter.minBattAh}Ah)`);
+    }
+
+    if (nightEnergyNeeded_Wh > selectedBattery.kwh * 1000 * 0.8) {
+      warnings.push("الحمل الليلي يتجاوز 80% من سعة البطاريات — يُنصح بزيادة السعة");
+    } else {
+      oks.push("البطاريات كافية للحمل الليلي");
+    }
+
+    if (battType === "lithium" && selectedBattery.maxCurrent) {
+      const requiredCurrent = inverter.power / inverter.voltage;
+      if (selectedBattery.maxCurrent < requiredCurrent) {
+        errors.push(`تيار التفريغ الأقصى للبطاريات (${selectedBattery.maxCurrent}A) أقل من المطلوب (${requiredCurrent.toFixed(0)}A)`);
+      }
+    }
+
+    // Health score
+    let health = 100;
+    health -= errors.length * 25;
+    health -= warnings.length * 10;
+    health = Math.max(0, Math.min(100, health));
+
+    return {
+      nightLoadW, nightLoadActual, nightEnergyNeeded_Wh, requiredBankWh,
+      batteryOptions, selectedBattery, inverter,
+      panelsNeeded, panelsCapped, totalPVneeded_Wh,
+      availableWh, actualNightRuntimeMin, theoreticalMin,
+      errors, warnings, oks, health,
+      peakLoadW,
+    };
+  }, [nightAmps, nightHours, dayAmps, dayHours, battType, season, systemType, chosenBattery]);
+
+  // ───────── PDF
+  const downloadPdf = () => {
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const AMBER: [number, number, number] = [245, 158, 11];
+
+    // Report number
+    const lastNum = parseInt(localStorage.getItem("ufuk_design_report_no") || "1000", 10);
+    const reportNum = lastNum + 1;
+    localStorage.setItem("ufuk_design_report_no", String(reportNum));
+
+    // Header
+    pdf.setFillColor(...AMBER);
+    pdf.rect(0, 0, pageW, 28, "F");
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(20);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("UFUK AL-Basra", pageW / 2, 12, { align: "center" });
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("IT  -  Networking  -  Solar", pageW / 2, 18, { align: "center" });
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Solar System Design Report", pageW / 2, 25, { align: "center" });
+
+    let y = 36;
+    pdf.setTextColor(60, 60, 60);
+    pdf.setFontSize(9);
+    const dateStr = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+    pdf.text(`Date: ${dateStr}`, 12, y);
+    pdf.text(`Report No: #${reportNum}`, pageW - 12, y, { align: "right" });
+    y += 8;
+
+    // Section 1 — Customer
+    autoTable(pdf, {
+      startY: y,
+      head: [["Customer Info", ""]],
+      body: [
+        ["Name", customer.name || "—"],
+        ["Phone", customer.phone || "—"],
+        ["Address", customer.address || "—"],
+      ],
+      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
+      styles: { fontSize: 9 },
+      theme: "grid",
+    });
+    y = (pdf as any).lastAutoTable.finalY + 4;
+
+    // Section 2 — Requirements
+    autoTable(pdf, {
+      startY: y,
+      head: [["Requirements", ""]],
+      body: [
+        ["System Type", systemType === "battery" ? "Battery + Inverter" : "Full (Panels + Batteries + Inverter)"],
+        ["Night Load", `${nightAmps} A  /  ${calc.nightLoadW} W`],
+        ["Night Hours", `${nightHours} h`],
+        ...(systemType === "full" ? [
+          ["Day Load", `${dayAmps} A  /  ${dayAmps * 220} W`],
+          ["Day Hours", `${dayHours} h`],
+        ] : []),
+        ["Battery Type", battType === "lithium" ? "LiFePO4" : "Lead-Acid"],
+        ["Season", season],
+      ],
+      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
+      styles: { fontSize: 9 },
+      theme: "grid",
+    });
+    y = (pdf as any).lastAutoTable.finalY + 4;
+
+    // Section 3 — Components
+    const components: any[] = [
+      ["Inverter", calc.inverter.model, "1", `${calc.inverter.voltage}V  ${calc.inverter.mppt ?? ""}`],
+      ["Batteries", calc.selectedBattery.model, String(calc.selectedBattery.qty), calc.selectedBattery.connection ?? "—"],
+    ];
+    if (systemType === "full") {
+      components.push(["Solar Panels", "615W Mono", String(calc.panelsCapped), `Total ${(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW`]);
+    }
+    autoTable(pdf, {
+      startY: y,
+      head: [["Component", "Model", "Qty", "Notes"]],
+      body: components,
+      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
+      styles: { fontSize: 9 },
+      theme: "grid",
+    });
+    y = (pdf as any).lastAutoTable.finalY + 4;
+
+    // Section 4 — Engineering calculations
+    autoTable(pdf, {
+      startY: y,
+      head: [["Engineering Calculations", "Value"]],
+      body: [
+        ["Night load (W)", `${calc.nightLoadW.toFixed(0)} W`],
+        ["After inverter+wiring losses", `${calc.nightLoadActual.toFixed(0)} W`],
+        ["Night energy needed", `${calc.nightEnergyNeeded_Wh.toFixed(0)} Wh`],
+        ["Required bank (after DoD/Temp/Eff)", `${calc.requiredBankWh.toFixed(0)} Wh`],
+        ["Selected bank capacity", `${(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh`],
+        ["Available energy after losses", `${calc.availableWh.toFixed(0)} Wh`],
+        ...(systemType === "full" ? [
+          ["Total PV energy required", `${calc.totalPVneeded_Wh.toFixed(0)} Wh`],
+          ["Panels needed (theoretical)", String(calc.panelsNeeded)],
+          ["Panels installed (capped)", String(calc.panelsCapped)],
+        ] : []),
+      ],
+      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
+      styles: { fontSize: 9 },
+      theme: "grid",
+    });
+    y = (pdf as any).lastAutoTable.finalY + 4;
+
+    // Section 5 — Runtime
+    const h = Math.floor(calc.actualNightRuntimeMin / 60);
+    const m = Math.round(calc.actualNightRuntimeMin % 60);
+    autoTable(pdf, {
+      startY: y,
+      head: [["Expected Runtime", ""]],
+      body: [
+        ["Theoretical (no losses)", `${(calc.theoreticalMin / 60).toFixed(1)} h`],
+        ["Real runtime (after losses)", `${h} h ${m} min`],
+        ["Daytime", systemType === "full" ? "Continuous with sun" : "—"],
+      ],
+      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
+      styles: { fontSize: 9 },
+      theme: "grid",
+    });
+
+    // Footer
+    const pageCount = pdf.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text("This report is issued by UFUK AL-Basra Co. for Technology", pageW / 2, pageH - 14, { align: "center" });
+      pdf.text("sales@ufukbasra.com.iq  |  +964 771 699 2955  |  ufukalbasra.com", pageW / 2, pageH - 9, { align: "center" });
+      pdf.text("All calculations follow IEC 62109 international engineering standards", pageW / 2, pageH - 4, { align: "center" });
+    }
+
+    pdf.save(`ufuk-system-design-${reportNum}.pdf`);
+  };
+
+  const next = () => setStep((s) => (s < 5 ? ((s + 1) as any) : s));
+  const back = () => setStep((s) => (s > 1 ? ((s - 1) as any) : s));
+
+  const seasonIcon = season === "summer" ? Flame : season === "winter" ? Snowflake : Leaf;
+  const SeasonIcon = seasonIcon;
+
+  return (
+    <div dir="rtl" className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+      <style>{`
+        .reveal { animation: rv .5s ease-out both; }
+        @keyframes rv { from { opacity: 0; transform: translateY(14px);} to { opacity: 1; transform: translateY(0);} }
+      `}</style>
+
+      <div className="container mx-auto max-w-5xl px-4 py-10">
+        {/* Header */}
+        <div className="mb-6 text-center reveal">
+          <div className="mx-auto mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-900 shadow-[0_0_40px_-5px_rgba(245,158,11,0.7)]">
+            <Sun className="h-7 w-7" />
+          </div>
+          <h1 className="text-3xl font-extrabold text-amber-400">مصمم منظومات الطاقة الشمسية</h1>
+          <p className="mt-2 text-slate-400">أداة هندسية احترافية لتصميم منظومات Must الشمسية — UFUK AL-Basra</p>
+        </div>
+
+        <StepIndicator step={step} />
+
+        {/* STEP 1 — System Type */}
+        {step === 1 && (
+          <div className="reveal grid gap-4 md:grid-cols-2">
+            {[
+              { v: "battery" as SystemType, icon: Battery, title: "منظومة مع بطاريات فقط", desc: "بطاريات + عاكس (بدون ألواح شمسية)" },
+              { v: "full" as SystemType, icon: Sun, title: "منظومة متكاملة", desc: "بطاريات + عاكس + ألواح شمسية" },
+            ].map(({ v, icon: Icon, title, desc }) => (
+              <button
+                key={v}
+                onClick={() => { setSystemType(v); setStep(2); }}
+                className={cn(
+                  "rounded-2xl border-2 p-8 text-right transition-all",
+                  systemType === v
+                    ? "border-amber-400 bg-amber-500/10 shadow-[0_0_40px_-10px_rgba(245,158,11,0.7)]"
+                    : "border-slate-700 bg-slate-900/60 hover:border-amber-500/50"
+                )}
+              >
+                <Icon className="mb-3 h-10 w-10 text-amber-400" />
+                <div className="text-xl font-extrabold">{title}</div>
+                <div className="mt-1 text-sm text-slate-400">{desc}</div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* STEP 2 — Loads */}
+        {step === 2 && (
+          <div className="reveal space-y-5">
+            <div className={CARD}>
+              <h3 className="mb-3 text-lg font-bold text-amber-400">قسم أ: الأحمال الليلية</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label>كم ساعة تحتاج تجهيز ليلي؟</Label>
+                  <Input type="number" min={1} max={12} value={nightHours} onChange={(e) => setNightHours(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                </div>
+                <div>
+                  <Label>كم أمبير الحمل الليلي؟ (A عند 220V)</Label>
+                  <Input type="number" min={0} value={nightAmps} onChange={(e) => setNightAmps(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                </div>
+              </div>
+              <div className="mt-3 rounded-lg bg-slate-800/60 px-3 py-2 text-sm text-slate-300">
+                ⚡ الطاقة الليلية المطلوبة: <span className="font-bold text-amber-400">{(nightAmps * 220 * nightHours).toLocaleString()} Wh</span>
+              </div>
+            </div>
+
+            {systemType === "full" && (
+              <div className={CARD}>
+                <h3 className="mb-3 text-lg font-bold text-amber-400">قسم ب: الأحمال النهارية</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>كم أمبير الحمل النهاري؟ (مع وجود الشمس)</Label>
+                    <Input type="number" min={0} value={dayAmps} onChange={(e) => setDayAmps(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                  </div>
+                  <div>
+                    <Label>كم ساعة الحمل النهاري؟</Label>
+                    <Input type="number" min={1} max={8} value={dayHours} onChange={(e) => setDayHours(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className={CARD}>
+              <h3 className="mb-3 text-lg font-bold text-amber-400">نوع البطارية المطلوبة</h3>
+              <RadioGroup value={battType} onValueChange={(v) => { setBattType(v as BattType); setChosenBattery(null); }} className="grid gap-3 md:grid-cols-2">
+                {[
+                  { v: "lithium", label: "ليثيوم LiFePO4 — Must LP Series", hint: "موصى به — عمر طويل، DoD 80%" },
+                  { v: "leadacid", label: "ليد أسيد 12V/200Ah — Must", hint: "اقتصادي — DoD 50%" },
+                ].map((o) => (
+                  <label key={o.v} className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition",
+                    battType === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-700 bg-slate-800/40 hover:border-amber-500/40"
+                  )}>
+                    <RadioGroupItem value={o.v} className="mt-1" />
+                    <div>
+                      <div className="font-bold">{o.label}</div>
+                      <div className="text-xs text-slate-400">{o.hint}</div>
+                    </div>
+                  </label>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <div className={CARD}>
+              <h3 className="mb-3 text-lg font-bold text-amber-400">الموسم (للتعويض الحراري)</h3>
+              <RadioGroup value={season} onValueChange={(v) => setSeason(v as Season)} className="grid gap-3 md:grid-cols-3">
+                {[
+                  { v: "summer", label: "صيف", icon: Flame, t: "~45°C" },
+                  { v: "moderate", label: "معتدل", icon: Leaf, t: "~30°C" },
+                  { v: "winter", label: "شتاء", icon: Snowflake, t: "~20°C" },
+                ].map((o) => {
+                  const I = o.icon;
+                  return (
+                    <label key={o.v} className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition",
+                      season === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-700 bg-slate-800/40 hover:border-amber-500/40"
+                    )}>
+                      <RadioGroupItem value={o.v} />
+                      <I className="h-5 w-5 text-amber-400" />
+                      <div>
+                        <div className="font-bold">{o.label}</div>
+                        <div className="text-xs text-slate-400">{o.t}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </RadioGroup>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3 — Battery sizing */}
+        {step === 3 && (
+          <div className="reveal space-y-5">
+            <div className={CARD}>
+              <h3 className="mb-2 text-lg font-bold text-amber-400">حساب البطاريات</h3>
+              <div className="grid gap-3 md:grid-cols-3 text-sm">
+                <div className={STAT}>الطاقة الليلية: <span className="font-bold text-amber-400">{calc.nightEnergyNeeded_Wh.toFixed(0)} Wh</span></div>
+                <div className={STAT}>سعة البنك المطلوبة: <span className="font-bold text-amber-400">{calc.requiredBankWh.toFixed(0)} Wh</span></div>
+                <div className={STAT}>(بعد DoD/حرارة/كفاءة شحن)</div>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-amber-400">اختر التكوين</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              {calc.batteryOptions.map((opt, i) => {
+                const active = (chosenBattery?.model === opt.model && chosenBattery?.qty === opt.qty) || (!chosenBattery && i === 0);
+                return (
+                  <button
+                    key={`${opt.model}-${opt.qty}`}
+                    onClick={() => setChosenBattery(opt)}
+                    className={cn(
+                      "rounded-2xl border-2 p-4 text-right transition-all",
+                      active ? "border-amber-400 bg-amber-500/10 shadow-[0_0_25px_-8px_rgba(245,158,11,0.6)]" : "border-slate-700 bg-slate-900/50 hover:border-amber-500/40"
+                    )}
+                  >
+                    <div className="mb-2 inline-block rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-300">{opt.label}</div>
+                    <div className="font-extrabold">{opt.model}</div>
+                    <div className="mt-2 text-sm text-slate-300 space-y-1">
+                      <div>الفولطية: {opt.voltage}V</div>
+                      <div>السعة: {opt.ah}Ah</div>
+                      <div>الطاقة: {opt.kwh.toFixed(2)} kWh</div>
+                      <div>الكمية: {opt.qty}</div>
+                      {opt.connection && opt.connection !== "—" && <div>التوصيل: {opt.connection}</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4 — Inverter & Panels */}
+        {step === 4 && (
+          <div className="reveal space-y-5">
+            <div className={CARD}>
+              <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-400"><Zap className="h-5 w-5" /> العاكس المقترح</div>
+              <div className="text-xl font-extrabold">{calc.inverter.model}</div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2 text-sm">
+                <div className={STAT}>القدرة: <b className="text-amber-400">{calc.inverter.power} W</b></div>
+                <div className={STAT}>الفولطية: <b className="text-amber-400">{calc.inverter.voltage}V</b></div>
+                <div className={STAT}>MPPT: <b className="text-amber-400">{calc.inverter.mppt ?? "—"}</b> {calc.inverter.dualMPPT && "(Dual)"}</div>
+                <div className={STAT}>الحد الأقصى للألواح: <b className="text-amber-400">{calc.inverter.maxPanels}</b></div>
+              </div>
+              <div className="mt-3 text-xs text-slate-400">{calc.inverter.note}</div>
+            </div>
+
+            {systemType === "full" && (
+              <div className={CARD}>
+                <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-400"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
+                <div className="grid gap-3 md:grid-cols-3 text-sm">
+                  <div className={STAT}>العدد: <b className="text-amber-400">{calc.panelsCapped} لوح</b></div>
+                  <div className={STAT}>القدرة الكلية: <b className="text-amber-400">{(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</b></div>
+                  <div className={STAT}>إنتاج يومي متوقع: <b className="text-amber-400">{((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</b></div>
+                </div>
+                {calc.panelsNeeded > calc.inverter.maxPanels && (
+                  <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+                    ⚠️ المطلوب نظرياً {calc.panelsNeeded} لوح لكن العاكس محدود بـ {calc.inverter.maxPanels} — يُنصح بترقية العاكس
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* STEP 5 — Results */}
+        {step === 5 && (
+          <div className="reveal space-y-5">
+            {/* Health score */}
+            <div className={CARD}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-slate-400">مؤشر صحة المنظومة</div>
+                  <div className="text-4xl font-extrabold text-amber-400">{calc.health}%</div>
+                </div>
+                <SeasonIcon className="h-10 w-10 text-amber-400" />
+              </div>
+              <Progress value={calc.health} className="mt-3 h-3 bg-slate-800" />
+            </div>
+
+            {/* Cards grid */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className={CARD}>
+                <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold"><Battery className="h-5 w-5" /> بنك البطاريات المقترح</div>
+                <div className="font-extrabold">{calc.selectedBattery.model}</div>
+                <div className="mt-2 text-sm text-slate-300">
+                  الفولطية: {calc.selectedBattery.voltage}V | السعة: {calc.selectedBattery.ah}Ah | {calc.selectedBattery.kwh.toFixed(2)} kWh
+                </div>
+                <div className="mt-1 text-sm text-slate-400">الطاقة القابلة للاستخدام: <b className="text-amber-300">{calc.availableWh.toFixed(0)} Wh</b></div>
+              </div>
+
+              <div className={CARD}>
+                <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold"><Bolt className="h-5 w-5" /> العاكس المقترح</div>
+                <div className="font-extrabold">{calc.inverter.model}</div>
+                <div className="mt-2 text-sm text-slate-300">نظام: {calc.inverter.voltage}V | MPPT: {calc.inverter.mppt ?? "—"}</div>
+                <div className="mt-1 text-sm text-slate-400">الحد الأقصى للألواح: {calc.inverter.maxPanels}</div>
+              </div>
+
+              {systemType === "full" && (
+                <div className={CARD}>
+                  <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
+                  <div className="font-extrabold">{calc.panelsCapped} لوح بقدرة 615W</div>
+                  <div className="mt-2 text-sm text-slate-300">إجمالي القدرة: {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</div>
+                  <div className="mt-1 text-sm text-slate-400">إنتاج يومي متوقع: {((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</div>
+                </div>
+              )}
+
+              <div className={CARD}>
+                <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold">⏱️ وقت التشغيل الفعلي</div>
+                <div className="text-sm text-slate-300">ليلاً: <b className="text-amber-300">{Math.floor(calc.actualNightRuntimeMin / 60)} ساعة {Math.round(calc.actualNightRuntimeMin % 60)} دقيقة</b></div>
+                <div className="text-sm text-slate-400">نظري (بدون خسائر): {(calc.theoreticalMin / 60).toFixed(1)} ساعة</div>
+                {systemType === "full" && <div className="text-sm text-slate-400">نهاراً: مستمر مع الشمس</div>}
+              </div>
+            </div>
+
+            {/* Loss breakdown */}
+            <Collapsible>
+              <CollapsibleTrigger className="w-full rounded-xl border border-amber-500/30 bg-slate-900/60 px-4 py-3 text-right font-bold text-amber-400 hover:bg-slate-900/80">
+                📊 تفاصيل الخسائر (اضغط للعرض)
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-2 rounded-xl border border-amber-500/20 bg-slate-900/50 p-4 text-sm">
+                <div>خسائر العاكس 10%: <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * 0.10).toFixed(0)} Wh</b></div>
+                <div>خسائر الأسلاك 3%: <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * 0.03).toFixed(0)} Wh</b></div>
+                <div>عمق التفريغ {(DOD[battType] * 100).toFixed(0)}%: <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * (1 - DOD[battType])).toFixed(0)} Wh</b></div>
+                <div>تأثير الحرارة ({season}): <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * (1 - TEMP[season])).toFixed(0)} Wh</b></div>
+                <div className="mt-2 border-t border-amber-500/20 pt-2">الطاقة الفعلية المتاحة: <b className="text-amber-400">{calc.availableWh.toFixed(0)} Wh</b> (من أصل {(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh)</div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Validation checklist */}
+            <div className={CARD}>
+              <div className="mb-3 font-bold text-amber-400">قائمة التحقق الهندسية</div>
+              <ul className="space-y-2 text-sm">
+                {calc.errors.map((e) => (
+                  <li key={e} className="flex items-start gap-2 text-red-400"><XCircle className="mt-0.5 h-4 w-4 shrink-0" /> {e}</li>
+                ))}
+                {calc.warnings.map((w) => (
+                  <li key={w} className="flex items-start gap-2 text-amber-300"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {w}</li>
+                ))}
+                {calc.oks.map((o) => (
+                  <li key={o} className="flex items-start gap-2 text-emerald-400"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {o}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Customer info before PDF */}
+            <div className={CARD}>
+              <div className="mb-3 font-bold text-amber-400">بيانات العميل (اختياري — تظهر في التقرير)</div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <Input placeholder="اسم العميل" value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} className="bg-slate-800 border-slate-700 text-slate-100" />
+                <Input placeholder="رقم الهاتف" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} className="bg-slate-800 border-slate-700 text-slate-100" />
+                <Input placeholder="العنوان" value={customer.address} onChange={(e) => setCustomer({ ...customer, address: e.target.value })} className="bg-slate-800 border-slate-700 text-slate-100" />
+              </div>
+            </div>
+
+            <Button onClick={downloadPdf} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 font-bold hover:from-amber-400 hover:to-amber-500" size="lg">
+              <Download className="ml-2 h-5 w-5" /> تحميل تقرير PDF
+            </Button>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="mt-8 flex items-center justify-between gap-3">
+          <Button variant="outline" onClick={back} disabled={step === 1} className="border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
+            <ChevronRight className="ml-1 h-4 w-4" /> السابق
+          </Button>
+          {step < 5 ? (
+            <Button onClick={next} className="bg-amber-500 text-slate-900 hover:bg-amber-400 font-bold">
+              التالي <ChevronLeft className="mr-1 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => setStep(1)} className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+              تصميم جديد
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
