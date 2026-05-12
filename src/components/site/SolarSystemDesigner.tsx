@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, Download, Sun, TriangleAlert, XCircle, Zap, Leaf, Snowflake, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -255,145 +255,81 @@ export default function SolarSystemDesigner() {
     };
   }, [nightAmps, nightHours, dayAmps, dayHours, battType, season, systemType, chosenBattery]);
 
-  // ───────── PDF
-  const downloadPdf = () => {
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const AMBER: [number, number, number] = [245, 158, 11];
+  // ───────── PDF (renders Arabic-friendly DOM via html2canvas)
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [reportNumber, setReportNumber] = useState<number>(() => {
+    const n = parseInt(localStorage.getItem("ufuk_design_report_no") || "1000", 10);
+    return n + 1;
+  });
 
-    // Report number
-    const lastNum = parseInt(localStorage.getItem("ufuk_design_report_no") || "1000", 10);
-    const reportNum = lastNum + 1;
-    localStorage.setItem("ufuk_design_report_no", String(reportNum));
+  const downloadPdf = async () => {
+    if (!reportRef.current) return;
+    setDownloading(true);
+    try {
+      // Reserve and persist report number
+      localStorage.setItem("ufuk_design_report_no", String(reportNumber));
 
-    // Header
-    pdf.setFillColor(...AMBER);
-    pdf.rect(0, 0, pageW, 28, "F");
-    pdf.setTextColor(15, 23, 42);
-    pdf.setFontSize(20);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("UFUK AL-Basra", pageW / 2, 12, { align: "center" });
-    pdf.setFontSize(10);
-    pdf.setFont("helvetica", "normal");
-    pdf.text("IT  -  Networking  -  Solar", pageW / 2, 18, { align: "center" });
-    pdf.setFontSize(11);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("Solar System Design Report", pageW / 2, 25, { align: "center" });
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
 
-    let y = 36;
-    pdf.setTextColor(60, 60, 60);
-    pdf.setFontSize(9);
-    const dateStr = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
-    pdf.text(`Date: ${dateStr}`, 12, y);
-    pdf.text(`Report No: #${reportNum}`, pageW - 12, y, { align: "right" });
-    y += 8;
+      const marginX = 8;
+      const availW = pageW - marginX * 2;
+      const ratio = canvas.height / canvas.width;
+      const imgH = availW * ratio;
+      let y = 10;
+      let remaining = imgH;
+      let srcY = 0;
+      const maxBodyH = pageH - y - 16;
 
-    // Section 1 — Customer
-    autoTable(pdf, {
-      startY: y,
-      head: [["Customer Info", ""]],
-      body: [
-        ["Name", customer.name || "—"],
-        ["Phone", customer.phone || "—"],
-        ["Address", customer.address || "—"],
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
+      if (imgH <= maxBodyH) {
+        pdf.addImage(imgData, "JPEG", marginX, y, availW, imgH);
+      } else {
+        const pxPerMm = canvas.width / availW;
+        while (remaining > 0) {
+          const sliceMm = Math.min(maxBodyH, remaining);
+          const slicePx = sliceMm * pxPerMm;
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = slicePx;
+          const ctx = sliceCanvas.getContext("2d")!;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+          ctx.drawImage(canvas, 0, srcY, canvas.width, slicePx, 0, 0, canvas.width, slicePx);
+          const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.95);
+          pdf.addImage(sliceData, "JPEG", marginX, y, availW, sliceMm);
+          srcY += slicePx;
+          remaining -= sliceMm;
+          if (remaining > 0) {
+            pdf.addPage();
+            y = 10;
+          }
+        }
+      }
 
-    // Section 2 — Requirements
-    autoTable(pdf, {
-      startY: y,
-      head: [["Requirements", ""]],
-      body: [
-        ["System Type", systemType === "battery" ? "Battery + Inverter" : "Full (Panels + Batteries + Inverter)"],
-        ["Night Load", `${nightAmps} A  /  ${calc.nightLoadW} W`],
-        ["Night Hours", `${nightHours} h`],
-        ...(systemType === "full" ? [
-          ["Day Load", `${dayAmps} A  /  ${dayAmps * 220} W`],
-          ["Day Hours", `${dayHours} h`],
-        ] : []),
-        ["Battery Type", battType === "lithium" ? "LiFePO4" : "Lead-Acid"],
-        ["Season", season],
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
+      // Footer on each page
+      const pageCount = pdf.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text("ufukalbasra.com", pageW / 2, pageH - 12, { align: "center" });
+        pdf.text("sales@ufukbasra.com.iq", pageW / 2, pageH - 8, { align: "center" });
+        pdf.text("+964 771 699 2955", pageW / 2, pageH - 4, { align: "center" });
+      }
 
-    // Section 3 — Components
-    const components: any[] = [
-      ["Inverter", calc.inverter.model, "1", `${calc.inverter.voltage}V  ${calc.inverter.mppt ?? ""}`],
-      ["Batteries", calc.selectedBattery.model, String(calc.selectedBattery.qty), calc.selectedBattery.connection ?? "—"],
-    ];
-    if (systemType === "full") {
-      components.push(["Solar Panels", "615W Mono", String(calc.panelsCapped), `Total ${(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW`]);
+      pdf.save(`ufuk-system-design-${reportNumber}.pdf`);
+      setReportNumber((n) => n + 1);
+    } finally {
+      setDownloading(false);
     }
-    autoTable(pdf, {
-      startY: y,
-      head: [["Component", "Model", "Qty", "Notes"]],
-      body: components,
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
-
-    // Section 4 — Engineering calculations
-    autoTable(pdf, {
-      startY: y,
-      head: [["Engineering Calculations", "Value"]],
-      body: [
-        ["Night load (W)", `${calc.nightLoadW.toFixed(0)} W`],
-        ["After inverter+wiring losses", `${calc.nightLoadActual.toFixed(0)} W`],
-        ["Night energy needed", `${calc.nightEnergyNeeded_Wh.toFixed(0)} Wh`],
-        ["Required bank (after DoD/Temp/Eff)", `${calc.requiredBankWh.toFixed(0)} Wh`],
-        ["Selected bank capacity", `${(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh`],
-        ["Available energy after losses", `${calc.availableWh.toFixed(0)} Wh`],
-        ...(systemType === "full" ? [
-          ["Total PV energy required", `${calc.totalPVneeded_Wh.toFixed(0)} Wh`],
-          ["Panels needed (theoretical)", String(calc.panelsNeeded)],
-          ["Panels installed (capped)", String(calc.panelsCapped)],
-        ] : []),
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
-
-    // Section 5 — Runtime
-    const h = Math.floor(calc.actualNightRuntimeMin / 60);
-    const m = Math.round(calc.actualNightRuntimeMin % 60);
-    autoTable(pdf, {
-      startY: y,
-      head: [["Expected Runtime", ""]],
-      body: [
-        ["Theoretical (no losses)", `${(calc.theoreticalMin / 60).toFixed(1)} h`],
-        ["Real runtime (after losses)", `${h} h ${m} min`],
-        ["Daytime", systemType === "full" ? "Continuous with sun" : "—"],
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-
-    // Footer
-    const pageCount = pdf.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text("This report is issued by UFUK AL-Basra Co. for Technology", pageW / 2, pageH - 14, { align: "center" });
-      pdf.text("sales@ufukbasra.com.iq  |  +964 771 699 2955  |  ufukalbasra.com", pageW / 2, pageH - 9, { align: "center" });
-      pdf.text("All calculations follow IEC 62109 international engineering standards", pageW / 2, pageH - 4, { align: "center" });
-    }
-
-    pdf.save(`ufuk-system-design-${reportNum}.pdf`);
   };
 
   const next = () => setStep((s) => (s < 5 ? ((s + 1) as any) : s));
@@ -696,8 +632,8 @@ export default function SolarSystemDesigner() {
               </div>
             </div>
 
-            <Button onClick={downloadPdf} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 font-bold hover:from-amber-400 hover:to-amber-500" size="lg">
-              <Download className="ml-2 h-5 w-5" /> تحميل تقرير PDF
+            <Button onClick={downloadPdf} disabled={downloading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 font-bold hover:from-amber-400 hover:to-amber-500" size="lg">
+              <Download className="ml-2 h-5 w-5" /> {downloading ? "جاري التحضير..." : "تحميل تقرير PDF"}
             </Button>
           </div>
         )}
@@ -718,6 +654,110 @@ export default function SolarSystemDesigner() {
           )}
         </div>
       </div>
+
+      {/* Off-screen PDF report (rendered as image so Arabic works) */}
+      <div style={{ position: "fixed", left: "-10000px", top: 0, width: "794px", background: "#ffffff" }} aria-hidden>
+        <div ref={reportRef} dir="rtl" style={{ width: "794px", padding: "24px", background: "#ffffff", color: "#0f172a", fontFamily: "'Cairo', system-ui, sans-serif" }}>
+          {/* Header */}
+          <div style={{ background: "#F59E0B", padding: "18px 16px", borderRadius: "8px", color: "#0f172a", textAlign: "center" }}>
+            <div style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "1px" }}>أُفق البصرة | UFUK AL-Basra</div>
+            <div style={{ fontSize: "12px", marginTop: "4px" }}>IT • Networking • Solar</div>
+            <div style={{ fontSize: "15px", fontWeight: 700, marginTop: "6px" }}>تقرير تصميم منظومة الطاقة الشمسية</div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", fontSize: "12px", color: "#475569" }}>
+            <div>التاريخ: {new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" })}</div>
+            <div>رقم التقرير: #{reportNumber}</div>
+          </div>
+
+          {/* Section 1 — Customer */}
+          <PdfSection title="بيانات العميل">
+            <PdfRow label="الاسم" value={customer.name || "—"} />
+            <PdfRow label="الهاتف" value={customer.phone || "—"} />
+            <PdfRow label="العنوان" value={customer.address || "—"} />
+          </PdfSection>
+
+          {/* Section 2 — Requirements */}
+          <PdfSection title="ملخص المتطلبات">
+            <PdfRow label="نوع المنظومة" value={systemType === "battery" ? "بطاريات + عاكس فقط" : "متكاملة (بطاريات + عاكس + ألواح)"} />
+            <PdfRow label="الحمل الليلي" value={`${nightAmps} A  /  ${calc.nightLoadW} W`} />
+            <PdfRow label="ساعات التشغيل الليلي" value={`${nightHours} ساعة`} />
+            {systemType === "full" && <PdfRow label="الحمل النهاري" value={`${dayAmps} A  /  ${dayAmps * 220} W`} />}
+            {systemType === "full" && <PdfRow label="ساعات التشغيل النهاري" value={`${dayHours} ساعة`} />}
+            <PdfRow label="نوع البطارية" value={battType === "lithium" ? "ليثيوم LiFePO4" : "ليد أسيد"} />
+            <PdfRow label="الموسم" value={season === "summer" ? "صيف" : season === "winter" ? "شتاء" : "معتدل"} />
+          </PdfSection>
+
+          {/* Section 3 — Components */}
+          <PdfSection title="المكونات المقترحة">
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+              <thead>
+                <tr style={{ background: "#F59E0B", color: "#0f172a" }}>
+                  <th style={pdfTh}>المكون</th>
+                  <th style={pdfTh}>الموديل</th>
+                  <th style={pdfTh}>الكمية</th>
+                  <th style={pdfTh}>الملاحظات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style={pdfTd}>العاكس</td><td style={pdfTd}>{calc.inverter.model}</td><td style={pdfTd}>1</td><td style={pdfTd}>{calc.inverter.voltage}V {calc.inverter.mppt ? `، MPPT ${calc.inverter.mppt}` : ""}</td></tr>
+                <tr><td style={pdfTd}>البطاريات</td><td style={pdfTd}>{calc.selectedBattery.model}</td><td style={pdfTd}>{calc.selectedBattery.qty}</td><td style={pdfTd}>{calc.selectedBattery.connection ?? "—"}</td></tr>
+                {systemType === "full" && (
+                  <tr><td style={pdfTd}>الألواح الشمسية</td><td style={pdfTd}>615W Mono</td><td style={pdfTd}>{calc.panelsCapped}</td><td style={pdfTd}>إجمالي {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</td></tr>
+                )}
+              </tbody>
+            </table>
+          </PdfSection>
+
+          {/* Section 4 — Engineering */}
+          <PdfSection title="الحسابات الهندسية">
+            <PdfRow label="الحمل الليلي" value={`${calc.nightLoadW.toFixed(0)} W`} />
+            <PdfRow label="بعد خسائر العاكس والأسلاك" value={`${calc.nightLoadActual.toFixed(0)} W`} />
+            <PdfRow label="الطاقة الليلية المطلوبة" value={`${calc.nightEnergyNeeded_Wh.toFixed(0)} Wh`} />
+            <PdfRow label="سعة البنك المطلوبة (بعد DoD/حرارة)" value={`${calc.requiredBankWh.toFixed(0)} Wh`} />
+            <PdfRow label="سعة البنك المختار" value={`${(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh`} />
+            <PdfRow label="الطاقة المتاحة بعد الخسائر" value={`${calc.availableWh.toFixed(0)} Wh`} />
+            {systemType === "full" && <PdfRow label="إجمالي طاقة الألواح المطلوبة" value={`${calc.totalPVneeded_Wh.toFixed(0)} Wh`} />}
+            {systemType === "full" && <PdfRow label="عدد الألواح المطلوب نظرياً" value={String(calc.panelsNeeded)} />}
+            {systemType === "full" && <PdfRow label="عدد الألواح المثبت (ضمن حد العاكس)" value={String(calc.panelsCapped)} />}
+          </PdfSection>
+
+          {/* Section 5 — Runtime */}
+          <PdfSection title="وقت التشغيل المتوقع">
+            <PdfRow label="نظري (بدون خسائر)" value={`${(calc.theoreticalMin / 60).toFixed(1)} ساعة`} />
+            <PdfRow label="واقعي (بعد الخسائر)" value={`${Math.floor(calc.actualNightRuntimeMin / 60)} ساعة و ${Math.round(calc.actualNightRuntimeMin % 60)} دقيقة`} />
+            <PdfRow label="نهاراً" value={systemType === "full" ? "مستمر مع وجود الشمس" : "—"} />
+          </PdfSection>
+
+          {/* Footer */}
+          <div style={{ marginTop: "20px", borderTop: "2px solid #F59E0B", paddingTop: "10px", fontSize: "11px", color: "#475569", textAlign: "center", lineHeight: 1.7 }}>
+            <div>هذا التقرير صادر من شركة أُفق البصرة للتقنية</div>
+            <div>جميع الحسابات وفق المعايير الهندسية الدولية IEC 62109</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+const pdfTh: React.CSSProperties = { padding: "8px 6px", textAlign: "right", fontWeight: 700, border: "1px solid #fbbf24" };
+const pdfTd: React.CSSProperties = { padding: "7px 6px", textAlign: "right", border: "1px solid #e5e7eb" };
+
+function PdfSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginTop: "14px" }}>
+      <div style={{ background: "#F59E0B", color: "#0f172a", padding: "6px 10px", fontWeight: 700, fontSize: "13px", borderRadius: "4px 4px 0 0" }}>{title}</div>
+      <div style={{ border: "1px solid #fbbf24", borderTop: "none", padding: "8px 10px", borderRadius: "0 0 4px 4px" }}>{children}</div>
+    </div>
+  );
+}
+
+function PdfRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px dashed #e5e7eb", fontSize: "12px" }}>
+      <span style={{ color: "#475569" }}>{label}</span>
+      <span style={{ fontWeight: 700, color: "#0f172a" }}>{value}</span>
+    </div>
+  );
+}
+
