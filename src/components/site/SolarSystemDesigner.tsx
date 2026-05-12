@@ -542,7 +542,7 @@ export default function SolarSystemDesigner() {
     const tierComparison = (Object.keys(CHARGE_TIERS[battType]) as ChargeTier[]).map((t) => {
       const cR = CHARGE_TIERS[battType][t];
       const reqA = selectedBattery.ah * cR;
-      const invForCharge = Math.max(1, Math.ceil(reqA / INVERTER_MAX_CHARGE_A));
+      const invForCharge = t === "economy" ? 1 : Math.max(1, Math.ceil(reqA / INVERTER_MAX_CHARGE_A));
       const invTotal = Math.max(invertersForLoad, invForCharge);
       const panelsTier = systemType === "full"
         ? Math.min(Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF)), inverter.maxPanels * invTotal)
