@@ -361,13 +361,47 @@ export default function SolarSystemDesigner() {
     const actualNightRuntimeMin = (availableWh / nightLoadActual) * 60;
     const theoreticalMin = ((selectedBattery.kwh * 1000) / nightLoadW) * 60;
 
+    // ── Charging feasibility
+    const totalChargeAmps = invertersNeeded * INVERTER_MAX_CHARGE_A;
+    const dayLoadDCamps = systemType === "full"
+      ? (dayAmps * 220) / (systemVoltage * INVERTER_EFF) : 0;
+    const availableChargeAmps = Math.max(0, totalChargeAmps - dayLoadDCamps);
+    const fullChargeHoursTheoretical = requiredChargeA > 0 ? selectedBattery.ah / requiredChargeA : 0;
+    const fullChargeHoursActual = availableChargeAmps > 0
+      ? selectedBattery.ah / availableChargeAmps : Infinity;
+    const rechargeableWh = availableChargeAmps * systemVoltage * PEAK_SUN_HOURS * 0.97;
+    const nightDischargedWh = nightEnergyNeeded_Wh;
+    let chargeStatus: "ok" | "tight" | "fail" = "ok";
+    let daysToFullCharge = 1;
+    if (rechargeableWh >= nightDischargedWh * 1.1) chargeStatus = "ok";
+    else if (rechargeableWh >= nightDischargedWh) chargeStatus = "tight";
+    else { chargeStatus = "fail"; daysToFullCharge = nightDischargedWh / Math.max(1, rechargeableWh); }
+
+    // Modules per inverter ratio (lithium only)
+    const liModules = battType === "lithium" ? Math.round(selectedBattery.kwh / LI_MODULE_KWH) : 0;
+    const modulesPerInverter = invertersNeeded > 0 ? Math.ceil(liModules / invertersNeeded) : 0;
+    const maxModulesAllowed = MAX_MODULES_PER_INVERTER_LI[chargeTier];
+    const modulesRatioOk = battType !== "lithium" || modulesPerInverter <= maxModulesAllowed;
+
+    // Tier comparison
+    const tierComparison = (Object.keys(CHARGE_TIERS[battType]) as ChargeTier[]).map((t) => {
+      const cR = CHARGE_TIERS[battType][t];
+      const reqA = selectedBattery.ah * cR;
+      const invForCharge = Math.max(1, Math.ceil(reqA / INVERTER_MAX_CHARGE_A));
+      const invTotal = Math.max(invertersForLoad, invForCharge);
+      const panelsTier = systemType === "full"
+        ? Math.min(Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF)), inverter.maxPanels * invTotal)
+        : 0;
+      return { tier: t, cRate: cR, inverters: invTotal, batteries: selectedBattery.qty, panels: panelsTier, hours: cR > 0 ? 1 / cR : 0 };
+    });
+
     // Validations
     const errors: string[] = [];
     const warnings: string[] = [];
     const oks: string[] = [];
 
     if (parallelExceeded) {
-      errors.push(`الحمل يتجاوز حد التوازي للعاكس (${MAX_PARALLEL_INVERTERS} × 12kW = 72kW) — يلزم نظام ثلاثي الطور أو تقسيم الأحمال`);
+      errors.push(`الحمل/الشحن يتجاوز حد التوازي للعاكس (${MAX_PARALLEL_INVERTERS} × 12kW = 72kW) — يلزم نظام ثلاثي الطور أو تقسيم الأحمال`);
     }
     if (selectedBattery.voltage !== systemVoltage) {
       errors.push("فولطية البطاريات لا تطابق فولطية العاكس");
@@ -380,7 +414,8 @@ export default function SolarSystemDesigner() {
       oks.push(`الحمل (${(peakLoadW / 1000).toFixed(1)}kW) ضمن قدرة العواكس (${(totalInverterPower / 1000).toFixed(0)}kW)`);
     }
     if (invertersNeeded > 1 && invertersNeeded <= MAX_PARALLEL_INVERTERS) {
-      warnings.push(`نظام موزع: ${invertersNeeded} عواكس على التوازي — يلزم Parallel Cable Kit وضبط Master/Slave`);
+      const reason = inverterBottleneck === "charging" ? "متطلبات سرعة الشحن" : "قدرة الحمل";
+      warnings.push(`نظام موزع: ${invertersNeeded} عواكس على التوازي — عدد العواكس محدد بـ${reason}`);
     }
     if (battType === "leadacid" && selectedBattery.qty > 40) {
       warnings.push(`عدد كبير من بطاريات الليد أسيد (${selectedBattery.qty}) — يُنصح بشدة بالليثيوم للأنظمة الكبيرة`);
@@ -397,6 +432,18 @@ export default function SolarSystemDesigner() {
       } else {
         oks.push("تيار البطاريات يكفي قدرة العواكس");
       }
+    }
+    if (!modulesRatioOk) {
+      errors.push(`نسبة البطاريات للعواكس (${modulesPerInverter}/عاكس) تتجاوز الحد للفئة المختارة (${maxModulesAllowed}/عاكس) — أضف عاكساً أو اختر فئة أبطأ`);
+    } else if (battType === "lithium" && liModules > 0) {
+      oks.push(`نسبة البطاريات/العواكس ${modulesPerInverter}:1 (الحد ${maxModulesAllowed}:1)`);
+    }
+    if (chargeStatus === "fail") {
+      errors.push(`الشحن لا يكتمل في يوم واحد — يحتاج ~${daysToFullCharge.toFixed(1)} يوم. أضف عواكس أو ألواح إضافية`);
+    } else if (chargeStatus === "tight") {
+      warnings.push("الشحن يكتمل بشق الأنفس — لا هامش للأيام الغائمة");
+    } else {
+      oks.push("المنظومة تشحن بالكامل خلال يوم شمسي واحد");
     }
     if (nightEnergyNeeded_Wh > selectedBattery.kwh * 1000 * 0.8) {
       warnings.push("الحمل الليلي يتجاوز 80% من سعة البطاريات — يُنصح بزيادة السعة");
