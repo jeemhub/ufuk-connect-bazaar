@@ -35,6 +35,69 @@ const CHARGE_TIERS: Record<"lithium" | "leadacid", Record<ChargeTier, number>> =
 };
 const MAX_MODULES_PER_INVERTER_LI: Record<ChargeTier, number> = { economy: 7, balanced: 3, fast: 1 };
 
+// ───────── Appliances (Mode 1: Easy)
+type Appliance = { id: string; name: string; icon: string; watts: number; qty: number; nightHours: number; dayHours: number };
+const newId = () => Math.random().toString(36).slice(2, 9);
+const DEFAULT_APPLIANCES: Appliance[] = [
+  { id: newId(), name: "مكيف 1.5طن", icon: "🌡️", watts: 1500, qty: 1, nightHours: 0, dayHours: 8 },
+  { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 10, nightHours: 6, dayHours: 0 },
+  { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 1, nightHours: 8, dayHours: 8 },
+  { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 1, nightHours: 4, dayHours: 2 },
+  { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 2, nightHours: 6, dayHours: 4 },
+];
+const QUICK_CHIPS: Array<{ name: string; icon: string; watts: number }> = [
+  { name: "غسالة", icon: "🧺", watts: 500 },
+  { name: "مضخة ماء", icon: "🚿", watts: 750 },
+  { name: "شاشة كمبيوتر", icon: "🖥️", watts: 200 },
+  { name: "راوتر", icon: "📡", watts: 20 },
+  { name: "شاحن موبايل", icon: "🔌", watts: 15 },
+  { name: "ميكروويف", icon: "🍽️", watts: 1200 },
+];
+type PresetKey = "small" | "medium" | "large" | "shop";
+const PRESETS: Record<PresetKey, { label: string; icon: string; appliances: Appliance[] }> = {
+  small: {
+    label: "منزل صغير", icon: "🏠",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 5, nightHours: 6, dayHours: 0 },
+      { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 1, nightHours: 8, dayHours: 8 },
+      { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 1, nightHours: 4, dayHours: 2 },
+      { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 2, nightHours: 6, dayHours: 4 },
+    ],
+  },
+  medium: {
+    label: "منزل متوسط", icon: "🏡",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 8, nightHours: 6, dayHours: 0 },
+      { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 1, nightHours: 8, dayHours: 8 },
+      { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 2, nightHours: 4, dayHours: 2 },
+      { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 3, nightHours: 6, dayHours: 4 },
+      { id: newId(), name: "مكيف 1.5طن", icon: "🌡️", watts: 1500, qty: 1, nightHours: 4, dayHours: 6 },
+      { id: newId(), name: "غسالة", icon: "🧺", watts: 500, qty: 1, nightHours: 0, dayHours: 1 },
+    ],
+  },
+  large: {
+    label: "منزل كبير", icon: "🏢",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 15, nightHours: 6, dayHours: 0 },
+      { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 2, nightHours: 8, dayHours: 8 },
+      { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 3, nightHours: 4, dayHours: 2 },
+      { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 5, nightHours: 6, dayHours: 4 },
+      { id: newId(), name: "مكيف 1.5طن", icon: "🌡️", watts: 1500, qty: 2, nightHours: 5, dayHours: 8 },
+      { id: newId(), name: "مضخة ماء", icon: "🚿", watts: 750, qty: 1, nightHours: 0, dayHours: 1 },
+      { id: newId(), name: "غسالة", icon: "🧺", watts: 500, qty: 1, nightHours: 0, dayHours: 1 },
+    ],
+  },
+  shop: {
+    label: "محل تجاري", icon: "🏭",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 20, qty: 20, nightHours: 4, dayHours: 10 },
+      { id: newId(), name: "مكيف 2طن", icon: "🌡️", watts: 2200, qty: 2, nightHours: 0, dayHours: 10 },
+      { id: newId(), name: "ثلاجة عرض", icon: "🧊", watts: 400, qty: 2, nightHours: 8, dayHours: 12 },
+      { id: newId(), name: "شاشة عرض", icon: "🖥️", watts: 200, qty: 2, nightHours: 0, dayHours: 10 },
+    ],
+  },
+};
+
 type SystemType = "battery" | "full";
 type BattType = "lithium" | "leadacid";
 type Season = "summer" | "moderate" | "winter";
