@@ -439,7 +439,10 @@ export default function SolarSystemDesigner() {
     const requiredBankWh = nightEnergyNeeded_Wh / DOD[battType] / TEMP[season] / CHARGE_EFF[battType];
 
     // ── Inverter sizing (multi-inverter, load-based first)
-    const peakAmps = Math.max(nightAmps, systemType === "full" ? dayAmps : 0);
+    // In backup mode: peak occurs at night (day runs from grid). In standalone: take max.
+    const peakAmps = coverageMode === "standalone" && systemType === "full"
+      ? Math.max(nightAmps, dayAmps)
+      : nightAmps;
     const peakLoadW = peakAmps * 220;
     const peakLoadWithMargin = peakLoadW * 1.25;
 
@@ -468,7 +471,11 @@ export default function SolarSystemDesigner() {
     // ── Charging tier — required charge current = bankAh × C-rate
     const cRate = CHARGE_TIERS[battType][chargeTier];
     const requiredChargeA = selectedBattery.ah * cRate;
-    const invertersForCharging = Math.max(1, Math.ceil(requiredChargeA / INVERTER_MAX_CHARGE_A));
+    // For "economy" tier, accept slower charging — do NOT add inverters just to meet the C-rate.
+    // For balanced/fast, the user explicitly wants speed → enforce the requirement.
+    const invertersForCharging = chargeTier === "economy"
+      ? 1
+      : Math.max(1, Math.ceil(requiredChargeA / INVERTER_MAX_CHARGE_A));
 
     // Final inverter count
     let invertersNeeded = Math.max(invertersForLoad, invertersForCharging);
