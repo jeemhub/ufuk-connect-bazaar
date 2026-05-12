@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, Download, Sun, TriangleAlert, XCircle, Zap, Leaf, Snowflake, Flame } from "lucide-react";
+import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, Download, Sun, TriangleAlert, XCircle, Zap, Leaf, Snowflake, Flame, Sparkles, Building2, Factory, Home as HomeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,17 +20,22 @@ const PANEL_WATT = 615;
 const PEAK_SUN_HOURS = 5.5;
 const PANEL_EFF = 0.80;
 
+// Multi-inverter constants
+const MAX_INVERTER_W = 12000;        // Largest single-phase Must inverter
+const MAX_PARALLEL_INVERTERS = 6;    // Must PV1900M EXP supports up to 6 in parallel
+const PARALLEL_BATT_LIMIT_LP = 15;   // LP3000 PRO supports max 15 units parallel
+
 type SystemType = "battery" | "full";
 type BattType = "lithium" | "leadacid";
 type Season = "summer" | "moderate" | "winter";
 
 // ───────── Must product database
-type LithiumOpt = { model: string; kwh: number; voltage: number; ah: number; maxCurrent: number; maxInverter: number };
+type LithiumOpt = { model: string; kwh: number; voltage: number; ah: number; maxCurrent: number };
 const LITHIUM_OPTIONS: LithiumOpt[] = [
-  { model: "Must LP1600 SE — 5kWh", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100, maxInverter: 5 },
-  { model: "Must LP3000 PRO — 5kWh module", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100, maxInverter: 5 },
-  { model: "Must LP3000 PRO — 10kWh (2 modules)", kwh: 10.24, voltage: 48, ah: 200, maxCurrent: 200, maxInverter: 10 },
-  { model: "Must LP3000 PRO — 15kWh (3 modules)", kwh: 15.36, voltage: 48, ah: 300, maxCurrent: 200, maxInverter: 10 },
+  { model: "Must LP1600 SE — 5kWh", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100 },
+  { model: "Must LP3000 PRO — 5kWh module", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100 },
+  { model: "Must LP3000 PRO — 10kWh (2 modules)", kwh: 10.24, voltage: 48, ah: 200, maxCurrent: 200 },
+  { model: "Must LP3000 PRO — 15kWh (3 modules)", kwh: 15.36, voltage: 48, ah: 300, maxCurrent: 200 },
 ];
 const LEADACID = { model: "Must 12V/200Ah", voltage: 12, ah: 200, kwh: 12 * 200 / 1000 };
 
@@ -47,8 +52,9 @@ const INVERTERS: Inverter[] = [
   { model: "Must PV1900M EXP — 10kW", power: 10000, voltage: 48, maxPanels: 16, maxPVwatt: 10000, minBattAh: 300, mppt: "150~450V", dualMPPT: true, note: "مناسب للمنشآت التجارية" },
   { model: "Must PV1900M EXP — 12kW Single Phase", power: 12000, voltage: 48, maxPanels: 20, maxPVwatt: 12000, minBattAh: 400, mppt: "150~450V", dualMPPT: true, note: "للمنشآت الكبيرة" },
 ];
+const INVERTER_12K = INVERTERS[INVERTERS.length - 1];
 
-// ───────── Battery selection
+// ───────── Battery selection (scales for any size)
 type BatteryConfig = {
   label: "موصى به" | "اقتصادي" | "متميز";
   model: string;
@@ -61,55 +67,51 @@ type BatteryConfig = {
 };
 
 function pickLithiumConfigs(requiredWh: number): BatteryConfig[] {
-  // Find smallest single-option meeting requirement
-  const ordered = [...LITHIUM_OPTIONS].sort((a, b) => a.kwh - b.kwh);
-  const sufficient = ordered.filter((o) => o.kwh * 1000 >= requiredWh);
-  const recommended = sufficient[0] ?? ordered[ordered.length - 1];
+  // Use 5kWh module (LP3000 PRO module) as base for the recommended scaled stack.
+  const base5 = LITHIUM_OPTIONS[1];   // 5.12kWh module
+  const base10 = LITHIUM_OPTIONS[2];  // 10.24kWh unit
+  const base15 = LITHIUM_OPTIONS[3];  // 15.36kWh unit
 
-  // Economy: stack the smallest module to reach requirement
-  const small = ordered[0];
-  const qtyEconomy = Math.max(1, Math.ceil(requiredWh / (small.kwh * 1000)));
+  const qty5 = Math.max(1, Math.ceil(requiredWh / (base5.kwh * 1000)));
+  const qty10 = Math.max(1, Math.ceil(requiredWh / (base10.kwh * 1000)));
+  const qty15 = Math.max(1, Math.ceil(requiredWh / (base15.kwh * 1000)));
+
+  const recommended: BatteryConfig = {
+    label: "موصى به",
+    model: base10.model,
+    voltage: base10.voltage,
+    ah: base10.ah * qty10,
+    kwh: base10.kwh * qty10,
+    qty: qty10,
+    maxCurrent: base10.maxCurrent * qty10,
+    connection: qty10 > 1 ? `${qty10} وحدة بالتوازي على 48V` : "—",
+  };
   const economy: BatteryConfig = {
     label: "اقتصادي",
-    model: small.model,
-    voltage: small.voltage,
-    ah: small.ah * qtyEconomy,
-    kwh: small.kwh * qtyEconomy,
-    qty: qtyEconomy,
-    maxCurrent: small.maxCurrent * qtyEconomy,
-    connection: qtyEconomy > 1 ? "توازي" : "—",
+    model: base5.model,
+    voltage: base5.voltage,
+    ah: base5.ah * qty5,
+    kwh: base5.kwh * qty5,
+    qty: qty5,
+    maxCurrent: base5.maxCurrent * qty5,
+    connection: qty5 > 1 ? `${qty5} وحدة بالتوازي على 48V` : "—",
   };
-
-  const rec: BatteryConfig = {
-    label: "موصى به",
-    model: recommended.model,
-    voltage: recommended.voltage,
-    ah: recommended.ah,
-    kwh: recommended.kwh,
-    qty: 1,
-    maxCurrent: recommended.maxCurrent,
-    connection: "—",
-  };
-
-  // Premium: next size up if available
-  const idx = ordered.findIndex((o) => o.model === recommended.model);
-  const premiumOpt = ordered[idx + 1] ?? recommended;
   const premium: BatteryConfig = {
     label: "متميز",
-    model: premiumOpt.model,
-    voltage: premiumOpt.voltage,
-    ah: premiumOpt.ah,
-    kwh: premiumOpt.kwh,
-    qty: 1,
-    maxCurrent: premiumOpt.maxCurrent,
-    connection: "—",
+    model: base15.model,
+    voltage: base15.voltage,
+    ah: base15.ah * qty15,
+    kwh: base15.kwh * qty15,
+    qty: qty15,
+    maxCurrent: base15.maxCurrent * qty15,
+    connection: qty15 > 1 ? `${qty15} وحدة بالتوازي على 48V` : "—",
   };
 
-  return [rec, economy, premium];
+  return [recommended, economy, premium];
 }
 
 function pickLeadAcidConfig(requiredWh: number, targetVoltage: 12 | 24 | 48): BatteryConfig {
-  const seriesCount = targetVoltage / LEADACID.voltage; // 4 for 48V
+  const seriesCount = targetVoltage / LEADACID.voltage;
   const onePackWh = LEADACID.voltage * LEADACID.ah * seriesCount;
   const parallelStrings = Math.max(1, Math.ceil(requiredWh / onePackWh));
   const totalQty = seriesCount * parallelStrings;
@@ -122,6 +124,21 @@ function pickLeadAcidConfig(requiredWh: number, targetVoltage: 12 | 24 | 48): Ba
     qty: totalQty,
     connection: `${seriesCount} على التوالي × ${parallelStrings} توازي`,
   };
+}
+
+// ───────── Scale tier
+type ScaleTier = {
+  key: "small" | "medium" | "large" | "commercial" | "exceeded";
+  label: string;
+  icon: any;
+  desc: string;
+};
+function scaleTierFor(invCount: number): ScaleTier {
+  if (invCount <= 1) return { key: "small", label: "منزلي صغير", icon: HomeIcon, desc: "حتى ~12kW" };
+  if (invCount === 2) return { key: "medium", label: "منزلي متوسط", icon: HomeIcon, desc: "حتى ~24kW" };
+  if (invCount <= 4) return { key: "large", label: "منزلي كبير", icon: Building2, desc: "حتى ~48kW" };
+  if (invCount <= 6) return { key: "commercial", label: "تجاري", icon: Factory, desc: "حتى ~72kW" };
+  return { key: "exceeded", label: "يتجاوز حد التوازي", icon: TriangleAlert, desc: "يلزم تصميم خاص ثلاثي الطور" };
 }
 
 // ───────── UI helpers
@@ -144,6 +161,97 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
+// ───────── Multi-inverter wiring diagram
+function MultiInverterDiagram({ count, hasPV, voltage }: { count: number; hasPV: boolean; voltage: number }) {
+  const n = Math.max(1, Math.min(count, MAX_PARALLEL_INVERTERS));
+  const W = 760;
+  const invH = 60;
+  const gapY = 14;
+  const topPad = hasPV ? 110 : 30;
+  const stackH = n * invH + (n - 1) * gapY;
+  const H = topPad + stackH + 60;
+
+  const battX = 30, battW = 130, battY = topPad, battH = stackH;
+  const invX = 280, invW = 200;
+  const acBusX = invX + invW + 50;
+  const panelX = acBusX + 60;
+
+  const wires: { d: string; color: string }[] = [];
+  // DC bus (battery → each inverter): + (red) top, − (black) bottom
+  for (let i = 0; i < n; i++) {
+    const y = topPad + i * (invH + gapY) + invH / 2;
+    wires.push({ d: `M ${battX + battW} ${y - 10} H ${invX}`, color: "#ef4444" });
+    wires.push({ d: `M ${battX + battW} ${y + 10} H ${invX}`, color: "#111827" });
+    // AC out (blue) to AC bus
+    wires.push({ d: `M ${invX + invW} ${y} H ${acBusX}`, color: "#2563eb" });
+  }
+  // AC bus vertical
+  wires.push({ d: `M ${acBusX} ${topPad} V ${topPad + stackH}`, color: "#2563eb" });
+  // AC bus → distribution panel
+  wires.push({ d: `M ${acBusX} ${topPad + stackH / 2} H ${acBusX + 50}`, color: "#2563eb" });
+
+  // PV strings into each inverter (from top)
+  if (hasPV) {
+    for (let i = 0; i < n; i++) {
+      const y = topPad + i * (invH + gapY) + 14;
+      const x = invX + invW / 2;
+      wires.push({ d: `M ${x} 70 V ${y}`, color: "#f59e0b" });
+    }
+  }
+
+  return (
+    <div className="w-full overflow-x-auto rounded-xl border border-amber-500/30 bg-[#F8FAFC] p-4">
+      <style>{`@keyframes solar-flow { to { stroke-dashoffset: -20; } }`}</style>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 680 }}>
+        <defs>
+          <pattern id="sd-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#E2E8F0" strokeWidth="0.5" />
+          </pattern>
+        </defs>
+        <rect width={W} height={H} fill="url(#sd-grid)" />
+
+        {/* Solar array */}
+        {hasPV && (
+          <g>
+            <rect x={invX - 30} y={20} width={invW + 60} height={50} rx={6} fill="#FEF3C7" stroke="#F59E0B" strokeWidth={1.5} />
+            <text x={invX + invW / 2} y={50} textAnchor="middle" fontSize="13" fontWeight="700" fill="#b45309">☀ مصفوفة الألواح الشمسية</text>
+          </g>
+        )}
+
+        {/* Battery bank */}
+        <rect x={battX} y={battY} width={battW} height={battH} rx={8} fill="#FEF3C7" stroke="#F59E0B" strokeWidth={2} />
+        <text x={battX + battW / 2} y={battY + battH / 2 - 8} textAnchor="middle" fontSize="13" fontWeight="800" fill="#b45309">بنك البطاريات</text>
+        <text x={battX + battW / 2} y={battY + battH / 2 + 12} textAnchor="middle" fontSize="12" fontWeight="700" fill="#92400e">{voltage}V DC</text>
+
+        {/* Wires (animated) */}
+        {wires.map((w, i) => (
+          <path key={i} d={w.d} fill="none" stroke={w.color} strokeWidth={2.4}
+            strokeDasharray="6 4" style={{ animation: "solar-flow 1s linear infinite" }} />
+        ))}
+
+        {/* Inverters */}
+        {Array.from({ length: n }).map((_, i) => {
+          const y = topPad + i * (invH + gapY);
+          return (
+            <g key={i}>
+              <rect x={invX} y={y} width={invW} height={invH} rx={6} fill="#F1F5F9" stroke="#3B82F6" strokeWidth={2} />
+              <text x={invX + invW / 2} y={y + 24} textAnchor="middle" fontSize="12" fontWeight="700" fill="#1d4ed8">عاكس {i + 1} — Must 12kW</text>
+              <text x={invX + invW / 2} y={y + 42} textAnchor="middle" fontSize="10" fill="#64748b">{i === 0 ? "Master" : `Slave ${i}`}</text>
+              <text x={invX - 6} y={y + invH / 2 - 6} textAnchor="end" fontSize="9" fontWeight="700" fill="#ef4444">+DC</text>
+              <text x={invX - 6} y={y + invH / 2 + 14} textAnchor="end" fontSize="9" fontWeight="700" fill="#111827">−DC</text>
+            </g>
+          );
+        })}
+
+        {/* Distribution panel */}
+        <rect x={acBusX + 50} y={topPad + stackH / 2 - 30} width={140} height={60} rx={6} fill="#ECFDF5" stroke="#10B981" strokeWidth={2} />
+        <text x={acBusX + 120} y={topPad + stackH / 2 + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#047857">لوحة التوزيع</text>
+        <text x={acBusX + 120} y={topPad + stackH / 2 + 20} textAnchor="middle" fontSize="10" fill="#065f46">AC 220V</text>
+      </svg>
+    </div>
+  );
+}
+
 export default function SolarSystemDesigner() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [systemType, setSystemType] = useState<SystemType>("full");
@@ -158,7 +266,17 @@ export default function SolarSystemDesigner() {
   const [chosenBattery, setChosenBattery] = useState<BatteryConfig | null>(null);
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
 
-  // ───────── Calculations
+  const loadExample = () => {
+    setSystemType("full");
+    setNightAmps(150); setNightHours(5);
+    setDayAmps(100); setDayHours(6);
+    setBattType("lithium");
+    setSeason("summer");
+    setChosenBattery(null);
+    setStep(5);
+  };
+
+  // ───────── Calculations (multi-inverter aware)
   const calc = useMemo(() => {
     const nightLoadW = nightAmps * 220;
     const nightLoadActual = nightLoadW / INVERTER_EFF / (1 - WIRING_LOSS);
@@ -166,44 +284,62 @@ export default function SolarSystemDesigner() {
 
     const requiredBankWh = nightEnergyNeeded_Wh / DOD[battType] / TEMP[season] / CHARGE_EFF[battType];
 
-    // Battery options
+    // ── Inverter sizing (multi-inverter)
+    const peakAmps = Math.max(nightAmps, systemType === "full" ? dayAmps : 0);
+    const peakLoadW = peakAmps * 220;
+    const peakLoadWithMargin = peakLoadW * 1.25;
+
+    let invertersNeeded = 1;
+    let inverter: Inverter = INVERTERS[0];
+    let parallelExceeded = false;
+
+    if (peakLoadWithMargin <= 0) {
+      inverter = INVERTERS[0];
+    } else if (peakLoadWithMargin <= MAX_INVERTER_W) {
+      // Fits in single inverter — pick smallest 48V unit (or any voltage) that fits
+      const candidates = INVERTERS.filter((i) => i.power >= peakLoadWithMargin);
+      inverter = candidates[0] ?? INVERTER_12K;
+      invertersNeeded = 1;
+    } else {
+      invertersNeeded = Math.ceil(peakLoadWithMargin / MAX_INVERTER_W);
+      inverter = INVERTER_12K;
+      if (invertersNeeded > MAX_PARALLEL_INVERTERS) {
+        parallelExceeded = true;
+      }
+    }
+
+    const totalInverterPower = invertersNeeded * inverter.power;
+    const systemVoltage = inverter.voltage;
+
+    // ── Battery options (always sized for required Wh)
     let batteryOptions: BatteryConfig[] = [];
     if (battType === "lithium") {
       batteryOptions = pickLithiumConfigs(requiredBankWh);
     } else {
-      // Need to know inverter voltage; default 48V for big, 24V for small
-      const tentativeVoltage: 12 | 24 | 48 = nightLoadW > 3000 ? 48 : nightLoadW > 1500 ? 24 : 12;
-      batteryOptions = [pickLeadAcidConfig(requiredBankWh, tentativeVoltage)];
+      batteryOptions = [pickLeadAcidConfig(requiredBankWh, systemVoltage as 12 | 24 | 48)];
     }
-
     const selectedBattery = chosenBattery ?? batteryOptions[0];
 
-    // Inverter sizing
-    const peakAmps = Math.max(nightAmps, systemType === "full" ? dayAmps : 0);
-    const peakLoadW = peakAmps * 220 * 1.25;
-
-    const invCandidates = INVERTERS.filter(
-      (i) => i.power >= peakLoadW && i.voltage === selectedBattery.voltage,
-    );
-    const inverter = invCandidates[0] ?? INVERTERS.find((i) => i.power >= peakLoadW) ?? INVERTERS[INVERTERS.length - 1];
-
-    // Panel sizing
+    // ── Panel sizing distributed across inverters
     let panelsNeeded = 0;
     let panelsCapped = 0;
     let totalPVneeded_Wh = 0;
+    let panelsPerInverter = 0;
+    let stringsPerInverter = 0;
     if (systemType === "full") {
       const dayEnergyNeeded_Wh = (dayAmps * 220 * dayHours) / INVERTER_EFF;
       const batteryRechargeWh = nightEnergyNeeded_Wh / CHARGE_EFF[battType];
       totalPVneeded_Wh = dayEnergyNeeded_Wh + batteryRechargeWh;
       panelsNeeded = Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF));
-      panelsCapped = Math.min(panelsNeeded, inverter.maxPanels);
+      const totalMaxPanels = inverter.maxPanels * invertersNeeded;
+      panelsCapped = Math.min(panelsNeeded, totalMaxPanels);
+      panelsPerInverter = Math.ceil(panelsCapped / invertersNeeded);
+      stringsPerInverter = inverter.dualMPPT ? 2 : 1;
     }
 
     // Available energy after losses
     const availableWh = selectedBattery.kwh * 1000 * DOD[battType] * TEMP[season];
     const actualNightRuntimeMin = (availableWh / nightLoadActual) * 60;
-
-    // Theoretical (no losses) runtime
     const theoreticalMin = ((selectedBattery.kwh * 1000) / nightLoadW) * 60;
 
     // Validations
@@ -211,51 +347,64 @@ export default function SolarSystemDesigner() {
     const warnings: string[] = [];
     const oks: string[] = [];
 
-    if (selectedBattery.voltage !== inverter.voltage) errors.push("فولطية البطاريات لا تطابق فولطية العاكس");
-    else oks.push("توافق فولطية العاكس مع البطاريات");
-
-    if (peakLoadW > inverter.power * 1.25) errors.push("الحمل الذروي يتجاوز قدرة العاكس");
-    else oks.push("الحمل ضمن طاقة العاكس");
-
-    if (systemType === "full") {
-      if (panelsNeeded > inverter.maxPanels) warnings.push(`عدد الألواح المطلوب (${panelsNeeded}) يتجاوز حد العاكس (${inverter.maxPanels})`);
-      else oks.push("عدد الألواح ضمن حد MPPT");
+    if (parallelExceeded) {
+      errors.push(`الحمل يتجاوز حد التوازي للعاكس (${MAX_PARALLEL_INVERTERS} × 12kW = 72kW) — يلزم نظام ثلاثي الطور أو تقسيم الأحمال`);
     }
-
-    if (battType === "leadacid" && selectedBattery.ah < inverter.minBattAh) {
-      warnings.push(`سعة البطاريات أقل من الموصى به للعاكس (${inverter.minBattAh}Ah)`);
+    if (selectedBattery.voltage !== systemVoltage) {
+      errors.push("فولطية البطاريات لا تطابق فولطية العاكس");
+    } else {
+      oks.push(`توافق فولطية النظام (${systemVoltage}V)`);
     }
-
+    if (peakLoadW > totalInverterPower) {
+      errors.push("الحمل الذروي يتجاوز إجمالي قدرة العواكس");
+    } else {
+      oks.push(`الحمل (${(peakLoadW / 1000).toFixed(1)}kW) ضمن قدرة العواكس (${(totalInverterPower / 1000).toFixed(0)}kW)`);
+    }
+    if (invertersNeeded > 1 && invertersNeeded <= MAX_PARALLEL_INVERTERS) {
+      warnings.push(`نظام موزع: ${invertersNeeded} عواكس على التوازي — يلزم Parallel Cable Kit وضبط Master/Slave`);
+    }
+    if (battType === "leadacid" && selectedBattery.qty > 40) {
+      warnings.push(`عدد كبير من بطاريات الليد أسيد (${selectedBattery.qty}) — يُنصح بشدة بالليثيوم للأنظمة الكبيرة`);
+    }
+    if (systemType === "full" && panelsNeeded > inverter.maxPanels * invertersNeeded) {
+      warnings.push(`عدد الألواح المطلوب (${panelsNeeded}) يتجاوز حد العواكس (${inverter.maxPanels * invertersNeeded})`);
+    } else if (systemType === "full") {
+      oks.push("توزيع الألواح ضمن قدرة MPPT للعواكس");
+    }
+    if (battType === "lithium" && selectedBattery.maxCurrent) {
+      const requiredCurrent = totalInverterPower / systemVoltage;
+      if (selectedBattery.maxCurrent < requiredCurrent) {
+        warnings.push(`تيار التفريغ الأقصى للبطاريات (${selectedBattery.maxCurrent}A) أقل من المطلوب للعواكس (${requiredCurrent.toFixed(0)}A)`);
+      } else {
+        oks.push("تيار البطاريات يكفي قدرة العواكس");
+      }
+    }
     if (nightEnergyNeeded_Wh > selectedBattery.kwh * 1000 * 0.8) {
       warnings.push("الحمل الليلي يتجاوز 80% من سعة البطاريات — يُنصح بزيادة السعة");
     } else {
       oks.push("البطاريات كافية للحمل الليلي");
     }
 
-    if (battType === "lithium" && selectedBattery.maxCurrent) {
-      const requiredCurrent = inverter.power / inverter.voltage;
-      if (selectedBattery.maxCurrent < requiredCurrent) {
-        errors.push(`تيار التفريغ الأقصى للبطاريات (${selectedBattery.maxCurrent}A) أقل من المطلوب (${requiredCurrent.toFixed(0)}A)`);
-      }
-    }
-
-    // Health score
+    // Health
     let health = 100;
     health -= errors.length * 25;
     health -= warnings.length * 10;
     health = Math.max(0, Math.min(100, health));
 
+    const tier = scaleTierFor(invertersNeeded);
+
     return {
       nightLoadW, nightLoadActual, nightEnergyNeeded_Wh, requiredBankWh,
-      batteryOptions, selectedBattery, inverter,
-      panelsNeeded, panelsCapped, totalPVneeded_Wh,
+      batteryOptions, selectedBattery,
+      inverter, invertersNeeded, totalInverterPower, systemVoltage, parallelExceeded,
+      panelsNeeded, panelsCapped, totalPVneeded_Wh, panelsPerInverter, stringsPerInverter,
       availableWh, actualNightRuntimeMin, theoreticalMin,
       errors, warnings, oks, health,
-      peakLoadW,
+      peakLoadW, tier,
     };
   }, [nightAmps, nightHours, dayAmps, dayHours, battType, season, systemType, chosenBattery]);
 
-  // ───────── PDF (renders Arabic-friendly DOM via html2canvas)
+  // ───────── PDF
   const reportRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [reportNumber, setReportNumber] = useState<number>(() => {
@@ -267,13 +416,10 @@ export default function SolarSystemDesigner() {
     if (!reportRef.current) return;
     setDownloading(true);
     try {
-      // Reserve and persist report number
       localStorage.setItem("ufuk_design_report_no", String(reportNumber));
 
       const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
+        scale: 2, backgroundColor: "#ffffff", useCORS: true,
       });
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -307,14 +453,10 @@ export default function SolarSystemDesigner() {
           pdf.addImage(sliceData, "JPEG", marginX, y, availW, sliceMm);
           srcY += slicePx;
           remaining -= sliceMm;
-          if (remaining > 0) {
-            pdf.addPage();
-            y = 10;
-          }
+          if (remaining > 0) { pdf.addPage(); y = 10; }
         }
       }
 
-      // Footer on each page
       const pageCount = pdf.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i);
@@ -337,6 +479,7 @@ export default function SolarSystemDesigner() {
 
   const seasonIcon = season === "summer" ? Flame : season === "winter" ? Snowflake : Leaf;
   const SeasonIcon = seasonIcon;
+  const TierIcon = calc.tier.icon;
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#F8FAFC] text-slate-900" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
@@ -354,11 +497,14 @@ export default function SolarSystemDesigner() {
           </div>
           <h1 className="text-3xl font-extrabold text-amber-600">مصمم منظومات الطاقة الشمسية</h1>
           <p className="mt-2 text-slate-500">أداة هندسية احترافية لتصميم منظومات Must الشمسية — UFUK AL-Basra</p>
+          <Button onClick={loadExample} variant="outline" className="mt-4 border-amber-500/50 text-amber-700 hover:bg-amber-50">
+            <Sparkles className="ml-2 h-4 w-4" /> مثال تلقائي (150A / 5 ساعات)
+          </Button>
         </div>
 
         <StepIndicator step={step} />
 
-        {/* STEP 1 — System Type */}
+        {/* STEP 1 */}
         {step === 1 && (
           <div className="reveal grid gap-4 md:grid-cols-2">
             {[
@@ -383,7 +529,7 @@ export default function SolarSystemDesigner() {
           </div>
         )}
 
-        {/* STEP 2 — Loads */}
+        {/* STEP 2 */}
         {step === 2 && (
           <div className="reveal space-y-5">
             <div className={CARD}>
@@ -408,7 +554,7 @@ export default function SolarSystemDesigner() {
                 <h3 className="mb-3 text-lg font-bold text-amber-600">قسم ب: الأحمال النهارية</h3>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label>كم أمبير الحمل النهاري؟ (مع وجود الشمس)</Label>
+                    <Label>كم أمبير الحمل النهاري؟</Label>
                     <Input type="number" min={0} value={dayAmps} onChange={(e) => setDayAmps(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
                   </div>
                   <div>
@@ -468,14 +614,14 @@ export default function SolarSystemDesigner() {
           </div>
         )}
 
-        {/* STEP 3 — Battery sizing */}
+        {/* STEP 3 */}
         {step === 3 && (
           <div className="reveal space-y-5">
             <div className={CARD}>
               <h3 className="mb-2 text-lg font-bold text-amber-600">حساب البطاريات</h3>
               <div className="grid gap-3 md:grid-cols-3 text-sm">
                 <div className={STAT}>الطاقة الليلية: <span className="font-bold text-amber-600">{calc.nightEnergyNeeded_Wh.toFixed(0)} Wh</span></div>
-                <div className={STAT}>سعة البنك المطلوبة: <span className="font-bold text-amber-600">{calc.requiredBankWh.toFixed(0)} Wh</span></div>
+                <div className={STAT}>سعة البنك المطلوبة: <span className="font-bold text-amber-600">{(calc.requiredBankWh / 1000).toFixed(1)} kWh</span></div>
                 <div className={STAT}>(بعد DoD/حرارة/كفاءة شحن)</div>
               </div>
             </div>
@@ -486,7 +632,7 @@ export default function SolarSystemDesigner() {
                 const active = (chosenBattery?.model === opt.model && chosenBattery?.qty === opt.qty) || (!chosenBattery && i === 0);
                 return (
                   <button
-                    key={`${opt.model}-${opt.qty}`}
+                    key={`${opt.model}-${opt.qty}-${i}`}
                     onClick={() => setChosenBattery(opt)}
                     className={cn(
                       "rounded-2xl border-2 p-4 text-right transition-all",
@@ -509,18 +655,23 @@ export default function SolarSystemDesigner() {
           </div>
         )}
 
-        {/* STEP 4 — Inverter & Panels */}
+        {/* STEP 4 */}
         {step === 4 && (
           <div className="reveal space-y-5">
             <div className={CARD}>
-              <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-600"><Zap className="h-5 w-5" /> العاكس المقترح</div>
-              <div className="text-xl font-extrabold">{calc.inverter.model}</div>
+              <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-600"><Zap className="h-5 w-5" /> العواكس المقترحة</div>
+              <div className="text-xl font-extrabold">{calc.invertersNeeded} × {calc.inverter.model}</div>
               <div className="mt-3 grid gap-3 md:grid-cols-2 text-sm">
-                <div className={STAT}>القدرة: <b className="text-amber-600">{calc.inverter.power} W</b></div>
-                <div className={STAT}>الفولطية: <b className="text-amber-600">{calc.inverter.voltage}V</b></div>
+                <div className={STAT}>إجمالي القدرة: <b className="text-amber-600">{(calc.totalInverterPower / 1000).toFixed(0)} kW</b></div>
+                <div className={STAT}>الفولطية: <b className="text-amber-600">{calc.systemVoltage}V</b></div>
                 <div className={STAT}>MPPT: <b className="text-amber-600">{calc.inverter.mppt ?? "—"}</b> {calc.inverter.dualMPPT && "(Dual)"}</div>
-                <div className={STAT}>الحد الأقصى للألواح: <b className="text-amber-600">{calc.inverter.maxPanels}</b></div>
+                <div className={STAT}>الحد الأقصى للألواح/عاكس: <b className="text-amber-600">{calc.inverter.maxPanels}</b></div>
               </div>
+              {calc.invertersNeeded > 1 && (
+                <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-50 p-3 text-sm text-amber-800">
+                  ⚠️ ربط توازي: استخدم Parallel Cable Kit وضبط Master/Slave على جميع العواكس
+                </div>
+              )}
               <div className="mt-3 text-xs text-slate-500">{calc.inverter.note}</div>
             </div>
 
@@ -528,13 +679,13 @@ export default function SolarSystemDesigner() {
               <div className={CARD}>
                 <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-600"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
                 <div className="grid gap-3 md:grid-cols-3 text-sm">
-                  <div className={STAT}>العدد: <b className="text-amber-600">{calc.panelsCapped} لوح</b></div>
+                  <div className={STAT}>العدد الإجمالي: <b className="text-amber-600">{calc.panelsCapped} لوح</b></div>
                   <div className={STAT}>القدرة الكلية: <b className="text-amber-600">{(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</b></div>
-                  <div className={STAT}>إنتاج يومي متوقع: <b className="text-amber-600">{((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</b></div>
+                  <div className={STAT}>لكل عاكس: <b className="text-amber-600">{calc.panelsPerInverter} لوح</b></div>
                 </div>
-                {calc.panelsNeeded > calc.inverter.maxPanels && (
-                  <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
-                    ⚠️ المطلوب نظرياً {calc.panelsNeeded} لوح لكن العاكس محدود بـ {calc.inverter.maxPanels} — يُنصح بترقية العاكس
+                {calc.panelsNeeded > calc.inverter.maxPanels * calc.invertersNeeded && (
+                  <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-50 p-3 text-sm text-amber-800">
+                    ⚠️ المطلوب نظرياً {calc.panelsNeeded} لوح لكن الحد الأقصى {calc.inverter.maxPanels * calc.invertersNeeded}
                   </div>
                 )}
               </div>
@@ -542,9 +693,31 @@ export default function SolarSystemDesigner() {
           </div>
         )}
 
-        {/* STEP 5 — Results */}
+        {/* STEP 5 */}
         {step === 5 && (
           <div className="reveal space-y-5">
+            {/* System architecture summary */}
+            <div className={cn(CARD, "border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-white")}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <TierIcon className="h-5 w-5" />
+                    <span className="rounded-full bg-amber-500/20 px-3 py-0.5 text-xs font-bold">{calc.tier.label}</span>
+                    <span className="text-xs text-slate-500">{calc.tier.desc}</span>
+                  </div>
+                  <div className="mt-2 text-2xl font-extrabold text-slate-900">
+                    {calc.invertersNeeded > 1 ? `منظومة موزعة على ${calc.invertersNeeded} عواكس متوازية` : "منظومة بعاكس واحد"}
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
+                    <div><span className="text-slate-500">القدرة الإجمالية: </span><b className="text-amber-700">{(calc.totalInverterPower / 1000).toFixed(0)}kW</b></div>
+                    <div><span className="text-slate-500">النظام: </span><b className="text-amber-700">{calc.systemVoltage}V DC</b></div>
+                    <div><span className="text-slate-500">الحمل المدعوم: </span><b className="text-amber-700">{Math.max(nightAmps, dayAmps)}A / {(calc.peakLoadW / 1000).toFixed(0)}kW</b></div>
+                    <div><span className="text-slate-500">السعة التخزينية: </span><b className="text-amber-700">{calc.selectedBattery.kwh.toFixed(0)}kWh</b></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Health score */}
             <div className={CARD}>
               <div className="flex items-center justify-between">
@@ -557,37 +730,52 @@ export default function SolarSystemDesigner() {
               <Progress dir="ltr" value={calc.health} className="mt-3 h-3 bg-slate-200 [transform:scaleX(-1)] [&>div]:bg-amber-500" />
             </div>
 
+            {/* Multi-inverter wiring diagram */}
+            <div className={CARD}>
+              <div className="mb-3 font-bold text-amber-600">📐 مخطط التوصيل</div>
+              <MultiInverterDiagram count={calc.invertersNeeded} hasPV={systemType === "full"} voltage={calc.systemVoltage} />
+              <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600">
+                <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-red-500" /> DC+</span>
+                <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-slate-900" /> DC−</span>
+                <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-blue-600" /> AC 220V</span>
+                {systemType === "full" && <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-amber-500" /> PV</span>}
+              </div>
+            </div>
+
             {/* Cards grid */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className={CARD}>
-                <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Battery className="h-5 w-5" /> بنك البطاريات المقترح</div>
-                <div className="font-extrabold">{calc.selectedBattery.model}</div>
-                <div className="mt-2 text-sm text-slate-700">
-                  الفولطية: {calc.selectedBattery.voltage}V | السعة: {calc.selectedBattery.ah}Ah | {calc.selectedBattery.kwh.toFixed(2)} kWh
-                </div>
-                <div className="mt-1 text-sm text-slate-500">الطاقة القابلة للاستخدام: <b className="text-amber-700">{calc.availableWh.toFixed(0)} Wh</b></div>
+                <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Bolt className="h-5 w-5" /> العواكس</div>
+                <div className="font-extrabold">{calc.invertersNeeded} × {calc.inverter.model}</div>
+                <div className="mt-2 text-sm text-slate-700">إجمالي: {(calc.totalInverterPower / 1000).toFixed(0)}kW | {calc.systemVoltage}V</div>
+                {calc.invertersNeeded > 1 && <div className="mt-1 text-xs text-amber-700">ربط توازي — Master/Slave</div>}
               </div>
 
               <div className={CARD}>
-                <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Bolt className="h-5 w-5" /> العاكس المقترح</div>
-                <div className="font-extrabold">{calc.inverter.model}</div>
-                <div className="mt-2 text-sm text-slate-700">نظام: {calc.inverter.voltage}V | MPPT: {calc.inverter.mppt ?? "—"}</div>
-                <div className="mt-1 text-sm text-slate-500">الحد الأقصى للألواح: {calc.inverter.maxPanels}</div>
+                <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Battery className="h-5 w-5" /> بنك البطاريات</div>
+                <div className="font-extrabold">{calc.selectedBattery.qty} × {calc.selectedBattery.model}</div>
+                <div className="mt-2 text-sm text-slate-700">
+                  {calc.selectedBattery.voltage}V | {calc.selectedBattery.ah}Ah | {calc.selectedBattery.kwh.toFixed(1)} kWh
+                </div>
+                <div className="mt-1 text-xs text-slate-500">قابل للاستخدام: <b className="text-amber-700">{(calc.availableWh / 1000).toFixed(1)} kWh</b></div>
+                {calc.selectedBattery.connection && calc.selectedBattery.connection !== "—" && (
+                  <div className="mt-1 text-xs text-slate-500">{calc.selectedBattery.connection}</div>
+                )}
               </div>
 
               {systemType === "full" && (
                 <div className={CARD}>
                   <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
-                  <div className="font-extrabold">{calc.panelsCapped} لوح بقدرة 615W</div>
-                  <div className="mt-2 text-sm text-slate-700">إجمالي القدرة: {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</div>
-                  <div className="mt-1 text-sm text-slate-500">إنتاج يومي متوقع: {((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</div>
+                  <div className="font-extrabold">{calc.panelsCapped} لوح × 615W</div>
+                  <div className="mt-2 text-sm text-slate-700">إجمالي: {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</div>
+                  <div className="mt-1 text-xs text-slate-500">توزيع: {calc.panelsPerInverter} لوح/عاكس ({calc.stringsPerInverter} سلسلة MPPT)</div>
                 </div>
               )}
 
               <div className={CARD}>
                 <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold">⏱️ وقت التشغيل الفعلي</div>
                 <div className="text-sm text-slate-700">ليلاً: <b className="text-amber-700">{Math.floor(calc.actualNightRuntimeMin / 60)} ساعة {Math.round(calc.actualNightRuntimeMin % 60)} دقيقة</b></div>
-                <div className="text-sm text-slate-500">نظري (بدون خسائر): {(calc.theoreticalMin / 60).toFixed(1)} ساعة</div>
+                <div className="text-sm text-slate-500">نظري: {(calc.theoreticalMin / 60).toFixed(1)} ساعة</div>
                 {systemType === "full" && <div className="text-sm text-slate-500">نهاراً: مستمر مع الشمس</div>}
               </div>
             </div>
@@ -602,7 +790,7 @@ export default function SolarSystemDesigner() {
                 <div>خسائر الأسلاك 3%: <b className="text-amber-700">-{(calc.selectedBattery.kwh * 1000 * 0.03).toFixed(0)} Wh</b></div>
                 <div>عمق التفريغ {(DOD[battType] * 100).toFixed(0)}%: <b className="text-amber-700">-{(calc.selectedBattery.kwh * 1000 * (1 - DOD[battType])).toFixed(0)} Wh</b></div>
                 <div>تأثير الحرارة ({season}): <b className="text-amber-700">-{(calc.selectedBattery.kwh * 1000 * (1 - TEMP[season])).toFixed(0)} Wh</b></div>
-                <div className="mt-2 border-t border-amber-500/20 pt-2">الطاقة الفعلية المتاحة: <b className="text-amber-600">{calc.availableWh.toFixed(0)} Wh</b> (من أصل {(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh)</div>
+                <div className="mt-2 border-t border-amber-500/20 pt-2">الطاقة الفعلية المتاحة: <b className="text-amber-600">{calc.availableWh.toFixed(0)} Wh</b></div>
               </CollapsibleContent>
             </Collapsible>
 
@@ -611,18 +799,18 @@ export default function SolarSystemDesigner() {
               <div className="mb-3 font-bold text-amber-600">قائمة التحقق الهندسية</div>
               <ul className="space-y-2 text-sm">
                 {calc.errors.map((e) => (
-                  <li key={e} className="flex items-start gap-2 text-red-400"><XCircle className="mt-0.5 h-4 w-4 shrink-0" /> {e}</li>
+                  <li key={e} className="flex items-start gap-2 text-red-600"><XCircle className="mt-0.5 h-4 w-4 shrink-0" /> {e}</li>
                 ))}
                 {calc.warnings.map((w) => (
                   <li key={w} className="flex items-start gap-2 text-amber-700"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {w}</li>
                 ))}
                 {calc.oks.map((o) => (
-                  <li key={o} className="flex items-start gap-2 text-emerald-400"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {o}</li>
+                  <li key={o} className="flex items-start gap-2 text-emerald-600"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {o}</li>
                 ))}
               </ul>
             </div>
 
-            {/* Customer info before PDF */}
+            {/* Customer info */}
             <div className={CARD}>
               <div className="mb-3 font-bold text-amber-600">بيانات العميل (اختياري — تظهر في التقرير)</div>
               <div className="grid gap-3 md:grid-cols-3">
@@ -655,7 +843,7 @@ export default function SolarSystemDesigner() {
         </div>
       </div>
 
-      {/* Off-screen PDF report (rendered as image so Arabic works) */}
+      {/* Off-screen PDF report */}
       <div style={{ position: "fixed", left: "-10000px", top: 0, width: "794px", background: "#ffffff" }} aria-hidden>
         <div ref={reportRef} dir="rtl" style={{ width: "794px", padding: "24px", background: "#ffffff", color: "#0f172a", fontFamily: "'Cairo', system-ui, sans-serif" }}>
           {/* Header */}
@@ -670,14 +858,24 @@ export default function SolarSystemDesigner() {
             <div>رقم التقرير: #{reportNumber}</div>
           </div>
 
-          {/* Section 1 — Customer */}
+          {/* Architecture summary */}
+          <PdfSection title="ملخص بنية المنظومة">
+            <PdfRow label="المستوى" value={calc.tier.label} />
+            <PdfRow label="عدد العواكس" value={`${calc.invertersNeeded} × ${calc.inverter.model}`} />
+            <PdfRow label="إجمالي القدرة" value={`${(calc.totalInverterPower / 1000).toFixed(0)} kW`} />
+            <PdfRow label="نظام التشغيل" value={`${calc.systemVoltage}V DC`} />
+            <PdfRow label="الحمل المدعوم" value={`${Math.max(nightAmps, dayAmps)}A / ${(calc.peakLoadW / 1000).toFixed(0)} kW`} />
+            <PdfRow label="السعة التخزينية" value={`${calc.selectedBattery.kwh.toFixed(1)} kWh`} />
+          </PdfSection>
+
+          {/* Customer */}
           <PdfSection title="بيانات العميل">
             <PdfRow label="الاسم" value={customer.name || "—"} />
             <PdfRow label="الهاتف" value={customer.phone || "—"} />
             <PdfRow label="العنوان" value={customer.address || "—"} />
           </PdfSection>
 
-          {/* Section 2 — Requirements */}
+          {/* Requirements */}
           <PdfSection title="ملخص المتطلبات">
             <PdfRow label="نوع المنظومة" value={systemType === "battery" ? "بطاريات + عاكس فقط" : "متكاملة (بطاريات + عاكس + ألواح)"} />
             <PdfRow label="الحمل الليلي" value={`${nightAmps} A  /  ${calc.nightLoadW} W`} />
@@ -688,45 +886,73 @@ export default function SolarSystemDesigner() {
             <PdfRow label="الموسم" value={season === "summer" ? "صيف" : season === "winter" ? "شتاء" : "معتدل"} />
           </PdfSection>
 
-          {/* Section 3 — Components */}
-          <PdfSection title="المكونات المقترحة">
+          {/* BOM table */}
+          <PdfSection title="قائمة المواد (Bill of Materials)">
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
               <thead>
                 <tr style={{ background: "#F59E0B", color: "#0f172a" }}>
                   <th style={pdfTh}>المكون</th>
                   <th style={pdfTh}>الموديل</th>
                   <th style={pdfTh}>الكمية</th>
-                  <th style={pdfTh}>الملاحظات</th>
+                  <th style={pdfTh}>السعر/الوحدة</th>
+                  <th style={pdfTh}>الإجمالي</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td style={pdfTd}>العاكس</td><td style={pdfTd}>{calc.inverter.model}</td><td style={pdfTd}>1</td><td style={pdfTd}>{calc.inverter.voltage}V {calc.inverter.mppt ? `، MPPT ${calc.inverter.mppt}` : ""}</td></tr>
-                <tr><td style={pdfTd}>البطاريات</td><td style={pdfTd}>{calc.selectedBattery.model}</td><td style={pdfTd}>{calc.selectedBattery.qty}</td><td style={pdfTd}>{calc.selectedBattery.connection ?? "—"}</td></tr>
+                <tr><td style={pdfTd}>عاكس</td><td style={pdfTd}>{calc.inverter.model}</td><td style={pdfTd}>{calc.invertersNeeded}</td><td style={pdfTd}>—</td><td style={pdfTd}>—</td></tr>
+                <tr><td style={pdfTd}>بطاريات</td><td style={pdfTd}>{calc.selectedBattery.model}</td><td style={pdfTd}>{calc.selectedBattery.qty}</td><td style={pdfTd}>—</td><td style={pdfTd}>—</td></tr>
                 {systemType === "full" && (
-                  <tr><td style={pdfTd}>الألواح الشمسية</td><td style={pdfTd}>615W Mono</td><td style={pdfTd}>{calc.panelsCapped}</td><td style={pdfTd}>إجمالي {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</td></tr>
+                  <tr><td style={pdfTd}>ألواح شمسية 615W Mono</td><td style={pdfTd}>Mono PERC 615W</td><td style={pdfTd}>{calc.panelsCapped}</td><td style={pdfTd}>—</td><td style={pdfTd}>—</td></tr>
                 )}
+                {calc.invertersNeeded > 1 && (
+                  <tr><td style={pdfTd}>Parallel Cable Kit</td><td style={pdfTd}>Must Original</td><td style={pdfTd}>{calc.invertersNeeded - 1}</td><td style={pdfTd}>—</td><td style={pdfTd}>—</td></tr>
+                )}
+                <tr><td style={pdfTd}>كابل DC 95mm² (متر)</td><td style={pdfTd}>أحمر/أسود</td><td style={pdfTd}>—</td><td style={pdfTd}>—</td><td style={pdfTd}>—</td></tr>
+                <tr><td style={pdfTd}>قاطع DC رئيسي</td><td style={pdfTd}>حسب التيار</td><td style={pdfTd}>{calc.invertersNeeded}</td><td style={pdfTd}>—</td><td style={pdfTd}>—</td></tr>
               </tbody>
+              <tfoot>
+                <tr><td style={{ ...pdfTd, fontWeight: 700 }} colSpan={4}>الإجمالي الكلي</td><td style={{ ...pdfTd, fontWeight: 700, color: "#b45309" }}>—</td></tr>
+              </tfoot>
             </table>
+            <div style={{ fontSize: "10px", color: "#64748b", marginTop: "6px" }}>* الأسعار قابلة للتعديل من قسم المبيعات حسب التوافر والكميات</div>
           </PdfSection>
 
-          {/* Section 4 — Engineering */}
+          {/* Engineering */}
           <PdfSection title="الحسابات الهندسية">
             <PdfRow label="الحمل الليلي" value={`${calc.nightLoadW.toFixed(0)} W`} />
             <PdfRow label="بعد خسائر العاكس والأسلاك" value={`${calc.nightLoadActual.toFixed(0)} W`} />
             <PdfRow label="الطاقة الليلية المطلوبة" value={`${calc.nightEnergyNeeded_Wh.toFixed(0)} Wh`} />
-            <PdfRow label="سعة البنك المطلوبة (بعد DoD/حرارة)" value={`${calc.requiredBankWh.toFixed(0)} Wh`} />
+            <PdfRow label="سعة البنك المطلوبة" value={`${calc.requiredBankWh.toFixed(0)} Wh`} />
             <PdfRow label="سعة البنك المختار" value={`${(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh`} />
             <PdfRow label="الطاقة المتاحة بعد الخسائر" value={`${calc.availableWh.toFixed(0)} Wh`} />
             {systemType === "full" && <PdfRow label="إجمالي طاقة الألواح المطلوبة" value={`${calc.totalPVneeded_Wh.toFixed(0)} Wh`} />}
-            {systemType === "full" && <PdfRow label="عدد الألواح المطلوب نظرياً" value={String(calc.panelsNeeded)} />}
-            {systemType === "full" && <PdfRow label="عدد الألواح المثبت (ضمن حد العاكس)" value={String(calc.panelsCapped)} />}
+            {systemType === "full" && <PdfRow label="عدد الألواح" value={`${calc.panelsCapped} (${calc.panelsPerInverter}/عاكس)`} />}
           </PdfSection>
 
-          {/* Section 5 — Runtime */}
+          {/* Runtime */}
           <PdfSection title="وقت التشغيل المتوقع">
             <PdfRow label="نظري (بدون خسائر)" value={`${(calc.theoreticalMin / 60).toFixed(1)} ساعة`} />
             <PdfRow label="واقعي (بعد الخسائر)" value={`${Math.floor(calc.actualNightRuntimeMin / 60)} ساعة و ${Math.round(calc.actualNightRuntimeMin % 60)} دقيقة`} />
             <PdfRow label="نهاراً" value={systemType === "full" ? "مستمر مع وجود الشمس" : "—"} />
+          </PdfSection>
+
+          {/* Wiring notes for large systems */}
+          {calc.invertersNeeded > 1 && (
+            <PdfSection title="ملاحظات التركيب للمنظومات الكبيرة">
+              <ol style={{ margin: 0, paddingInlineStart: "20px", fontSize: "12px", lineHeight: 1.9, color: "#0f172a" }}>
+                <li>يجب استخدام كابلات DC لا تقل عن 95mm² لبنك البطاريات</li>
+                <li>يجب تركيب قاطع رئيسي DC بين البطاريات وكل عاكس</li>
+                <li>يجب موازنة أطوال كابلات البطاريات بين العواكس لتوزيع التيار بالتساوي</li>
+                <li>يجب ضبط العاكس الأول كـ Master والبقية كـ Slave عبر شاشة الإعدادات</li>
+                <li>يجب أرضة (Earthing) منفصلة لكل عاكس مع ربطها على Bus Bar مشترك</li>
+                <li>يجب استخدام Parallel Cable Kit الأصلي من Must وعدم تجاوز {MAX_PARALLEL_INVERTERS} عواكس متوازية</li>
+              </ol>
+            </PdfSection>
+          )}
+
+          {/* One-line diagram embedded */}
+          <PdfSection title="مخطط التوصيل المبسط">
+            <MultiInverterDiagram count={calc.invertersNeeded} hasPV={systemType === "full"} voltage={calc.systemVoltage} />
           </PdfSection>
 
           {/* Footer */}
@@ -760,4 +986,3 @@ function PdfRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
