@@ -24,6 +24,16 @@ const PANEL_EFF = 0.80;
 const MAX_INVERTER_W = 12000;        // Largest single-phase Must inverter
 const MAX_PARALLEL_INVERTERS = 6;    // Must PV1900M EXP supports up to 6 in parallel
 const PARALLEL_BATT_LIMIT_LP = 15;   // LP3000 PRO supports max 15 units parallel
+const INVERTER_MAX_CHARGE_A = 150;   // Must 12kW max DC charge current at 48V
+const LI_MODULE_KWH = 5.12;          // Single LP module size
+
+// Charging tier (C-rate) — IEC 61427 / IEEE 1013/1562 / LiFePO4 best practice
+type ChargeTier = "economy" | "balanced" | "fast";
+const CHARGE_TIERS: Record<"lithium" | "leadacid", Record<ChargeTier, number>> = {
+  lithium:  { economy: 0.2, balanced: 0.5, fast: 1.0 },
+  leadacid: { economy: 0.1, balanced: 0.15, fast: 0.2 },
+};
+const MAX_MODULES_PER_INVERTER_LI: Record<ChargeTier, number> = { economy: 7, balanced: 3, fast: 1 };
 
 type SystemType = "battery" | "full";
 type BattType = "lithium" | "leadacid";
