@@ -1,7 +1,7 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, Download, Sun, TriangleAlert, XCircle, Zap, Leaf, Snowflake, Flame, Sparkles, Building2, Factory, Home as HomeIcon } from "lucide-react";
+import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, Download, Sun, TriangleAlert, XCircle, Zap, Leaf, Snowflake, Flame, Sparkles, Building2, Factory, Home as HomeIcon, Plus, Trash2, List, SlidersHorizontal, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,69 @@ const CHARGE_TIERS: Record<"lithium" | "leadacid", Record<ChargeTier, number>> =
   leadacid: { economy: 0.1, balanced: 0.15, fast: 0.2 },
 };
 const MAX_MODULES_PER_INVERTER_LI: Record<ChargeTier, number> = { economy: 7, balanced: 3, fast: 1 };
+
+// ───────── Appliances (Mode 1: Easy)
+type Appliance = { id: string; name: string; icon: string; watts: number; qty: number; nightHours: number; dayHours: number };
+const newId = () => Math.random().toString(36).slice(2, 9);
+const DEFAULT_APPLIANCES: Appliance[] = [
+  { id: newId(), name: "مكيف 1.5طن", icon: "🌡️", watts: 1500, qty: 1, nightHours: 0, dayHours: 8 },
+  { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 10, nightHours: 6, dayHours: 0 },
+  { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 1, nightHours: 8, dayHours: 8 },
+  { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 1, nightHours: 4, dayHours: 2 },
+  { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 2, nightHours: 6, dayHours: 4 },
+];
+const QUICK_CHIPS: Array<{ name: string; icon: string; watts: number }> = [
+  { name: "غسالة", icon: "🧺", watts: 500 },
+  { name: "مضخة ماء", icon: "🚿", watts: 750 },
+  { name: "شاشة كمبيوتر", icon: "🖥️", watts: 200 },
+  { name: "راوتر", icon: "📡", watts: 20 },
+  { name: "شاحن موبايل", icon: "🔌", watts: 15 },
+  { name: "ميكروويف", icon: "🍽️", watts: 1200 },
+];
+type PresetKey = "small" | "medium" | "large" | "shop";
+const PRESETS: Record<PresetKey, { label: string; icon: string; appliances: Appliance[] }> = {
+  small: {
+    label: "منزل صغير", icon: "🏠",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 5, nightHours: 6, dayHours: 0 },
+      { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 1, nightHours: 8, dayHours: 8 },
+      { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 1, nightHours: 4, dayHours: 2 },
+      { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 2, nightHours: 6, dayHours: 4 },
+    ],
+  },
+  medium: {
+    label: "منزل متوسط", icon: "🏡",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 8, nightHours: 6, dayHours: 0 },
+      { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 1, nightHours: 8, dayHours: 8 },
+      { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 2, nightHours: 4, dayHours: 2 },
+      { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 3, nightHours: 6, dayHours: 4 },
+      { id: newId(), name: "مكيف 1.5طن", icon: "🌡️", watts: 1500, qty: 1, nightHours: 4, dayHours: 6 },
+      { id: newId(), name: "غسالة", icon: "🧺", watts: 500, qty: 1, nightHours: 0, dayHours: 1 },
+    ],
+  },
+  large: {
+    label: "منزل كبير", icon: "🏢",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 15, qty: 15, nightHours: 6, dayHours: 0 },
+      { id: newId(), name: "ثلاجة", icon: "🧊", watts: 150, qty: 2, nightHours: 8, dayHours: 8 },
+      { id: newId(), name: "تلفزيون", icon: "📺", watts: 100, qty: 3, nightHours: 4, dayHours: 2 },
+      { id: newId(), name: "مروحة سقف", icon: "🌀", watts: 75, qty: 5, nightHours: 6, dayHours: 4 },
+      { id: newId(), name: "مكيف 1.5طن", icon: "🌡️", watts: 1500, qty: 2, nightHours: 5, dayHours: 8 },
+      { id: newId(), name: "مضخة ماء", icon: "🚿", watts: 750, qty: 1, nightHours: 0, dayHours: 1 },
+      { id: newId(), name: "غسالة", icon: "🧺", watts: 500, qty: 1, nightHours: 0, dayHours: 1 },
+    ],
+  },
+  shop: {
+    label: "محل تجاري", icon: "🏭",
+    appliances: [
+      { id: newId(), name: "إضاءة LED", icon: "💡", watts: 20, qty: 20, nightHours: 4, dayHours: 10 },
+      { id: newId(), name: "مكيف 2طن", icon: "🌡️", watts: 2200, qty: 2, nightHours: 0, dayHours: 10 },
+      { id: newId(), name: "ثلاجة عرض", icon: "🧊", watts: 400, qty: 2, nightHours: 8, dayHours: 12 },
+      { id: newId(), name: "شاشة عرض", icon: "🖥️", watts: 200, qty: 2, nightHours: 0, dayHours: 10 },
+    ],
+  },
+};
 
 type SystemType = "battery" | "full";
 type BattType = "lithium" | "leadacid";
@@ -262,6 +325,26 @@ function MultiInverterDiagram({ count, hasPV, voltage }: { count: number; hasPV:
   );
 }
 
+function DonutNightDay({ night, day }: { night: number; day: number }) {
+  const total = night + day;
+  if (!total) return null;
+  const r = 38, c = 50, circ = 2 * Math.PI * r;
+  const nightPct = night / total;
+  const nightLen = circ * nightPct;
+  return (
+    <svg viewBox="0 0 100 100" className="h-28 w-28">
+      <circle cx={c} cy={c} r={r} fill="none" stroke="#fbbf24" strokeWidth="14" />
+      <circle cx={c} cy={c} r={r} fill="none" stroke="#6366f1" strokeWidth="14"
+        strokeDasharray={`${nightLen} ${circ - nightLen}`}
+        transform={`rotate(-90 ${c} ${c})`} />
+      <text x="50" y="46" textAnchor="middle" fontSize="11" fontWeight="800" fill="#334155">
+        {(nightPct * 100).toFixed(0)}%
+      </text>
+      <text x="50" y="60" textAnchor="middle" fontSize="8" fill="#64748b">ليل</text>
+    </svg>
+  );
+}
+
 export default function SolarSystemDesigner() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [systemType, setSystemType] = useState<SystemType>("full");
@@ -277,8 +360,65 @@ export default function SolarSystemDesigner() {
   const [chosenBattery, setChosenBattery] = useState<BatteryConfig | null>(null);
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
 
+  // Mode 1 (easy) state
+  const [loadMode, setLoadMode] = useState<"easy" | "advanced">("easy");
+  const [appliances, setAppliances] = useState<Appliance[]>(DEFAULT_APPLIANCES);
+  const [outageHours, setOutageHours] = useState(12);
+  const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
+
+  // Derived from appliances
+  const applianceSummary = useMemo(() => {
+    let peakW = 0, nightWh = 0, dayWh = 0, maxNightH = 0, maxDayH = 0;
+    const breakdown = appliances.map((a) => {
+      const total = a.watts * a.qty;
+      const nWh = total * a.nightHours;
+      const dWh = total * a.dayHours;
+      peakW += total; nightWh += nWh; dayWh += dWh;
+      if (a.nightHours > maxNightH) maxNightH = a.nightHours;
+      if (a.dayHours > maxDayH) maxDayH = a.dayHours;
+      return { ...a, totalW: total, energyWh: nWh + dWh };
+    });
+    const designPeakW = peakW * 0.8; // demand factor
+    const nH = Math.max(1, maxNightH || outageHours);
+    const dH = Math.max(1, maxDayH || 1);
+    const nightAvgA = nightWh / (nH * 220);
+    const dayAvgA = dayWh / (dH * 220);
+    const peakA = designPeakW / 220;
+    return { peakW, designPeakW, peakA, nightWh, dayWh, totalKWh: (nightWh + dayWh) / 1000, nH, dH, nightAvgA, dayAvgA, breakdown };
+  }, [appliances, outageHours]);
+
+  // Sync derived → calc inputs when in easy mode
+  useEffect(() => {
+    if (loadMode !== "easy") return;
+    setNightAmps(Math.round(applianceSummary.nightAvgA));
+    setDayAmps(Math.round(applianceSummary.dayAvgA));
+    setNightHours(Math.min(12, Math.max(1, applianceSummary.nH)));
+    setDayHours(Math.min(12, Math.max(1, applianceSummary.dH)));
+  }, [loadMode, applianceSummary.nightAvgA, applianceSummary.dayAvgA, applianceSummary.nH, applianceSummary.dH]);
+
+  const addAppliance = (preset?: { name: string; icon: string; watts: number }) => {
+    const a: Appliance = preset
+      ? { id: newId(), name: preset.name, icon: preset.icon, watts: preset.watts, qty: 1, nightHours: 4, dayHours: 4 }
+      : { id: newId(), name: "جهاز جديد", icon: "🔌", watts: 100, qty: 1, nightHours: 0, dayHours: 0 };
+    setAppliances((arr) => [...arr, a]);
+    setActivePreset(null);
+  };
+  const updateAppliance = (id: string, patch: Partial<Appliance>) => {
+    setAppliances((arr) => arr.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+    setActivePreset(null);
+  };
+  const removeAppliance = (id: string) => {
+    setAppliances((arr) => arr.filter((a) => a.id !== id));
+    setActivePreset(null);
+  };
+  const applyPreset = (key: PresetKey) => {
+    setAppliances(PRESETS[key].appliances.map((a) => ({ ...a, id: newId() })));
+    setActivePreset(key);
+  };
+
   const loadExample = () => {
     setSystemType("full");
+    setLoadMode("advanced");
     setNightAmps(150); setNightHours(5);
     setDayAmps(100); setDayHours(6);
     setBattType("lithium");
@@ -287,6 +427,7 @@ export default function SolarSystemDesigner() {
     setChosenBattery(null);
     setStep(5);
   };
+
 
   // ───────── Calculations (multi-inverter aware)
   const calc = useMemo(() => {
@@ -604,35 +745,275 @@ export default function SolarSystemDesigner() {
         {/* STEP 2 */}
         {step === 2 && (
           <div className="reveal space-y-5">
+            {/* Building preset */}
             <div className={CARD}>
-              <h3 className="mb-3 text-lg font-bold text-amber-600">قسم أ: الأحمال الليلية</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>كم ساعة تحتاج تجهيز ليلي؟</Label>
-                  <Input type="number" min={1} max={12} value={nightHours} onChange={(e) => setNightHours(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
-                </div>
-                <div>
-                  <Label>كم أمبير الحمل الليلي؟ (A عند 220V)</Label>
-                  <Input type="number" min={0} value={nightAmps} onChange={(e) => setNightAmps(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
-                </div>
+              <h3 className="mb-3 text-lg font-bold text-amber-600">نوع المبنى — اختيار سريع</h3>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                {(Object.keys(PRESETS) as PresetKey[]).map((k) => (
+                  <button
+                    key={k}
+                    onClick={() => applyPreset(k)}
+                    className={cn(
+                      "rounded-xl border p-3 text-sm font-bold transition",
+                      activePreset === k
+                        ? "border-amber-400 bg-amber-500/10 text-amber-700"
+                        : "border-slate-300 bg-white text-slate-700 hover:border-amber-500/50"
+                    )}
+                  >
+                    <div className="text-2xl">{PRESETS[k].icon}</div>
+                    <div className="mt-1">{PRESETS[k].label}</div>
+                  </button>
+                ))}
               </div>
-              <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-slate-700">
-                ⚡ الطاقة الليلية المطلوبة: <span className="font-bold text-amber-600">{(nightAmps * 220 * nightHours).toLocaleString()} Wh</span>
+              <p className="mt-2 text-xs text-slate-500">سيتم ملء جدول الأجهزة تلقائياً — يمكنك التعديل</p>
+            </div>
+
+            {/* Outage hours */}
+            <div className={CARD}>
+              <h3 className="mb-2 text-lg font-bold text-amber-600">ساعات انقطاع الكهرباء الوطنية</h3>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number" min={0} max={24} value={outageHours}
+                  onChange={(e) => setOutageHours(Math.min(24, Math.max(0, +e.target.value || 0)))}
+                  className="max-w-[140px] bg-white border-slate-300 text-slate-900"
+                />
+                <span className="text-sm text-slate-600">ساعة يومياً</span>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">
+                {outageHours < 8
+                  ? `المنظومة مصممة لتغطية ${outageHours} ساعة انقطاع — تكفي بطاريات أصغر`
+                  : outageHours > 16
+                  ? "انقطاع طويل — يلزم تصميم off-grid كامل (بطاريات وألواح أكبر)"
+                  : `المنظومة مصممة لتغطية ${outageHours} ساعة انقطاع يومياً`}
+              </p>
+            </div>
+
+            {/* Mode toggle */}
+            <div className={CARD}>
+              <h3 className="mb-3 text-lg font-bold text-amber-600">كيف تريد إدخال الأحمال؟</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setLoadMode("easy")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-xl border-2 p-4 font-bold transition",
+                    loadMode === "easy"
+                      ? "border-amber-400 bg-amber-500/10 text-amber-700"
+                      : "border-slate-300 bg-white text-slate-600 hover:border-amber-500/40"
+                  )}
+                >
+                  <List className="h-5 w-5" /> 📱 سهل — قائمة الأجهزة
+                </button>
+                <button
+                  onClick={() => setLoadMode("advanced")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-xl border-2 p-4 font-bold transition",
+                    loadMode === "advanced"
+                      ? "border-amber-400 bg-amber-500/10 text-amber-700"
+                      : "border-slate-300 bg-white text-slate-600 hover:border-amber-500/40"
+                  )}
+                >
+                  <SlidersHorizontal className="h-5 w-5" /> ⚙️ متقدم — أمبير
+                </button>
               </div>
             </div>
 
-            {systemType === "full" && (
+            {/* MODE 1: EASY — appliance table */}
+            {loadMode === "easy" && (
+              <>
+                <div className={CARD}>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-amber-600">قائمة الأجهزة</h3>
+                    <Button onClick={() => addAppliance()} size="sm" className="bg-amber-500 text-slate-900 hover:bg-amber-600">
+                      <Plus className="ml-1 h-4 w-4" /> إضافة جهاز
+                    </Button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-amber-500/30 text-xs text-slate-500">
+                          <th className="p-2 text-right">الجهاز</th>
+                          <th className="p-2">واط</th>
+                          <th className="p-2">عدد</th>
+                          <th className="p-2">ساعة ليل</th>
+                          <th className="p-2">ساعة نهار</th>
+                          <th className="p-2"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {appliances.map((a) => (
+                          <tr key={a.id} className="border-b border-slate-200">
+                            <td className="p-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">{a.icon}</span>
+                                <Input
+                                  value={a.name}
+                                  onChange={(e) => updateAppliance(a.id, { name: e.target.value })}
+                                  className="h-9 min-w-[120px] bg-white border-slate-300"
+                                />
+                              </div>
+                            </td>
+                            <td className="p-2">
+                              <Input type="number" min={0} value={a.watts}
+                                onChange={(e) => updateAppliance(a.id, { watts: +e.target.value || 0 })}
+                                className="h-9 w-20 bg-white border-slate-300 text-center" />
+                            </td>
+                            <td className="p-2">
+                              <Input type="number" min={0} value={a.qty}
+                                onChange={(e) => updateAppliance(a.id, { qty: +e.target.value || 0 })}
+                                className="h-9 w-16 bg-white border-slate-300 text-center" />
+                            </td>
+                            <td className="p-2">
+                              <Input type="number" min={0} max={12} value={a.nightHours}
+                                onChange={(e) => updateAppliance(a.id, { nightHours: Math.min(12, Math.max(0, +e.target.value || 0)) })}
+                                className="h-9 w-16 bg-white border-slate-300 text-center" />
+                            </td>
+                            <td className="p-2">
+                              <Input type="number" min={0} max={12} value={a.dayHours}
+                                onChange={(e) => updateAppliance(a.id, { dayHours: Math.min(12, Math.max(0, +e.target.value || 0)) })}
+                                className="h-9 w-16 bg-white border-slate-300 text-center" />
+                            </td>
+                            <td className="p-2">
+                              <Button
+                                onClick={() => removeAppliance(a.id)}
+                                size="icon" variant="ghost"
+                                className="h-8 w-8 text-rose-600 hover:bg-rose-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                        {appliances.length === 0 && (
+                          <tr><td colSpan={6} className="p-4 text-center text-slate-400">لا توجد أجهزة — أضف أو اختر نوع المبنى</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="mb-2 text-xs font-bold text-slate-500">إضافة سريعة:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {QUICK_CHIPS.map((c) => (
+                        <button
+                          key={c.name}
+                          onClick={() => addAppliance(c)}
+                          className="rounded-full border border-amber-500/40 bg-white px-3 py-1 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                        >
+                          {c.icon} {c.name} {c.watts}W
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live summary */}
+                <div className="sticky bottom-2 z-10">
+                  <div className="rounded-2xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-white p-4 shadow-[0_10px_40px_-10px_rgba(245,158,11,0.5)]">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h4 className="text-sm font-extrabold text-amber-700">ملخص الأحمال (يتحدث تلقائياً)</h4>
+                      <span className="text-xs text-slate-500">{appliances.length} جهاز</span>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-xl bg-white p-3 text-sm">
+                        🌙 الطاقة الليلية: <div className="text-base font-bold text-indigo-600">{Math.round(applianceSummary.nightWh).toLocaleString()} Wh</div>
+                        <div className="text-xs text-slate-500">≈ {applianceSummary.nightAvgA.toFixed(1)} A × 220V × {applianceSummary.nH}h</div>
+                      </div>
+                      <div className="rounded-xl bg-white p-3 text-sm">
+                        ☀️ الطاقة النهارية: <div className="text-base font-bold text-amber-600">{Math.round(applianceSummary.dayWh).toLocaleString()} Wh</div>
+                        <div className="text-xs text-slate-500">≈ {applianceSummary.dayAvgA.toFixed(1)} A × 220V × {applianceSummary.dH}h</div>
+                      </div>
+                      <div className="rounded-xl bg-white p-3 text-sm">
+                        📊 إجمالي يومي: <div className="text-base font-bold text-emerald-600">{applianceSummary.totalKWh.toFixed(2)} kWh</div>
+                        <div className="text-xs text-slate-500">{Math.round(applianceSummary.nightWh + applianceSummary.dayWh).toLocaleString()} Wh</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 rounded-xl border border-amber-300 bg-amber-100/60 p-3 text-sm">
+                      ⚡ أعلى حمل لحظي: <span className="font-extrabold text-amber-700">{Math.round(applianceSummary.designPeakW).toLocaleString()} W ({applianceSummary.peakA.toFixed(0)} A)</span>
+                      <div className="text-xs text-slate-600">← هذا يحدد حجم العاكس المطلوب (مع معامل طلب 0.8)</div>
+                    </div>
+
+                    {applianceSummary.peakA > 80 && (
+                      <div className="mt-2 rounded-xl border border-rose-400 bg-rose-50 p-2 text-xs text-rose-700">
+                        ⚠️ هذا حمل كبير ({applianceSummary.peakA.toFixed(0)}A) — تأكد من قدرة اللوحة الكهربائية الرئيسية
+                      </div>
+                    )}
+
+                    {/* Donut + top consumers */}
+                    {(applianceSummary.nightWh + applianceSummary.dayWh) > 0 && (
+                      <div className="mt-3 grid gap-3 md:grid-cols-[120px_1fr] items-center">
+                        <DonutNightDay night={applianceSummary.nightWh} day={applianceSummary.dayWh} />
+                        <div>
+                          <div className="mb-1 text-xs font-bold text-slate-500">أعلى المستهلكين:</div>
+                          <ul className="space-y-1 text-xs">
+                            {[...applianceSummary.breakdown]
+                              .sort((a, b) => b.energyWh - a.energyWh)
+                              .slice(0, 3)
+                              .map((b, i) => {
+                                const total = applianceSummary.nightWh + applianceSummary.dayWh;
+                                const pct = total ? (b.energyWh / total) * 100 : 0;
+                                return (
+                                  <li key={b.id} className="flex items-center gap-2">
+                                    <span className="w-4 text-amber-600 font-bold">{i + 1}.</span>
+                                    <span>{b.icon} {b.name}</span>
+                                    <span className="ml-auto font-bold text-slate-700">{pct.toFixed(0)}%</span>
+                                  </li>
+                                );
+                              })}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* MODE 2: ADVANCED — direct amps */}
+            {loadMode === "advanced" && (
               <div className={CARD}>
-                <h3 className="mb-3 text-lg font-bold text-amber-600">قسم ب: الأحمال النهارية</h3>
-                <div className="grid gap-4 md:grid-cols-2">
+                <h3 className="mb-3 text-lg font-bold text-amber-600">إجمالي الأحمال — إدخال مباشر</h3>
+
+                <div className="space-y-4">
                   <div>
-                    <Label>كم أمبير الحمل النهاري؟</Label>
-                    <Input type="number" min={0} value={dayAmps} onChange={(e) => setDayAmps(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
+                    <Label>الحمل الليلي المتوسط (A عند 220V)</Label>
+                    <Input type="number" min={0} value={nightAmps}
+                      onChange={(e) => setNightAmps(+e.target.value || 0)}
+                      className="bg-white border-slate-300 text-slate-900" />
                   </div>
                   <div>
-                    <Label>كم ساعة الحمل النهاري؟</Label>
-                    <Input type="number" min={1} max={8} value={dayHours} onChange={(e) => setDayHours(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
+                    <Label>عدد ساعات التجهيز الليلي</Label>
+                    <Input type="number" min={1} max={12} value={nightHours}
+                      onChange={(e) => setNightHours(+e.target.value || 0)}
+                      className="bg-white border-slate-300 text-slate-900" />
                   </div>
+
+                  {systemType === "full" && (
+                    <>
+                      <div className="border-t border-slate-200 pt-4">
+                        <Label>الحمل النهاري المتوسط (A) — اختياري</Label>
+                        <Input type="number" min={0} value={dayAmps}
+                          onChange={(e) => setDayAmps(+e.target.value || 0)}
+                          className="bg-white border-slate-300 text-slate-900" />
+                      </div>
+                      <div>
+                        <Label>عدد ساعات الاستخدام النهاري</Label>
+                        <Input type="number" min={1} max={12} value={dayHours}
+                          onChange={(e) => setDayHours(+e.target.value || 0)}
+                          className="bg-white border-slate-300 text-slate-900" />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-slate-700">
+                  💡 ملاحظة: الحمل الليلي هو ما تسحبه البطاريات. الحمل النهاري تغطيه الألواح مباشرة.
+                </div>
+
+                <div className="mt-3 rounded-lg bg-white border border-amber-500/30 px-3 py-2 text-sm text-slate-700">
+                  ⚡ الطاقة الليلية المطلوبة: <span className="font-bold text-amber-600">{(nightAmps * 220 * nightHours).toLocaleString()} Wh</span>
                 </div>
               </div>
             )}
