@@ -495,9 +495,15 @@ export default function SolarSystemDesigner() {
     let panelsPerInverter = 0;
     let stringsPerInverter = 0;
     if (systemType === "full") {
-      const dayEnergyNeeded_Wh = (dayAmps * 220 * dayHours) / INVERTER_EFF;
       const batteryRechargeWh = nightEnergyNeeded_Wh / CHARGE_EFF[battType];
-      totalPVneeded_Wh = dayEnergyNeeded_Wh + batteryRechargeWh;
+      if (coverageMode === "standalone") {
+        // Full off-grid: panels must run day loads AND recharge batteries
+        const dayEnergyNeeded_Wh = (dayAmps * 220 * dayHours) / INVERTER_EFF;
+        totalPVneeded_Wh = dayEnergyNeeded_Wh + batteryRechargeWh;
+      } else {
+        // Backup-only: grid runs day loads, panels only recharge batteries
+        totalPVneeded_Wh = batteryRechargeWh;
+      }
       panelsNeeded = Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF));
       const totalMaxPanels = inverter.maxPanels * invertersNeeded;
       panelsCapped = Math.min(panelsNeeded, totalMaxPanels);
