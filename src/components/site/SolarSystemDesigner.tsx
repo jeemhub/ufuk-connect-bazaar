@@ -125,17 +125,17 @@ function pickLeadAcidConfig(requiredWh: number, targetVoltage: 12 | 24 | 48): Ba
 }
 
 // ───────── UI helpers
-const CARD = "rounded-2xl border border-amber-500/30 bg-slate-900/60 backdrop-blur p-5 text-slate-100";
-const STAT = "rounded-xl border border-amber-500/20 bg-slate-800/60 p-4";
+const CARD = "rounded-2xl border border-amber-500/30 bg-white shadow-[0_0_25px_-15px_rgba(245,158,11,0.4)] p-5 text-slate-900";
+const STAT = "rounded-xl border border-amber-500/20 bg-amber-50/60 p-4 text-slate-700";
 
 function StepIndicator({ step }: { step: number }) {
   const steps = ["النوع", "الأحمال", "البطاريات", "العاكس والألواح", "النتائج"];
   return (
     <div className="mb-6">
-      <Progress dir="ltr" value={(step / 5) * 100} className="h-2 bg-slate-800 [transform:scaleX(-1)] [&>div]:bg-amber-400" />
-      <div className="mt-3 flex justify-between text-xs text-slate-400">
+      <Progress dir="ltr" value={(step / 5) * 100} className="h-2 bg-slate-200 [transform:scaleX(-1)] [&>div]:bg-amber-500" />
+      <div className="mt-3 flex justify-between text-xs text-slate-500">
         {steps.map((s, i) => (
-          <div key={s} className={cn("text-center transition-colors", i + 1 <= step && "text-amber-400 font-bold")}>
+          <div key={s} className={cn("text-center transition-colors", i + 1 <= step && "text-amber-600 font-bold")}>
             {i + 1}. {s}
           </div>
         ))}
@@ -403,7 +403,7 @@ export default function SolarSystemDesigner() {
   const SeasonIcon = seasonIcon;
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
+    <div dir="rtl" className="min-h-screen bg-[#F8FAFC] text-slate-900" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
         .reveal { animation: rv .5s ease-out both; }
@@ -416,8 +416,8 @@ export default function SolarSystemDesigner() {
           <div className="mx-auto mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-900 shadow-[0_0_40px_-5px_rgba(245,158,11,0.7)]">
             <Sun className="h-7 w-7" />
           </div>
-          <h1 className="text-3xl font-extrabold text-amber-400">مصمم منظومات الطاقة الشمسية</h1>
-          <p className="mt-2 text-slate-400">أداة هندسية احترافية لتصميم منظومات Must الشمسية — UFUK AL-Basra</p>
+          <h1 className="text-3xl font-extrabold text-amber-600">مصمم منظومات الطاقة الشمسية</h1>
+          <p className="mt-2 text-slate-500">أداة هندسية احترافية لتصميم منظومات Must الشمسية — UFUK AL-Basra</p>
         </div>
 
         <StepIndicator step={step} />
@@ -436,12 +436,12 @@ export default function SolarSystemDesigner() {
                   "rounded-2xl border-2 p-8 text-right transition-all",
                   systemType === v
                     ? "border-amber-400 bg-amber-500/10 shadow-[0_0_40px_-10px_rgba(245,158,11,0.7)]"
-                    : "border-slate-700 bg-slate-900/60 hover:border-amber-500/50"
+                    : "border-slate-300 bg-white hover:border-amber-500/50"
                 )}
               >
-                <Icon className="mb-3 h-10 w-10 text-amber-400" />
+                <Icon className="mb-3 h-10 w-10 text-amber-600" />
                 <div className="text-xl font-extrabold">{title}</div>
-                <div className="mt-1 text-sm text-slate-400">{desc}</div>
+                <div className="mt-1 text-sm text-slate-500">{desc}</div>
               </button>
             ))}
           </div>
@@ -451,40 +451,40 @@ export default function SolarSystemDesigner() {
         {step === 2 && (
           <div className="reveal space-y-5">
             <div className={CARD}>
-              <h3 className="mb-3 text-lg font-bold text-amber-400">قسم أ: الأحمال الليلية</h3>
+              <h3 className="mb-3 text-lg font-bold text-amber-600">قسم أ: الأحمال الليلية</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label>كم ساعة تحتاج تجهيز ليلي؟</Label>
-                  <Input type="number" min={1} max={12} value={nightHours} onChange={(e) => setNightHours(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                  <Input type="number" min={1} max={12} value={nightHours} onChange={(e) => setNightHours(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
                 </div>
                 <div>
                   <Label>كم أمبير الحمل الليلي؟ (A عند 220V)</Label>
-                  <Input type="number" min={0} value={nightAmps} onChange={(e) => setNightAmps(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                  <Input type="number" min={0} value={nightAmps} onChange={(e) => setNightAmps(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
                 </div>
               </div>
-              <div className="mt-3 rounded-lg bg-slate-800/60 px-3 py-2 text-sm text-slate-300">
-                ⚡ الطاقة الليلية المطلوبة: <span className="font-bold text-amber-400">{(nightAmps * 220 * nightHours).toLocaleString()} Wh</span>
+              <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-slate-700">
+                ⚡ الطاقة الليلية المطلوبة: <span className="font-bold text-amber-600">{(nightAmps * 220 * nightHours).toLocaleString()} Wh</span>
               </div>
             </div>
 
             {systemType === "full" && (
               <div className={CARD}>
-                <h3 className="mb-3 text-lg font-bold text-amber-400">قسم ب: الأحمال النهارية</h3>
+                <h3 className="mb-3 text-lg font-bold text-amber-600">قسم ب: الأحمال النهارية</h3>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <Label>كم أمبير الحمل النهاري؟ (مع وجود الشمس)</Label>
-                    <Input type="number" min={0} value={dayAmps} onChange={(e) => setDayAmps(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                    <Input type="number" min={0} value={dayAmps} onChange={(e) => setDayAmps(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
                   </div>
                   <div>
                     <Label>كم ساعة الحمل النهاري؟</Label>
-                    <Input type="number" min={1} max={8} value={dayHours} onChange={(e) => setDayHours(+e.target.value || 0)} className="bg-slate-800 border-slate-700 text-slate-100" />
+                    <Input type="number" min={1} max={8} value={dayHours} onChange={(e) => setDayHours(+e.target.value || 0)} className="bg-white border-slate-300 text-slate-900" />
                   </div>
                 </div>
               </div>
             )}
 
             <div className={CARD}>
-              <h3 className="mb-3 text-lg font-bold text-amber-400">نوع البطارية المطلوبة</h3>
+              <h3 className="mb-3 text-lg font-bold text-amber-600">نوع البطارية المطلوبة</h3>
               <RadioGroup value={battType} onValueChange={(v) => { setBattType(v as BattType); setChosenBattery(null); }} className="grid gap-3 md:grid-cols-2">
                 {[
                   { v: "lithium", label: "ليثيوم LiFePO4 — Must LP Series", hint: "موصى به — عمر طويل، DoD 80%" },
@@ -492,12 +492,12 @@ export default function SolarSystemDesigner() {
                 ].map((o) => (
                   <label key={o.v} className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition",
-                    battType === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-700 bg-slate-800/40 hover:border-amber-500/40"
+                    battType === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-300 bg-white hover:border-amber-500/40"
                   )}>
                     <RadioGroupItem value={o.v} className="mt-1" />
                     <div>
                       <div className="font-bold">{o.label}</div>
-                      <div className="text-xs text-slate-400">{o.hint}</div>
+                      <div className="text-xs text-slate-500">{o.hint}</div>
                     </div>
                   </label>
                 ))}
@@ -505,7 +505,7 @@ export default function SolarSystemDesigner() {
             </div>
 
             <div className={CARD}>
-              <h3 className="mb-3 text-lg font-bold text-amber-400">الموسم (للتعويض الحراري)</h3>
+              <h3 className="mb-3 text-lg font-bold text-amber-600">الموسم (للتعويض الحراري)</h3>
               <RadioGroup value={season} onValueChange={(v) => setSeason(v as Season)} className="grid gap-3 md:grid-cols-3">
                 {[
                   { v: "summer", label: "صيف", icon: Flame, t: "~45°C" },
@@ -516,13 +516,13 @@ export default function SolarSystemDesigner() {
                   return (
                     <label key={o.v} className={cn(
                       "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition",
-                      season === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-700 bg-slate-800/40 hover:border-amber-500/40"
+                      season === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-300 bg-white hover:border-amber-500/40"
                     )}>
                       <RadioGroupItem value={o.v} />
-                      <I className="h-5 w-5 text-amber-400" />
+                      <I className="h-5 w-5 text-amber-600" />
                       <div>
                         <div className="font-bold">{o.label}</div>
-                        <div className="text-xs text-slate-400">{o.t}</div>
+                        <div className="text-xs text-slate-500">{o.t}</div>
                       </div>
                     </label>
                   );
@@ -536,15 +536,15 @@ export default function SolarSystemDesigner() {
         {step === 3 && (
           <div className="reveal space-y-5">
             <div className={CARD}>
-              <h3 className="mb-2 text-lg font-bold text-amber-400">حساب البطاريات</h3>
+              <h3 className="mb-2 text-lg font-bold text-amber-600">حساب البطاريات</h3>
               <div className="grid gap-3 md:grid-cols-3 text-sm">
-                <div className={STAT}>الطاقة الليلية: <span className="font-bold text-amber-400">{calc.nightEnergyNeeded_Wh.toFixed(0)} Wh</span></div>
-                <div className={STAT}>سعة البنك المطلوبة: <span className="font-bold text-amber-400">{calc.requiredBankWh.toFixed(0)} Wh</span></div>
+                <div className={STAT}>الطاقة الليلية: <span className="font-bold text-amber-600">{calc.nightEnergyNeeded_Wh.toFixed(0)} Wh</span></div>
+                <div className={STAT}>سعة البنك المطلوبة: <span className="font-bold text-amber-600">{calc.requiredBankWh.toFixed(0)} Wh</span></div>
                 <div className={STAT}>(بعد DoD/حرارة/كفاءة شحن)</div>
               </div>
             </div>
 
-            <h3 className="text-lg font-bold text-amber-400">اختر التكوين</h3>
+            <h3 className="text-lg font-bold text-amber-600">اختر التكوين</h3>
             <div className="grid gap-4 md:grid-cols-3">
               {calc.batteryOptions.map((opt, i) => {
                 const active = (chosenBattery?.model === opt.model && chosenBattery?.qty === opt.qty) || (!chosenBattery && i === 0);
@@ -554,12 +554,12 @@ export default function SolarSystemDesigner() {
                     onClick={() => setChosenBattery(opt)}
                     className={cn(
                       "rounded-2xl border-2 p-4 text-right transition-all",
-                      active ? "border-amber-400 bg-amber-500/10 shadow-[0_0_25px_-8px_rgba(245,158,11,0.6)]" : "border-slate-700 bg-slate-900/50 hover:border-amber-500/40"
+                      active ? "border-amber-400 bg-amber-500/10 shadow-[0_0_25px_-8px_rgba(245,158,11,0.6)]" : "border-slate-300 bg-white hover:border-amber-500/40"
                     )}
                   >
-                    <div className="mb-2 inline-block rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-300">{opt.label}</div>
+                    <div className="mb-2 inline-block rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-700">{opt.label}</div>
                     <div className="font-extrabold">{opt.model}</div>
-                    <div className="mt-2 text-sm text-slate-300 space-y-1">
+                    <div className="mt-2 text-sm text-slate-700 space-y-1">
                       <div>الفولطية: {opt.voltage}V</div>
                       <div>السعة: {opt.ah}Ah</div>
                       <div>الطاقة: {opt.kwh.toFixed(2)} kWh</div>
@@ -577,24 +577,24 @@ export default function SolarSystemDesigner() {
         {step === 4 && (
           <div className="reveal space-y-5">
             <div className={CARD}>
-              <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-400"><Zap className="h-5 w-5" /> العاكس المقترح</div>
+              <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-600"><Zap className="h-5 w-5" /> العاكس المقترح</div>
               <div className="text-xl font-extrabold">{calc.inverter.model}</div>
               <div className="mt-3 grid gap-3 md:grid-cols-2 text-sm">
-                <div className={STAT}>القدرة: <b className="text-amber-400">{calc.inverter.power} W</b></div>
-                <div className={STAT}>الفولطية: <b className="text-amber-400">{calc.inverter.voltage}V</b></div>
-                <div className={STAT}>MPPT: <b className="text-amber-400">{calc.inverter.mppt ?? "—"}</b> {calc.inverter.dualMPPT && "(Dual)"}</div>
-                <div className={STAT}>الحد الأقصى للألواح: <b className="text-amber-400">{calc.inverter.maxPanels}</b></div>
+                <div className={STAT}>القدرة: <b className="text-amber-600">{calc.inverter.power} W</b></div>
+                <div className={STAT}>الفولطية: <b className="text-amber-600">{calc.inverter.voltage}V</b></div>
+                <div className={STAT}>MPPT: <b className="text-amber-600">{calc.inverter.mppt ?? "—"}</b> {calc.inverter.dualMPPT && "(Dual)"}</div>
+                <div className={STAT}>الحد الأقصى للألواح: <b className="text-amber-600">{calc.inverter.maxPanels}</b></div>
               </div>
-              <div className="mt-3 text-xs text-slate-400">{calc.inverter.note}</div>
+              <div className="mt-3 text-xs text-slate-500">{calc.inverter.note}</div>
             </div>
 
             {systemType === "full" && (
               <div className={CARD}>
-                <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-400"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
+                <div className="mb-2 flex items-center gap-2 text-lg font-bold text-amber-600"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
                 <div className="grid gap-3 md:grid-cols-3 text-sm">
-                  <div className={STAT}>العدد: <b className="text-amber-400">{calc.panelsCapped} لوح</b></div>
-                  <div className={STAT}>القدرة الكلية: <b className="text-amber-400">{(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</b></div>
-                  <div className={STAT}>إنتاج يومي متوقع: <b className="text-amber-400">{((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</b></div>
+                  <div className={STAT}>العدد: <b className="text-amber-600">{calc.panelsCapped} لوح</b></div>
+                  <div className={STAT}>القدرة الكلية: <b className="text-amber-600">{(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</b></div>
+                  <div className={STAT}>إنتاج يومي متوقع: <b className="text-amber-600">{((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</b></div>
                 </div>
                 {calc.panelsNeeded > calc.inverter.maxPanels && (
                   <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
@@ -613,72 +613,72 @@ export default function SolarSystemDesigner() {
             <div className={CARD}>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm text-slate-400">مؤشر صحة المنظومة</div>
-                  <div className="text-4xl font-extrabold text-amber-400">{calc.health}%</div>
+                  <div className="text-sm text-slate-500">مؤشر صحة المنظومة</div>
+                  <div className="text-4xl font-extrabold text-amber-600">{calc.health}%</div>
                 </div>
-                <SeasonIcon className="h-10 w-10 text-amber-400" />
+                <SeasonIcon className="h-10 w-10 text-amber-600" />
               </div>
-              <Progress dir="ltr" value={calc.health} className="mt-3 h-3 bg-slate-800 [transform:scaleX(-1)] [&>div]:bg-amber-400" />
+              <Progress dir="ltr" value={calc.health} className="mt-3 h-3 bg-slate-200 [transform:scaleX(-1)] [&>div]:bg-amber-500" />
             </div>
 
             {/* Cards grid */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className={CARD}>
-                <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold"><Battery className="h-5 w-5" /> بنك البطاريات المقترح</div>
+                <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Battery className="h-5 w-5" /> بنك البطاريات المقترح</div>
                 <div className="font-extrabold">{calc.selectedBattery.model}</div>
-                <div className="mt-2 text-sm text-slate-300">
+                <div className="mt-2 text-sm text-slate-700">
                   الفولطية: {calc.selectedBattery.voltage}V | السعة: {calc.selectedBattery.ah}Ah | {calc.selectedBattery.kwh.toFixed(2)} kWh
                 </div>
-                <div className="mt-1 text-sm text-slate-400">الطاقة القابلة للاستخدام: <b className="text-amber-300">{calc.availableWh.toFixed(0)} Wh</b></div>
+                <div className="mt-1 text-sm text-slate-500">الطاقة القابلة للاستخدام: <b className="text-amber-700">{calc.availableWh.toFixed(0)} Wh</b></div>
               </div>
 
               <div className={CARD}>
-                <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold"><Bolt className="h-5 w-5" /> العاكس المقترح</div>
+                <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Bolt className="h-5 w-5" /> العاكس المقترح</div>
                 <div className="font-extrabold">{calc.inverter.model}</div>
-                <div className="mt-2 text-sm text-slate-300">نظام: {calc.inverter.voltage}V | MPPT: {calc.inverter.mppt ?? "—"}</div>
-                <div className="mt-1 text-sm text-slate-400">الحد الأقصى للألواح: {calc.inverter.maxPanels}</div>
+                <div className="mt-2 text-sm text-slate-700">نظام: {calc.inverter.voltage}V | MPPT: {calc.inverter.mppt ?? "—"}</div>
+                <div className="mt-1 text-sm text-slate-500">الحد الأقصى للألواح: {calc.inverter.maxPanels}</div>
               </div>
 
               {systemType === "full" && (
                 <div className={CARD}>
-                  <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
+                  <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold"><Sun className="h-5 w-5" /> الألواح الشمسية</div>
                   <div className="font-extrabold">{calc.panelsCapped} لوح بقدرة 615W</div>
-                  <div className="mt-2 text-sm text-slate-300">إجمالي القدرة: {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</div>
-                  <div className="mt-1 text-sm text-slate-400">إنتاج يومي متوقع: {((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</div>
+                  <div className="mt-2 text-sm text-slate-700">إجمالي القدرة: {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</div>
+                  <div className="mt-1 text-sm text-slate-500">إنتاج يومي متوقع: {((calc.panelsCapped * PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF) / 1000).toFixed(1)} kWh</div>
                 </div>
               )}
 
               <div className={CARD}>
-                <div className="mb-2 flex items-center gap-2 text-amber-400 font-bold">⏱️ وقت التشغيل الفعلي</div>
-                <div className="text-sm text-slate-300">ليلاً: <b className="text-amber-300">{Math.floor(calc.actualNightRuntimeMin / 60)} ساعة {Math.round(calc.actualNightRuntimeMin % 60)} دقيقة</b></div>
-                <div className="text-sm text-slate-400">نظري (بدون خسائر): {(calc.theoreticalMin / 60).toFixed(1)} ساعة</div>
-                {systemType === "full" && <div className="text-sm text-slate-400">نهاراً: مستمر مع الشمس</div>}
+                <div className="mb-2 flex items-center gap-2 text-amber-600 font-bold">⏱️ وقت التشغيل الفعلي</div>
+                <div className="text-sm text-slate-700">ليلاً: <b className="text-amber-700">{Math.floor(calc.actualNightRuntimeMin / 60)} ساعة {Math.round(calc.actualNightRuntimeMin % 60)} دقيقة</b></div>
+                <div className="text-sm text-slate-500">نظري (بدون خسائر): {(calc.theoreticalMin / 60).toFixed(1)} ساعة</div>
+                {systemType === "full" && <div className="text-sm text-slate-500">نهاراً: مستمر مع الشمس</div>}
               </div>
             </div>
 
             {/* Loss breakdown */}
             <Collapsible>
-              <CollapsibleTrigger className="w-full rounded-xl border border-amber-500/30 bg-slate-900/60 px-4 py-3 text-right font-bold text-amber-400 hover:bg-slate-900/80">
+              <CollapsibleTrigger className="w-full rounded-xl border border-amber-500/30 bg-white px-4 py-3 text-right font-bold text-amber-600 hover:bg-amber-50">
                 📊 تفاصيل الخسائر (اضغط للعرض)
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 space-y-2 rounded-xl border border-amber-500/20 bg-slate-900/50 p-4 text-sm">
-                <div>خسائر العاكس 10%: <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * 0.10).toFixed(0)} Wh</b></div>
-                <div>خسائر الأسلاك 3%: <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * 0.03).toFixed(0)} Wh</b></div>
-                <div>عمق التفريغ {(DOD[battType] * 100).toFixed(0)}%: <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * (1 - DOD[battType])).toFixed(0)} Wh</b></div>
-                <div>تأثير الحرارة ({season}): <b className="text-amber-300">-{(calc.selectedBattery.kwh * 1000 * (1 - TEMP[season])).toFixed(0)} Wh</b></div>
-                <div className="mt-2 border-t border-amber-500/20 pt-2">الطاقة الفعلية المتاحة: <b className="text-amber-400">{calc.availableWh.toFixed(0)} Wh</b> (من أصل {(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh)</div>
+              <CollapsibleContent className="mt-2 space-y-2 rounded-xl border border-amber-500/20 bg-amber-50/40 p-4 text-sm text-slate-700">
+                <div>خسائر العاكس 10%: <b className="text-amber-700">-{(calc.selectedBattery.kwh * 1000 * 0.10).toFixed(0)} Wh</b></div>
+                <div>خسائر الأسلاك 3%: <b className="text-amber-700">-{(calc.selectedBattery.kwh * 1000 * 0.03).toFixed(0)} Wh</b></div>
+                <div>عمق التفريغ {(DOD[battType] * 100).toFixed(0)}%: <b className="text-amber-700">-{(calc.selectedBattery.kwh * 1000 * (1 - DOD[battType])).toFixed(0)} Wh</b></div>
+                <div>تأثير الحرارة ({season}): <b className="text-amber-700">-{(calc.selectedBattery.kwh * 1000 * (1 - TEMP[season])).toFixed(0)} Wh</b></div>
+                <div className="mt-2 border-t border-amber-500/20 pt-2">الطاقة الفعلية المتاحة: <b className="text-amber-600">{calc.availableWh.toFixed(0)} Wh</b> (من أصل {(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh)</div>
               </CollapsibleContent>
             </Collapsible>
 
             {/* Validation checklist */}
             <div className={CARD}>
-              <div className="mb-3 font-bold text-amber-400">قائمة التحقق الهندسية</div>
+              <div className="mb-3 font-bold text-amber-600">قائمة التحقق الهندسية</div>
               <ul className="space-y-2 text-sm">
                 {calc.errors.map((e) => (
                   <li key={e} className="flex items-start gap-2 text-red-400"><XCircle className="mt-0.5 h-4 w-4 shrink-0" /> {e}</li>
                 ))}
                 {calc.warnings.map((w) => (
-                  <li key={w} className="flex items-start gap-2 text-amber-300"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {w}</li>
+                  <li key={w} className="flex items-start gap-2 text-amber-700"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {w}</li>
                 ))}
                 {calc.oks.map((o) => (
                   <li key={o} className="flex items-start gap-2 text-emerald-400"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {o}</li>
@@ -688,11 +688,11 @@ export default function SolarSystemDesigner() {
 
             {/* Customer info before PDF */}
             <div className={CARD}>
-              <div className="mb-3 font-bold text-amber-400">بيانات العميل (اختياري — تظهر في التقرير)</div>
+              <div className="mb-3 font-bold text-amber-600">بيانات العميل (اختياري — تظهر في التقرير)</div>
               <div className="grid gap-3 md:grid-cols-3">
-                <Input placeholder="اسم العميل" value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} className="bg-slate-800 border-slate-700 text-slate-100" />
-                <Input placeholder="رقم الهاتف" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} className="bg-slate-800 border-slate-700 text-slate-100" />
-                <Input placeholder="العنوان" value={customer.address} onChange={(e) => setCustomer({ ...customer, address: e.target.value })} className="bg-slate-800 border-slate-700 text-slate-100" />
+                <Input placeholder="اسم العميل" value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} className="bg-white border-slate-300 text-slate-900" />
+                <Input placeholder="رقم الهاتف" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} className="bg-white border-slate-300 text-slate-900" />
+                <Input placeholder="العنوان" value={customer.address} onChange={(e) => setCustomer({ ...customer, address: e.target.value })} className="bg-white border-slate-300 text-slate-900" />
               </div>
             </div>
 
@@ -704,7 +704,7 @@ export default function SolarSystemDesigner() {
 
         {/* Navigation */}
         <div className="mt-8 flex items-center justify-between gap-3">
-          <Button variant="outline" onClick={back} disabled={step === 1} className="border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
+          <Button variant="outline" onClick={back} disabled={step === 1} className="border-slate-300 bg-white text-slate-900 hover:bg-slate-100">
             <ChevronRight className="ml-1 h-4 w-4" /> السابق
           </Button>
           {step < 5 ? (
@@ -712,7 +712,7 @@ export default function SolarSystemDesigner() {
               التالي <ChevronLeft className="mr-1 h-4 w-4" />
             </Button>
           ) : (
-            <Button variant="outline" onClick={() => setStep(1)} className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+            <Button variant="outline" onClick={() => setStep(1)} className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
               تصميم جديد
             </Button>
           )}
