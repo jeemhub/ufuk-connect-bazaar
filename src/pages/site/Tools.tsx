@@ -12,7 +12,7 @@ export default function ToolsPage() {
   return (
     <div dir="rtl">
       <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
-      <div className="bg-slate-950 border-b border-amber-500/20" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
+      <div className="bg-white border-b border-amber-200" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
         <div className="container mx-auto max-w-5xl px-4 py-4">
           <div className="flex flex-wrap gap-2">
             {[
@@ -27,8 +27,8 @@ export default function ToolsPage() {
                   className={cn(
                     "flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-all",
                     tool === t.v
-                      ? "border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_20px_-5px_rgba(245,158,11,0.6)]"
-                      : "border-slate-700 bg-slate-900/60 text-slate-300 hover:border-amber-500/40"
+                      ? "border-amber-400 bg-amber-50 text-amber-700 shadow-[0_0_20px_-8px_rgba(245,158,11,0.5)]"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-amber-400/60 hover:text-amber-700"
                   )}
                 >
                   <I className="h-4 w-4" /> {t.label}
