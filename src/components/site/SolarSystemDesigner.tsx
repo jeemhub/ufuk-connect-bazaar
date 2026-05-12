@@ -348,6 +348,7 @@ function DonutNightDay({ night, day }: { night: number; day: number }) {
 export default function SolarSystemDesigner() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [systemType, setSystemType] = useState<SystemType>("full");
+  const [coverageMode, setCoverageMode] = useState<"backup" | "standalone">("backup");
 
   const [nightHours, setNightHours] = useState(6);
   const [nightAmps, setNightAmps] = useState(10);
@@ -438,7 +439,10 @@ export default function SolarSystemDesigner() {
     const requiredBankWh = nightEnergyNeeded_Wh / DOD[battType] / TEMP[season] / CHARGE_EFF[battType];
 
     // ── Inverter sizing (multi-inverter, load-based first)
-    const peakAmps = Math.max(nightAmps, systemType === "full" ? dayAmps : 0);
+    // In backup mode: peak occurs at night (day runs from grid). In standalone: take max.
+    const peakAmps = coverageMode === "standalone" && systemType === "full"
+      ? Math.max(nightAmps, dayAmps)
+      : nightAmps;
     const peakLoadW = peakAmps * 220;
     const peakLoadWithMargin = peakLoadW * 1.25;
 
@@ -467,7 +471,11 @@ export default function SolarSystemDesigner() {
     // ── Charging tier — required charge current = bankAh × C-rate
     const cRate = CHARGE_TIERS[battType][chargeTier];
     const requiredChargeA = selectedBattery.ah * cRate;
-    const invertersForCharging = Math.max(1, Math.ceil(requiredChargeA / INVERTER_MAX_CHARGE_A));
+    // For "economy" tier, accept slower charging — do NOT add inverters just to meet the C-rate.
+    // For balanced/fast, the user explicitly wants speed → enforce the requirement.
+    const invertersForCharging = chargeTier === "economy"
+      ? 1
+      : Math.max(1, Math.ceil(requiredChargeA / INVERTER_MAX_CHARGE_A));
 
     // Final inverter count
     let invertersNeeded = Math.max(invertersForLoad, invertersForCharging);
@@ -487,9 +495,15 @@ export default function SolarSystemDesigner() {
     let panelsPerInverter = 0;
     let stringsPerInverter = 0;
     if (systemType === "full") {
-      const dayEnergyNeeded_Wh = (dayAmps * 220 * dayHours) / INVERTER_EFF;
       const batteryRechargeWh = nightEnergyNeeded_Wh / CHARGE_EFF[battType];
-      totalPVneeded_Wh = dayEnergyNeeded_Wh + batteryRechargeWh;
+      if (coverageMode === "standalone") {
+        // Full off-grid: panels must run day loads AND recharge batteries
+        const dayEnergyNeeded_Wh = (dayAmps * 220 * dayHours) / INVERTER_EFF;
+        totalPVneeded_Wh = dayEnergyNeeded_Wh + batteryRechargeWh;
+      } else {
+        // Backup-only: grid runs day loads, panels only recharge batteries
+        totalPVneeded_Wh = batteryRechargeWh;
+      }
       panelsNeeded = Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF));
       const totalMaxPanels = inverter.maxPanels * invertersNeeded;
       panelsCapped = Math.min(panelsNeeded, totalMaxPanels);
@@ -504,7 +518,7 @@ export default function SolarSystemDesigner() {
 
     // ── Charging feasibility
     const totalChargeAmps = invertersNeeded * INVERTER_MAX_CHARGE_A;
-    const dayLoadDCamps = systemType === "full"
+    const dayLoadDCamps = systemType === "full" && coverageMode === "standalone"
       ? (dayAmps * 220) / (systemVoltage * INVERTER_EFF) : 0;
     const availableChargeAmps = Math.max(0, totalChargeAmps - dayLoadDCamps);
     const fullChargeHoursTheoretical = requiredChargeA > 0 ? selectedBattery.ah / requiredChargeA : 0;
@@ -528,7 +542,7 @@ export default function SolarSystemDesigner() {
     const tierComparison = (Object.keys(CHARGE_TIERS[battType]) as ChargeTier[]).map((t) => {
       const cR = CHARGE_TIERS[battType][t];
       const reqA = selectedBattery.ah * cR;
-      const invForCharge = Math.max(1, Math.ceil(reqA / INVERTER_MAX_CHARGE_A));
+      const invForCharge = t === "economy" ? 1 : Math.max(1, Math.ceil(reqA / INVERTER_MAX_CHARGE_A));
       const invTotal = Math.max(invertersForLoad, invForCharge);
       const panelsTier = systemType === "full"
         ? Math.min(Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF)), inverter.maxPanels * invTotal)
@@ -574,9 +588,9 @@ export default function SolarSystemDesigner() {
         oks.push("تيار البطاريات يكفي قدرة العواكس");
       }
     }
-    if (!modulesRatioOk) {
+    if (!modulesRatioOk && chargeTier !== "economy") {
       errors.push(`نسبة البطاريات للعواكس (${modulesPerInverter}/عاكس) تتجاوز الحد للفئة المختارة (${maxModulesAllowed}/عاكس) — أضف عاكساً أو اختر فئة أبطأ`);
-    } else if (battType === "lithium" && liModules > 0) {
+    } else if (battType === "lithium" && liModules > 0 && chargeTier !== "economy") {
       oks.push(`نسبة البطاريات/العواكس ${modulesPerInverter}:1 (الحد ${maxModulesAllowed}:1)`);
     }
     if (chargeStatus === "fail") {
@@ -615,7 +629,7 @@ export default function SolarSystemDesigner() {
       errors, warnings, oks, health,
       peakLoadW, tier,
     };
-  }, [nightAmps, nightHours, dayAmps, dayHours, battType, chargeTier, season, systemType, chosenBattery]);
+  }, [nightAmps, nightHours, dayAmps, dayHours, battType, chargeTier, season, systemType, coverageMode, chosenBattery]);
 
   // ───────── PDF
   const reportRef = useRef<HTMLDivElement>(null);
@@ -788,7 +802,42 @@ export default function SolarSystemDesigner() {
               </p>
             </div>
 
-            {/* Mode toggle */}
+            {/* Coverage mode — backup vs standalone */}
+            {systemType === "full" && (
+              <div className={CARD}>
+                <h3 className="mb-2 text-lg font-bold text-amber-600">هل تريد المنظومة تعمل نهاراً أيضاً بشكل مستقل؟</h3>
+                <p className="mb-3 text-xs text-slate-500">
+                  هذا الخيار يحدد حجم الألواح: في وضع تغطية الانقطاع، الألواح فقط لإعادة شحن البطاريات (لا تشغّل أحمال النهار من الشمس).
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    onClick={() => setCoverageMode("backup")}
+                    className={cn(
+                      "rounded-xl border-2 p-4 text-right transition",
+                      coverageMode === "backup"
+                        ? "border-amber-400 bg-amber-500/10"
+                        : "border-slate-300 bg-white hover:border-amber-500/40"
+                    )}
+                  >
+                    <div className="font-bold text-slate-800">لا — تغطية انقطاع فقط</div>
+                    <div className="mt-1 text-xs text-slate-500">الكهرباء الوطنية تشغّل النهار، والمنظومة تغطي الانقطاع (الليل أو أوقات محددة). ألواح أقل = كلفة أقل.</div>
+                  </button>
+                  <button
+                    onClick={() => setCoverageMode("standalone")}
+                    className={cn(
+                      "rounded-xl border-2 p-4 text-right transition",
+                      coverageMode === "standalone"
+                        ? "border-amber-400 bg-amber-500/10"
+                        : "border-slate-300 bg-white hover:border-amber-500/40"
+                    )}
+                  >
+                    <div className="font-bold text-slate-800">نعم — منظومة مستقلة كاملة</div>
+                    <div className="mt-1 text-xs text-slate-500">تشغيل الأحمال من الشمس نهاراً + شحن البطاريات لليل. تحتاج عدد ألواح أكبر.</div>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className={CARD}>
               <h3 className="mb-3 text-lg font-bold text-amber-600">كيف تريد إدخال الأحمال؟</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -1426,6 +1475,7 @@ export default function SolarSystemDesigner() {
           {/* Requirements */}
           <PdfSection title="ملخص المتطلبات">
             <PdfRow label="نوع المنظومة" value={systemType === "battery" ? "بطاريات + عاكس فقط" : "متكاملة (بطاريات + عاكس + ألواح)"} />
+            {systemType === "full" && <PdfRow label="نمط التغطية" value={coverageMode === "backup" ? "تغطية انقطاع فقط (الألواح للشحن فقط)" : "منظومة مستقلة كاملة (نهار + ليل)"} />}
             <PdfRow label="الحمل الليلي" value={`${nightAmps} A  /  ${calc.nightLoadW} W`} />
             <PdfRow label="ساعات التشغيل الليلي" value={`${nightHours} ساعة`} />
             {systemType === "full" && <PdfRow label="الحمل النهاري" value={`${dayAmps} A  /  ${dayAmps * 220} W`} />}
