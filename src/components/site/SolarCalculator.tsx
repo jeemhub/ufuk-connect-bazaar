@@ -125,7 +125,9 @@ export default function SolarCalculator() {
         pdf.setPage(i);
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
-        pdf.text("ufukalbasra.com", pageW / 2, pageH - 6, { align: "center" });
+        pdf.text("ufukalbasra.com", pageW / 2, pageH - 14, { align: "center" });
+        pdf.text("sales@ufukbasra.com.iq", pageW / 2, pageH - 9, { align: "center" });
+        pdf.text("+964 771 699 2955", pageW / 2, pageH - 4, { align: "center" });
       }
 
       pdf.save(`ufuk-solar-report-${Date.now()}.pdf`);
