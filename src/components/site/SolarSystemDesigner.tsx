@@ -629,7 +629,7 @@ export default function SolarSystemDesigner() {
       errors, warnings, oks, health,
       peakLoadW, tier,
     };
-  }, [nightAmps, nightHours, dayAmps, dayHours, battType, chargeTier, season, systemType, chosenBattery]);
+  }, [nightAmps, nightHours, dayAmps, dayHours, battType, chargeTier, season, systemType, coverageMode, chosenBattery]);
 
   // ───────── PDF
   const reportRef = useRef<HTMLDivElement>(null);
