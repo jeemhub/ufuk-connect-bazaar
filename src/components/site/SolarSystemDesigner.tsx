@@ -348,6 +348,7 @@ function DonutNightDay({ night, day }: { night: number; day: number }) {
 export default function SolarSystemDesigner() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [systemType, setSystemType] = useState<SystemType>("full");
+  const [coverageMode, setCoverageMode] = useState<"backup" | "standalone">("backup");
 
   const [nightHours, setNightHours] = useState(6);
   const [nightAmps, setNightAmps] = useState(10);
