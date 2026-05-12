@@ -462,13 +462,19 @@ export default function SolarSystemDesigner() {
     return {
       nightLoadW, nightLoadActual, nightEnergyNeeded_Wh, requiredBankWh,
       batteryOptions, selectedBattery,
-      inverter, invertersNeeded, totalInverterPower, systemVoltage, parallelExceeded,
+      inverter, invertersNeeded, invertersForLoad, invertersForCharging, inverterBottleneck,
+      totalInverterPower, systemVoltage, parallelExceeded,
       panelsNeeded, panelsCapped, totalPVneeded_Wh, panelsPerInverter, stringsPerInverter,
       availableWh, actualNightRuntimeMin, theoreticalMin,
+      cRate, requiredChargeA, totalChargeAmps, availableChargeAmps,
+      fullChargeHoursTheoretical, fullChargeHoursActual,
+      rechargeableWh, nightDischargedWh, chargeStatus, daysToFullCharge,
+      liModules, modulesPerInverter, maxModulesAllowed, modulesRatioOk,
+      tierComparison,
       errors, warnings, oks, health,
       peakLoadW, tier,
     };
-  }, [nightAmps, nightHours, dayAmps, dayHours, battType, season, systemType, chosenBattery]);
+  }, [nightAmps, nightHours, dayAmps, dayHours, battType, chargeTier, season, systemType, chosenBattery]);
 
   // ───────── PDF
   const reportRef = useRef<HTMLDivElement>(null);
