@@ -340,8 +340,65 @@ export default function SolarSystemDesigner() {
   const [chosenBattery, setChosenBattery] = useState<BatteryConfig | null>(null);
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
 
+  // Mode 1 (easy) state
+  const [loadMode, setLoadMode] = useState<"easy" | "advanced">("easy");
+  const [appliances, setAppliances] = useState<Appliance[]>(DEFAULT_APPLIANCES);
+  const [outageHours, setOutageHours] = useState(12);
+  const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
+
+  // Derived from appliances
+  const applianceSummary = useMemo(() => {
+    let peakW = 0, nightWh = 0, dayWh = 0, maxNightH = 0, maxDayH = 0;
+    const breakdown = appliances.map((a) => {
+      const total = a.watts * a.qty;
+      const nWh = total * a.nightHours;
+      const dWh = total * a.dayHours;
+      peakW += total; nightWh += nWh; dayWh += dWh;
+      if (a.nightHours > maxNightH) maxNightH = a.nightHours;
+      if (a.dayHours > maxDayH) maxDayH = a.dayHours;
+      return { ...a, totalW: total, energyWh: nWh + dWh };
+    });
+    const designPeakW = peakW * 0.8; // demand factor
+    const nH = Math.max(1, maxNightH || outageHours);
+    const dH = Math.max(1, maxDayH || 1);
+    const nightAvgA = nightWh / (nH * 220);
+    const dayAvgA = dayWh / (dH * 220);
+    const peakA = designPeakW / 220;
+    return { peakW, designPeakW, peakA, nightWh, dayWh, totalKWh: (nightWh + dayWh) / 1000, nH, dH, nightAvgA, dayAvgA, breakdown };
+  }, [appliances, outageHours]);
+
+  // Sync derived → calc inputs when in easy mode
+  useEffect(() => {
+    if (loadMode !== "easy") return;
+    setNightAmps(Math.round(applianceSummary.nightAvgA));
+    setDayAmps(Math.round(applianceSummary.dayAvgA));
+    setNightHours(Math.min(12, Math.max(1, applianceSummary.nH)));
+    setDayHours(Math.min(12, Math.max(1, applianceSummary.dH)));
+  }, [loadMode, applianceSummary.nightAvgA, applianceSummary.dayAvgA, applianceSummary.nH, applianceSummary.dH]);
+
+  const addAppliance = (preset?: { name: string; icon: string; watts: number }) => {
+    const a: Appliance = preset
+      ? { id: newId(), name: preset.name, icon: preset.icon, watts: preset.watts, qty: 1, nightHours: 4, dayHours: 4 }
+      : { id: newId(), name: "جهاز جديد", icon: "🔌", watts: 100, qty: 1, nightHours: 0, dayHours: 0 };
+    setAppliances((arr) => [...arr, a]);
+    setActivePreset(null);
+  };
+  const updateAppliance = (id: string, patch: Partial<Appliance>) => {
+    setAppliances((arr) => arr.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+    setActivePreset(null);
+  };
+  const removeAppliance = (id: string) => {
+    setAppliances((arr) => arr.filter((a) => a.id !== id));
+    setActivePreset(null);
+  };
+  const applyPreset = (key: PresetKey) => {
+    setAppliances(PRESETS[key].appliances.map((a) => ({ ...a, id: newId() })));
+    setActivePreset(key);
+  };
+
   const loadExample = () => {
     setSystemType("full");
+    setLoadMode("advanced");
     setNightAmps(150); setNightHours(5);
     setDayAmps(100); setDayHours(6);
     setBattType("lithium");
@@ -350,6 +407,7 @@ export default function SolarSystemDesigner() {
     setChosenBattery(null);
     setStep(5);
   };
+
 
   // ───────── Calculations (multi-inverter aware)
   const calc = useMemo(() => {
