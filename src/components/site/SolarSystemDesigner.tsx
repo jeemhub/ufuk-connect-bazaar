@@ -255,145 +255,81 @@ export default function SolarSystemDesigner() {
     };
   }, [nightAmps, nightHours, dayAmps, dayHours, battType, season, systemType, chosenBattery]);
 
-  // ───────── PDF
-  const downloadPdf = () => {
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const AMBER: [number, number, number] = [245, 158, 11];
+  // ───────── PDF (renders Arabic-friendly DOM via html2canvas)
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [reportNumber, setReportNumber] = useState<number>(() => {
+    const n = parseInt(localStorage.getItem("ufuk_design_report_no") || "1000", 10);
+    return n + 1;
+  });
 
-    // Report number
-    const lastNum = parseInt(localStorage.getItem("ufuk_design_report_no") || "1000", 10);
-    const reportNum = lastNum + 1;
-    localStorage.setItem("ufuk_design_report_no", String(reportNum));
+  const downloadPdf = async () => {
+    if (!reportRef.current) return;
+    setDownloading(true);
+    try {
+      // Reserve and persist report number
+      localStorage.setItem("ufuk_design_report_no", String(reportNumber));
 
-    // Header
-    pdf.setFillColor(...AMBER);
-    pdf.rect(0, 0, pageW, 28, "F");
-    pdf.setTextColor(15, 23, 42);
-    pdf.setFontSize(20);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("UFUK AL-Basra", pageW / 2, 12, { align: "center" });
-    pdf.setFontSize(10);
-    pdf.setFont("helvetica", "normal");
-    pdf.text("IT  -  Networking  -  Solar", pageW / 2, 18, { align: "center" });
-    pdf.setFontSize(11);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("Solar System Design Report", pageW / 2, 25, { align: "center" });
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
 
-    let y = 36;
-    pdf.setTextColor(60, 60, 60);
-    pdf.setFontSize(9);
-    const dateStr = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
-    pdf.text(`Date: ${dateStr}`, 12, y);
-    pdf.text(`Report No: #${reportNum}`, pageW - 12, y, { align: "right" });
-    y += 8;
+      const marginX = 8;
+      const availW = pageW - marginX * 2;
+      const ratio = canvas.height / canvas.width;
+      const imgH = availW * ratio;
+      let y = 10;
+      let remaining = imgH;
+      let srcY = 0;
+      const maxBodyH = pageH - y - 16;
 
-    // Section 1 — Customer
-    autoTable(pdf, {
-      startY: y,
-      head: [["Customer Info", ""]],
-      body: [
-        ["Name", customer.name || "—"],
-        ["Phone", customer.phone || "—"],
-        ["Address", customer.address || "—"],
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
+      if (imgH <= maxBodyH) {
+        pdf.addImage(imgData, "JPEG", marginX, y, availW, imgH);
+      } else {
+        const pxPerMm = canvas.width / availW;
+        while (remaining > 0) {
+          const sliceMm = Math.min(maxBodyH, remaining);
+          const slicePx = sliceMm * pxPerMm;
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = slicePx;
+          const ctx = sliceCanvas.getContext("2d")!;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+          ctx.drawImage(canvas, 0, srcY, canvas.width, slicePx, 0, 0, canvas.width, slicePx);
+          const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.95);
+          pdf.addImage(sliceData, "JPEG", marginX, y, availW, sliceMm);
+          srcY += slicePx;
+          remaining -= sliceMm;
+          if (remaining > 0) {
+            pdf.addPage();
+            y = 10;
+          }
+        }
+      }
 
-    // Section 2 — Requirements
-    autoTable(pdf, {
-      startY: y,
-      head: [["Requirements", ""]],
-      body: [
-        ["System Type", systemType === "battery" ? "Battery + Inverter" : "Full (Panels + Batteries + Inverter)"],
-        ["Night Load", `${nightAmps} A  /  ${calc.nightLoadW} W`],
-        ["Night Hours", `${nightHours} h`],
-        ...(systemType === "full" ? [
-          ["Day Load", `${dayAmps} A  /  ${dayAmps * 220} W`],
-          ["Day Hours", `${dayHours} h`],
-        ] : []),
-        ["Battery Type", battType === "lithium" ? "LiFePO4" : "Lead-Acid"],
-        ["Season", season],
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
+      // Footer on each page
+      const pageCount = pdf.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text("ufukalbasra.com", pageW / 2, pageH - 12, { align: "center" });
+        pdf.text("sales@ufukbasra.com.iq", pageW / 2, pageH - 8, { align: "center" });
+        pdf.text("+964 771 699 2955", pageW / 2, pageH - 4, { align: "center" });
+      }
 
-    // Section 3 — Components
-    const components: any[] = [
-      ["Inverter", calc.inverter.model, "1", `${calc.inverter.voltage}V  ${calc.inverter.mppt ?? ""}`],
-      ["Batteries", calc.selectedBattery.model, String(calc.selectedBattery.qty), calc.selectedBattery.connection ?? "—"],
-    ];
-    if (systemType === "full") {
-      components.push(["Solar Panels", "615W Mono", String(calc.panelsCapped), `Total ${(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW`]);
+      pdf.save(`ufuk-system-design-${reportNumber}.pdf`);
+      setReportNumber((n) => n + 1);
+    } finally {
+      setDownloading(false);
     }
-    autoTable(pdf, {
-      startY: y,
-      head: [["Component", "Model", "Qty", "Notes"]],
-      body: components,
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
-
-    // Section 4 — Engineering calculations
-    autoTable(pdf, {
-      startY: y,
-      head: [["Engineering Calculations", "Value"]],
-      body: [
-        ["Night load (W)", `${calc.nightLoadW.toFixed(0)} W`],
-        ["After inverter+wiring losses", `${calc.nightLoadActual.toFixed(0)} W`],
-        ["Night energy needed", `${calc.nightEnergyNeeded_Wh.toFixed(0)} Wh`],
-        ["Required bank (after DoD/Temp/Eff)", `${calc.requiredBankWh.toFixed(0)} Wh`],
-        ["Selected bank capacity", `${(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh`],
-        ["Available energy after losses", `${calc.availableWh.toFixed(0)} Wh`],
-        ...(systemType === "full" ? [
-          ["Total PV energy required", `${calc.totalPVneeded_Wh.toFixed(0)} Wh`],
-          ["Panels needed (theoretical)", String(calc.panelsNeeded)],
-          ["Panels installed (capped)", String(calc.panelsCapped)],
-        ] : []),
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-    y = (pdf as any).lastAutoTable.finalY + 4;
-
-    // Section 5 — Runtime
-    const h = Math.floor(calc.actualNightRuntimeMin / 60);
-    const m = Math.round(calc.actualNightRuntimeMin % 60);
-    autoTable(pdf, {
-      startY: y,
-      head: [["Expected Runtime", ""]],
-      body: [
-        ["Theoretical (no losses)", `${(calc.theoreticalMin / 60).toFixed(1)} h`],
-        ["Real runtime (after losses)", `${h} h ${m} min`],
-        ["Daytime", systemType === "full" ? "Continuous with sun" : "—"],
-      ],
-      headStyles: { fillColor: AMBER, textColor: [15, 23, 42] },
-      styles: { fontSize: 9 },
-      theme: "grid",
-    });
-
-    // Footer
-    const pageCount = pdf.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text("This report is issued by UFUK AL-Basra Co. for Technology", pageW / 2, pageH - 14, { align: "center" });
-      pdf.text("sales@ufukbasra.com.iq  |  +964 771 699 2955  |  ufukalbasra.com", pageW / 2, pageH - 9, { align: "center" });
-      pdf.text("All calculations follow IEC 62109 international engineering standards", pageW / 2, pageH - 4, { align: "center" });
-    }
-
-    pdf.save(`ufuk-system-design-${reportNum}.pdf`);
   };
 
   const next = () => setStep((s) => (s < 5 ? ((s + 1) as any) : s));
