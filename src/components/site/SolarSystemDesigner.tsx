@@ -132,7 +132,7 @@ function StepIndicator({ step }: { step: number }) {
   const steps = ["النوع", "الأحمال", "البطاريات", "العاكس والألواح", "النتائج"];
   return (
     <div className="mb-6">
-      <Progress value={(step / 5) * 100} className="h-2 bg-slate-800" />
+      <Progress dir="ltr" value={(step / 5) * 100} className="h-2 bg-slate-800 [transform:scaleX(-1)] [&>div]:bg-amber-400" />
       <div className="mt-3 flex justify-between text-xs text-slate-400">
         {steps.map((s, i) => (
           <div key={s} className={cn("text-center transition-colors", i + 1 <= step && "text-amber-400 font-bold")}>
@@ -618,7 +618,7 @@ export default function SolarSystemDesigner() {
                 </div>
                 <SeasonIcon className="h-10 w-10 text-amber-400" />
               </div>
-              <Progress value={calc.health} className="mt-3 h-3 bg-slate-800" />
+              <Progress dir="ltr" value={calc.health} className="mt-3 h-3 bg-slate-800 [transform:scaleX(-1)] [&>div]:bg-amber-400" />
             </div>
 
             {/* Cards grid */}
