@@ -325,6 +325,26 @@ function MultiInverterDiagram({ count, hasPV, voltage }: { count: number; hasPV:
   );
 }
 
+function DonutNightDay({ night, day }: { night: number; day: number }) {
+  const total = night + day;
+  if (!total) return null;
+  const r = 38, c = 50, circ = 2 * Math.PI * r;
+  const nightPct = night / total;
+  const nightLen = circ * nightPct;
+  return (
+    <svg viewBox="0 0 100 100" className="h-28 w-28">
+      <circle cx={c} cy={c} r={r} fill="none" stroke="#fbbf24" strokeWidth="14" />
+      <circle cx={c} cy={c} r={r} fill="none" stroke="#6366f1" strokeWidth="14"
+        strokeDasharray={`${nightLen} ${circ - nightLen}`}
+        transform={`rotate(-90 ${c} ${c})`} />
+      <text x="50" y="46" textAnchor="middle" fontSize="11" fontWeight="800" fill="#334155">
+        {(nightPct * 100).toFixed(0)}%
+      </text>
+      <text x="50" y="60" textAnchor="middle" fontSize="8" fill="#64748b">ليل</text>
+    </svg>
+  );
+}
+
 export default function SolarSystemDesigner() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [systemType, setSystemType] = useState<SystemType>("full");
