@@ -1096,7 +1096,20 @@ export default function SolarSystemDesigner() {
             {systemType === "full" && <PdfRow label="عدد الألواح" value={`${calc.panelsCapped} (${calc.panelsPerInverter}/عاكس)`} />}
           </PdfSection>
 
-          {/* Runtime */}
+          {/* Charging tier */}
+          <PdfSection title="معيار الشحن المطبق (C-rate)">
+            <PdfRow label="فئة الشحن" value={chargeTier === "economy" ? "اقتصادي" : chargeTier === "balanced" ? "متوازن" : "سريع"} />
+            <PdfRow label="C-rate" value={`${calc.cRate}  (مرجع IEC 61427: 0.2C للأنظمة المنزلية)`} />
+            <PdfRow label="تيار الشحن المطلوب" value={`${calc.requiredChargeA.toFixed(0)} A على ${calc.systemVoltage} V`} />
+            <PdfRow label="تيار الشحن المتاح من العواكس" value={`${calc.totalChargeAmps.toFixed(0)} A`} />
+            {battType === "lithium" && (
+              <PdfRow label="نسبة البطاريات/العواكس" value={`${calc.modulesPerInverter}:1 (الحد المسموح ${calc.maxModulesAllowed}:1)`} />
+            )}
+            <PdfRow label="وقت إعادة الشحن الكامل (نظري)" value={`${Math.floor(calc.fullChargeHoursTheoretical)} ساعة و ${Math.round((calc.fullChargeHoursTheoretical % 1) * 60)} دقيقة`} />
+            <PdfRow label="تحقق الشحن خلال يوم واحد" value={calc.chargeStatus === "ok" ? "✅ نعم" : calc.chargeStatus === "tight" ? "⚠️ بشق الأنفس" : `❌ يحتاج ${calc.daysToFullCharge.toFixed(1)} يوم`} />
+            <PdfRow label="عدد العواكس محدد بـ" value={calc.inverterBottleneck === "charging" ? "متطلبات سرعة الشحن" : "قدرة الحمل"} />
+          </PdfSection>
+
           <PdfSection title="وقت التشغيل المتوقع">
             <PdfRow label="نظري (بدون خسائر)" value={`${(calc.theoreticalMin / 60).toFixed(1)} ساعة`} />
             <PdfRow label="واقعي (بعد الخسائر)" value={`${Math.floor(calc.actualNightRuntimeMin / 60)} ساعة و ${Math.round(calc.actualNightRuntimeMin % 60)} دقيقة`} />
