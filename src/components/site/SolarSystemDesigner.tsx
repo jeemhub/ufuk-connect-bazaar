@@ -1475,6 +1475,7 @@ export default function SolarSystemDesigner() {
           {/* Requirements */}
           <PdfSection title="ملخص المتطلبات">
             <PdfRow label="نوع المنظومة" value={systemType === "battery" ? "بطاريات + عاكس فقط" : "متكاملة (بطاريات + عاكس + ألواح)"} />
+            {systemType === "full" && <PdfRow label="نمط التغطية" value={coverageMode === "backup" ? "تغطية انقطاع فقط (الألواح للشحن فقط)" : "منظومة مستقلة كاملة (نهار + ليل)"} />}
             <PdfRow label="الحمل الليلي" value={`${nightAmps} A  /  ${calc.nightLoadW} W`} />
             <PdfRow label="ساعات التشغيل الليلي" value={`${nightHours} ساعة`} />
             {systemType === "full" && <PdfRow label="الحمل النهاري" value={`${dayAmps} A  /  ${dayAmps * 220} W`} />}
