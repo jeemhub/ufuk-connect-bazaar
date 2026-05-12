@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, Download, Sun, TriangleAlert, XCircle, Zap, Leaf, Snowflake, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
