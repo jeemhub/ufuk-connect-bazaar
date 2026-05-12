@@ -588,9 +588,9 @@ export default function SolarSystemDesigner() {
         oks.push("تيار البطاريات يكفي قدرة العواكس");
       }
     }
-    if (!modulesRatioOk) {
+    if (!modulesRatioOk && chargeTier !== "economy") {
       errors.push(`نسبة البطاريات للعواكس (${modulesPerInverter}/عاكس) تتجاوز الحد للفئة المختارة (${maxModulesAllowed}/عاكس) — أضف عاكساً أو اختر فئة أبطأ`);
-    } else if (battType === "lithium" && liModules > 0) {
+    } else if (battType === "lithium" && liModules > 0 && chargeTier !== "economy") {
       oks.push(`نسبة البطاريات/العواكس ${modulesPerInverter}:1 (الحد ${maxModulesAllowed}:1)`);
     }
     if (chargeStatus === "fail") {
