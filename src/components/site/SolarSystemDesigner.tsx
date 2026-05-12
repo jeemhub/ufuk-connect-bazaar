@@ -169,53 +169,31 @@ type BatteryConfig = {
   voltage: number;
   ah: number;
   kwh: number;
-  qty: number;
-  maxCurrent?: number;
+  qty: number;                   // number of stacks (or total units for lead-acid)
+  maxCurrent?: number;           // total continuous discharge current
+  maxDischargeW?: number;        // total continuous discharge POWER (BMS limit × qty)
   connection?: string;
 };
 
 function pickLithiumConfigs(requiredWh: number): BatteryConfig[] {
-  // Use 5kWh module (LP3000 PRO module) as base for the recommended scaled stack.
-  const base5 = LITHIUM_OPTIONS[1];   // 5.12kWh module
-  const base10 = LITHIUM_OPTIONS[2];  // 10.24kWh unit
-  const base15 = LITHIUM_OPTIONS[3];  // 15.36kWh unit
-
-  const qty5 = Math.max(1, Math.ceil(requiredWh / (base5.kwh * 1000)));
+  const base5  = LITHIUM_OPTIONS[0]; // 5.12kWh
+  const base10 = LITHIUM_OPTIONS[1]; // 10.24kWh
+  const base15 = LITHIUM_OPTIONS[2]; // 15.36kWh
+  const qty5  = Math.max(1, Math.ceil(requiredWh / (base5.kwh  * 1000)));
   const qty10 = Math.max(1, Math.ceil(requiredWh / (base10.kwh * 1000)));
   const qty15 = Math.max(1, Math.ceil(requiredWh / (base15.kwh * 1000)));
-
-  const recommended: BatteryConfig = {
-    label: "موصى به",
-    model: base10.model,
-    voltage: base10.voltage,
-    ah: base10.ah * qty10,
-    kwh: base10.kwh * qty10,
-    qty: qty10,
-    maxCurrent: base10.maxCurrent * qty10,
-    connection: qty10 > 1 ? `${qty10} وحدة بالتوازي على 48V` : "—",
-  };
-  const economy: BatteryConfig = {
-    label: "اقتصادي",
-    model: base5.model,
-    voltage: base5.voltage,
-    ah: base5.ah * qty5,
-    kwh: base5.kwh * qty5,
-    qty: qty5,
-    maxCurrent: base5.maxCurrent * qty5,
-    connection: qty5 > 1 ? `${qty5} وحدة بالتوازي على 48V` : "—",
-  };
-  const premium: BatteryConfig = {
-    label: "متميز",
-    model: base15.model,
-    voltage: base15.voltage,
-    ah: base15.ah * qty15,
-    kwh: base15.kwh * qty15,
-    qty: qty15,
-    maxCurrent: base15.maxCurrent * qty15,
-    connection: qty15 > 1 ? `${qty15} وحدة بالتوازي على 48V` : "—",
-  };
-
-  return [recommended, economy, premium];
+  const make = (b: LithiumOpt, qty: number, label: BatteryConfig["label"]): BatteryConfig => ({
+    label,
+    model: b.model,
+    voltage: b.voltage,
+    ah: b.ah * qty,
+    kwh: b.kwh * qty,
+    qty,
+    maxCurrent: b.maxCurrent * qty,
+    maxDischargeW: b.maxDischargeW * qty,
+    connection: qty > 1 ? `${qty} وحدة بالتوازي على 48V` : "—",
+  });
+  return [make(base10, qty10, "موصى به"), make(base5, qty5, "اقتصادي"), make(base15, qty15, "متميز")];
 }
 
 function pickLeadAcidConfig(requiredWh: number, targetVoltage: 12 | 24 | 48): BatteryConfig {
