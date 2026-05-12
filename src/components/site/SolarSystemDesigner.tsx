@@ -802,7 +802,42 @@ export default function SolarSystemDesigner() {
               </p>
             </div>
 
-            {/* Mode toggle */}
+            {/* Coverage mode — backup vs standalone */}
+            {systemType === "full" && (
+              <div className={CARD}>
+                <h3 className="mb-2 text-lg font-bold text-amber-600">هل تريد المنظومة تعمل نهاراً أيضاً بشكل مستقل؟</h3>
+                <p className="mb-3 text-xs text-slate-500">
+                  هذا الخيار يحدد حجم الألواح: في وضع تغطية الانقطاع، الألواح فقط لإعادة شحن البطاريات (لا تشغّل أحمال النهار من الشمس).
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    onClick={() => setCoverageMode("backup")}
+                    className={cn(
+                      "rounded-xl border-2 p-4 text-right transition",
+                      coverageMode === "backup"
+                        ? "border-amber-400 bg-amber-500/10"
+                        : "border-slate-300 bg-white hover:border-amber-500/40"
+                    )}
+                  >
+                    <div className="font-bold text-slate-800">لا — تغطية انقطاع فقط</div>
+                    <div className="mt-1 text-xs text-slate-500">الكهرباء الوطنية تشغّل النهار، والمنظومة تغطي الانقطاع (الليل أو أوقات محددة). ألواح أقل = كلفة أقل.</div>
+                  </button>
+                  <button
+                    onClick={() => setCoverageMode("standalone")}
+                    className={cn(
+                      "rounded-xl border-2 p-4 text-right transition",
+                      coverageMode === "standalone"
+                        ? "border-amber-400 bg-amber-500/10"
+                        : "border-slate-300 bg-white hover:border-amber-500/40"
+                    )}
+                  >
+                    <div className="font-bold text-slate-800">نعم — منظومة مستقلة كاملة</div>
+                    <div className="mt-1 text-xs text-slate-500">تشغيل الأحمال من الشمس نهاراً + شحن البطاريات لليل. تحتاج عدد ألواح أكبر.</div>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className={CARD}>
               <h3 className="mb-3 text-lg font-bold text-amber-600">كيف تريد إدخال الأحمال؟</h3>
               <div className="grid grid-cols-2 gap-2">
