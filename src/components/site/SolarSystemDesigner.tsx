@@ -518,7 +518,7 @@ export default function SolarSystemDesigner() {
 
     // ── Charging feasibility
     const totalChargeAmps = invertersNeeded * INVERTER_MAX_CHARGE_A;
-    const dayLoadDCamps = systemType === "full"
+    const dayLoadDCamps = systemType === "full" && coverageMode === "standalone"
       ? (dayAmps * 220) / (systemVoltage * INVERTER_EFF) : 0;
     const availableChargeAmps = Math.max(0, totalChargeAmps - dayLoadDCamps);
     const fullChargeHoursTheoretical = requiredChargeA > 0 ? selectedBattery.ah / requiredChargeA : 0;
