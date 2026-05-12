@@ -443,54 +443,60 @@ export default function SolarSystemDesigner() {
   };
 
 
-  // ───────── Calculations (multi-inverter aware)
+  // ───────── Calculations (verified engineering — see SECTION 3 spec)
   const calc = useMemo(() => {
+    const sunHours = PEAK_SUN_HOURS_BY_SEASON[season];
+    const panelDerate = PANEL_SYSTEM_DERATE[season];
+    const battTempK = BATT_TEMP[battType][season];
+    const dod = DOD[battType];
+    const chargeEff = CHARGE_EFF[battType];
+
+    // ── STEP A: Load analysis ──
     const nightLoadW = nightAmps * 220;
-    const nightLoadActual = nightLoadW / INVERTER_EFF / (1 - WIRING_LOSS);
-    const nightEnergyNeeded_Wh = nightLoadActual * nightHours;
+    const nightLoadActual = nightLoadW / INVERTER_EFF / WIRING_EFF;
+    const nightEnergyWh_raw = nightLoadW * nightHours;
+    const nightEnergyNeeded_Wh = nightEnergyWh_raw / INVERTER_EFF / WIRING_EFF;
 
-    const requiredBankWh = nightEnergyNeeded_Wh / DOD[battType] / TEMP[season] / CHARGE_EFF[battType];
-
-    // ── Inverter sizing (multi-inverter, load-based first)
-    // In backup mode: peak occurs at night (day runs from grid). In standalone: take max.
     const peakAmps = coverageMode === "standalone" && systemType === "full"
       ? Math.max(nightAmps, dayAmps)
       : nightAmps;
-    const peakLoadW = peakAmps * 220;
-    const peakLoadWithMargin = peakLoadW * 1.25;
+    const peakLoadW_raw = peakAmps * 220;
+    const peakLoadW = peakLoadW_raw * DEMAND_FACTOR;
+    const designLoadW = peakLoadW * INVERTER_SAFETY_MARGIN;
 
-    let invertersForLoad = 1;
-    let inverter: Inverter = INVERTERS[0];
-    if (peakLoadWithMargin <= 0) {
-      inverter = INVERTERS[0];
-    } else if (peakLoadWithMargin <= MAX_INVERTER_W) {
-      const candidates = INVERTERS.filter((i) => i.power >= peakLoadWithMargin);
-      inverter = candidates[0] ?? INVERTER_12K;
-      invertersForLoad = 1;
-    } else {
-      invertersForLoad = Math.ceil(peakLoadWithMargin / MAX_INVERTER_W);
-      inverter = INVERTER_12K;
-    }
+    // ── STEP B: Battery bank sizing ──
+    const requiredBankWh = nightEnergyNeeded_Wh / dod / battTempK / chargeEff;
 
-    // ── Battery options
     let batteryOptions: BatteryConfig[] = [];
     if (battType === "lithium") {
       batteryOptions = pickLithiumConfigs(requiredBankWh);
     } else {
-      batteryOptions = [pickLeadAcidConfig(requiredBankWh, inverter.voltage as 12 | 24 | 48)];
+      batteryOptions = [pickLeadAcidConfig(requiredBankWh, 48 as 12 | 24 | 48)];
     }
     const selectedBattery = chosenBattery ?? batteryOptions[0];
 
-    // ── Charging tier — required charge current = bankAh × C-rate
+    // ── STEP C: Inverter sizing ──
+    let invertersForLoad = 1;
+    let inverter: Inverter = INVERTER_12K;
+    if (designLoadW <= 0) {
+      inverter = INVERTERS[0];
+    } else if (designLoadW <= MAX_INVERTER_W) {
+      const candidates = INVERTERS.filter((i) => i.power >= designLoadW && i.voltage === 48);
+      inverter = candidates[0] ?? INVERTER_12K;
+      invertersForLoad = 1;
+    } else {
+      invertersForLoad = Math.ceil(designLoadW / MAX_INVERTER_W);
+      inverter = INVERTER_12K;
+    }
+
+    // ── STEP D: Charging analysis (per-inverter charge current) ──
     const cRate = CHARGE_TIERS[battType][chargeTier];
     const requiredChargeA = selectedBattery.ah * cRate;
-    // For "economy" tier, accept slower charging — do NOT add inverters just to meet the C-rate.
-    // For balanced/fast, the user explicitly wants speed → enforce the requirement.
+    const chargePerInv = inverter.maxChargeA;
     const invertersForCharging = chargeTier === "economy"
       ? 1
-      : Math.max(1, Math.ceil(requiredChargeA / INVERTER_MAX_CHARGE_A));
+      : Math.max(1, Math.ceil(requiredChargeA / chargePerInv));
 
-    // Final inverter count
     let invertersNeeded = Math.max(invertersForLoad, invertersForCharging);
     const inverterBottleneck: "load" | "charging" =
       invertersForCharging > invertersForLoad ? "charging" : "load";
@@ -501,117 +507,127 @@ export default function SolarSystemDesigner() {
     const totalInverterPower = invertersNeeded * inverter.power;
     const systemVoltage = inverter.voltage;
 
-    // ── Panel sizing distributed across inverters
+    // ── STEP E: Charge time / feasibility (current side) ──
+    const totalChargeAmps = invertersNeeded * inverter.maxChargeA;
+    const dayLoadDCamps = systemType === "full" && coverageMode === "standalone"
+      ? (dayAmps * 220) / (systemVoltage * INVERTER_EFF) : 0;
+    const battMaxChargeA = ((selectedBattery as unknown) as { maxChargeA?: number }).maxChargeA
+      ?? selectedBattery.maxCurrent ?? totalChargeAmps;
+    const availableChargeAmps = Math.max(0, Math.min(totalChargeAmps - dayLoadDCamps, battMaxChargeA));
+    const fullChargeHoursTheoretical = requiredChargeA > 0 ? selectedBattery.ah / requiredChargeA : 0;
+    const fullChargeHoursActual = availableChargeAmps > 0
+      ? selectedBattery.ah / availableChargeAmps : Infinity;
+
+    // ── STEP F: Panel sizing ──
     let panelsNeeded = 0;
     let panelsCapped = 0;
     let totalPVneeded_Wh = 0;
     let panelsPerInverter = 0;
     let stringsPerInverter = 0;
+    let panelsPerInverter_max = 0;
     if (systemType === "full") {
-      const batteryRechargeWh = nightEnergyNeeded_Wh / CHARGE_EFF[battType];
-      if (coverageMode === "standalone") {
-        // Full off-grid: panels must run day loads AND recharge batteries
-        const dayEnergyNeeded_Wh = (dayAmps * 220 * dayHours) / INVERTER_EFF;
-        totalPVneeded_Wh = dayEnergyNeeded_Wh + batteryRechargeWh;
-      } else {
-        // Backup-only: grid runs day loads, panels only recharge batteries
-        totalPVneeded_Wh = batteryRechargeWh;
-      }
-      panelsNeeded = Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF));
-      const totalMaxPanels = inverter.maxPanels * invertersNeeded;
+      const energyToRecharge = nightEnergyNeeded_Wh / chargeEff;
+      const dayEnergyAC = (coverageMode === "standalone")
+        ? (dayAmps * 220 * dayHours) / WIRING_EFF
+        : 0;
+      totalPVneeded_Wh = dayEnergyAC + energyToRecharge;
+      const effectivePanelWh = PANEL_WATT * sunHours * panelDerate;
+      panelsNeeded = effectivePanelWh > 0 ? Math.ceil(totalPVneeded_Wh / effectivePanelWh) : 0;
+      const mpptCount = inverter.dualMPPT ? 2 : 1;
+      const panelsPerMPPT = Math.floor((inverter.maxPVwatt / mpptCount) / PANEL_WATT);
+      panelsPerInverter_max = panelsPerMPPT * mpptCount;
+      const totalMaxPanels = panelsPerInverter_max * invertersNeeded;
       panelsCapped = Math.min(panelsNeeded, totalMaxPanels);
-      panelsPerInverter = Math.ceil(panelsCapped / invertersNeeded);
-      stringsPerInverter = inverter.dualMPPT ? 2 : 1;
+      panelsPerInverter = invertersNeeded > 0 ? Math.ceil(panelsCapped / invertersNeeded) : 0;
+      stringsPerInverter = mpptCount;
     }
 
-    // Available energy after losses
-    const availableWh = selectedBattery.kwh * 1000 * DOD[battType] * TEMP[season];
-    const actualNightRuntimeMin = (availableWh / nightLoadActual) * 60;
-    const theoreticalMin = ((selectedBattery.kwh * 1000) / nightLoadW) * 60;
-
-    // ── Charging feasibility
-    const totalChargeAmps = invertersNeeded * INVERTER_MAX_CHARGE_A;
-    const dayLoadDCamps = systemType === "full" && coverageMode === "standalone"
-      ? (dayAmps * 220) / (systemVoltage * INVERTER_EFF) : 0;
-    const availableChargeAmps = Math.max(0, totalChargeAmps - dayLoadDCamps);
-    const fullChargeHoursTheoretical = requiredChargeA > 0 ? selectedBattery.ah / requiredChargeA : 0;
-    const fullChargeHoursActual = availableChargeAmps > 0
-      ? selectedBattery.ah / availableChargeAmps : Infinity;
-    const rechargeableWh = availableChargeAmps * systemVoltage * PEAK_SUN_HOURS * 0.97;
-    const nightDischargedWh = nightEnergyNeeded_Wh;
+    const energyFromPanelsPerDay = panelsCapped * PANEL_WATT * sunHours * panelDerate;
+    const energyToRechargeWh = nightEnergyNeeded_Wh / chargeEff;
     let chargeStatus: "ok" | "tight" | "fail" = "ok";
     let daysToFullCharge = 1;
-    if (rechargeableWh >= nightDischargedWh * 1.1) chargeStatus = "ok";
-    else if (rechargeableWh >= nightDischargedWh) chargeStatus = "tight";
-    else { chargeStatus = "fail"; daysToFullCharge = nightDischargedWh / Math.max(1, rechargeableWh); }
+    if (systemType === "full") {
+      if (energyFromPanelsPerDay >= energyToRechargeWh * 1.1) chargeStatus = "ok";
+      else if (energyFromPanelsPerDay >= energyToRechargeWh) chargeStatus = "tight";
+      else { chargeStatus = "fail"; daysToFullCharge = energyToRechargeWh / Math.max(1, energyFromPanelsPerDay); }
+    }
 
-    // Modules per inverter ratio (lithium only)
+    // ── STEP G: Runtime ──
+    const availableWh = selectedBattery.kwh * 1000 * dod * battTempK;
+    const actualNightRuntimeMin = (availableWh / Math.max(1, nightLoadActual)) * 60;
+    const runtimeHours = actualNightRuntimeMin / 60;
+    const theoreticalMin = ((selectedBattery.kwh * 1000) / Math.max(1, nightLoadW)) * 60;
+
     const liModules = battType === "lithium" ? Math.round(selectedBattery.kwh / LI_MODULE_KWH) : 0;
     const modulesPerInverter = invertersNeeded > 0 ? Math.ceil(liModules / invertersNeeded) : 0;
     const maxModulesAllowed = MAX_MODULES_PER_INVERTER_LI[chargeTier];
     const modulesRatioOk = battType !== "lithium" || modulesPerInverter <= maxModulesAllowed;
 
-    // Tier comparison
+    const battMaxDischargeW = (selectedBattery.maxDischargeW ?? ((selectedBattery.maxCurrent ?? 0) * selectedBattery.voltage));
+
     const tierComparison = (Object.keys(CHARGE_TIERS[battType]) as ChargeTier[]).map((t) => {
       const cR = CHARGE_TIERS[battType][t];
       const reqA = selectedBattery.ah * cR;
-      const invForCharge = t === "economy" ? 1 : Math.max(1, Math.ceil(reqA / INVERTER_MAX_CHARGE_A));
+      const invForCharge = t === "economy" ? 1 : Math.max(1, Math.ceil(reqA / inverter.maxChargeA));
       const invTotal = Math.max(invertersForLoad, invForCharge);
       const panelsTier = systemType === "full"
-        ? Math.min(Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF)), inverter.maxPanels * invTotal)
+        ? Math.min(Math.ceil(totalPVneeded_Wh / Math.max(1, PANEL_WATT * sunHours * panelDerate)), panelsPerInverter_max * invTotal)
         : 0;
       return { tier: t, cRate: cR, inverters: invTotal, batteries: selectedBattery.qty, panels: panelsTier, hours: cR > 0 ? 1 / cR : 0 };
     });
 
-    // Validations
+    // ── Validations (Rules 1–7) ──
     const errors: string[] = [];
     const warnings: string[] = [];
     const oks: string[] = [];
 
     if (parallelExceeded) {
-      errors.push(`الحمل/الشحن يتجاوز حد التوازي للعاكس (${MAX_PARALLEL_INVERTERS} × 12kW = 72kW) — يلزم نظام ثلاثي الطور أو تقسيم الأحمال`);
+      errors.push(`❌ يتجاوز الحد الأقصى للتوازي (${MAX_PARALLEL_INVERTERS} وحدات = 72kW) — يلزم نظام ثلاثي الطور`);
     }
     if (selectedBattery.voltage !== systemVoltage) {
-      errors.push("فولطية البطاريات لا تطابق فولطية العاكس");
+      errors.push("❌ فولطية البطاريات لا تطابق العاكس");
     } else {
       oks.push(`توافق فولطية النظام (${systemVoltage}V)`);
     }
-    if (peakLoadW > totalInverterPower) {
-      errors.push("الحمل الذروي يتجاوز إجمالي قدرة العواكس");
+    if (peakLoadW_raw > totalInverterPower) {
+      errors.push(`❌ الحمل الذروي (${(peakLoadW_raw/1000).toFixed(1)}kW) يتجاوز قدرة العواكس (${(totalInverterPower/1000).toFixed(0)}kW)`);
     } else {
-      oks.push(`الحمل (${(peakLoadW / 1000).toFixed(1)}kW) ضمن قدرة العواكس (${(totalInverterPower / 1000).toFixed(0)}kW)`);
+      oks.push(`الحمل (${(peakLoadW_raw/1000).toFixed(1)}kW) ضمن قدرة العواكس (${(totalInverterPower/1000).toFixed(0)}kW)`);
+    }
+    if (nightLoadActual > battMaxDischargeW) {
+      errors.push(`❌ البطاريات لا تستطيع تزويد هذا الحمل — يحتاج ${(nightLoadActual/1000).toFixed(1)}kW DC والبطاريات تعطي ${(battMaxDischargeW/1000).toFixed(1)}kW فقط — زد المجموعات`);
+    } else if (battType === "lithium") {
+      oks.push(`قدرة تفريغ البطاريات (${(battMaxDischargeW/1000).toFixed(1)}kW) تكفي`);
     }
     if (invertersNeeded > 1 && invertersNeeded <= MAX_PARALLEL_INVERTERS) {
       const reason = inverterBottleneck === "charging" ? "متطلبات سرعة الشحن" : "قدرة الحمل";
-      warnings.push(`نظام موزع: ${invertersNeeded} عواكس على التوازي — عدد العواكس محدد بـ${reason}`);
+      warnings.push(`نظام موزع: ${invertersNeeded} عواكس على التوازي — محدد بـ${reason}`);
     }
     if (battType === "leadacid" && selectedBattery.qty > 40) {
-      warnings.push(`عدد كبير من بطاريات الليد أسيد (${selectedBattery.qty}) — يُنصح بشدة بالليثيوم للأنظمة الكبيرة`);
+      warnings.push(`عدد كبير من بطاريات الليد أسيد (${selectedBattery.qty}) — يُنصح بالليثيوم`);
     }
-    if (systemType === "full" && panelsNeeded > inverter.maxPanels * invertersNeeded) {
-      warnings.push(`عدد الألواح المطلوب (${panelsNeeded}) يتجاوز حد العواكس (${inverter.maxPanels * invertersNeeded})`);
+    if (systemType === "full" && panelsNeeded > panelsPerInverter_max * invertersNeeded) {
+      warnings.push(`⚠️ الألواح المطلوبة (${panelsNeeded}) تتجاوز طاقة MPPT للعواكس (${panelsPerInverter_max * invertersNeeded}) — قد يحدث clipping`);
     } else if (systemType === "full") {
-      oks.push("توزيع الألواح ضمن قدرة MPPT للعواكس");
-    }
-    if (battType === "lithium" && selectedBattery.maxCurrent) {
-      const requiredCurrent = totalInverterPower / systemVoltage;
-      if (selectedBattery.maxCurrent < requiredCurrent) {
-        warnings.push(`تيار التفريغ الأقصى للبطاريات (${selectedBattery.maxCurrent}A) أقل من المطلوب للعواكس (${requiredCurrent.toFixed(0)}A)`);
-      } else {
-        oks.push("تيار البطاريات يكفي قدرة العواكس");
-      }
+      oks.push("توزيع الألواح ضمن قدرة MPPT");
     }
     if (!modulesRatioOk && chargeTier !== "economy") {
-      errors.push(`نسبة البطاريات للعواكس (${modulesPerInverter}/عاكس) تتجاوز الحد للفئة المختارة (${maxModulesAllowed}/عاكس) — أضف عاكساً أو اختر فئة أبطأ`);
+      errors.push(`نسبة البطاريات/العواكس (${modulesPerInverter}/عاكس) تتجاوز الحد للفئة (${maxModulesAllowed}) — أضف عاكساً أو اختر فئة أبطأ`);
     } else if (battType === "lithium" && liModules > 0 && chargeTier !== "economy") {
       oks.push(`نسبة البطاريات/العواكس ${modulesPerInverter}:1 (الحد ${maxModulesAllowed}:1)`);
     }
-    if (chargeStatus === "fail") {
-      errors.push(`الشحن لا يكتمل في يوم واحد — يحتاج ~${daysToFullCharge.toFixed(1)} يوم. أضف عواكس أو ألواح إضافية`);
-    } else if (chargeStatus === "tight") {
-      warnings.push("الشحن يكتمل بشق الأنفس — لا هامش للأيام الغائمة");
-    } else {
-      oks.push("المنظومة تشحن بالكامل خلال يوم شمسي واحد");
+    if (systemType === "full") {
+      if (chargeStatus === "fail") {
+        errors.push(`❌ الشحن لا يكتمل في يوم — يحتاج ~${daysToFullCharge.toFixed(1)} يوم`);
+      } else if (chargeStatus === "tight") {
+        warnings.push("⚠️ الشحن يكتمل بشق الأنفس — لا هامش للأيام الغائمة");
+      } else {
+        oks.push("المنظومة تشحن بالكامل خلال يوم شمسي");
+      }
+    }
+    const dischargeCrate = nightLoadW / Math.max(1, selectedBattery.kwh * 1000);
+    if (dischargeCrate > 1.0) {
+      warnings.push(`⚠️ معدل التفريغ مرتفع (C=${dischargeCrate.toFixed(2)}) — قد يقلل عمر البطارية`);
     }
     if (nightEnergyNeeded_Wh > selectedBattery.kwh * 1000 * 0.8) {
       warnings.push("الحمل الليلي يتجاوز 80% من سعة البطاريات — يُنصح بزيادة السعة");
@@ -619,28 +635,79 @@ export default function SolarSystemDesigner() {
       oks.push("البطاريات كافية للحمل الليلي");
     }
 
-    // Health
+    // ── Calculation breakdown trail ──
+    const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
+    const breakdown: { step: string; rows: { label: string; value: string }[] }[] = [
+      {
+        step: "أ. تحليل الحمل",
+        rows: [
+          { label: "الطاقة الليلية الخام", value: `${nightAmps}A × 220V × ${nightHours}س = ${fmt(nightEnergyWh_raw)} Wh` },
+          { label: "÷ كفاءة العاكس (0.90)", value: `${fmt(nightEnergyWh_raw / INVERTER_EFF)} Wh` },
+          { label: "÷ كفاءة الأسلاك (0.97)", value: `${fmt(nightEnergyNeeded_Wh)} Wh ← يجب أن تعطيه البطاريات (DC)` },
+          { label: "الحمل الذروي اللحظي", value: `${(peakLoadW_raw/1000).toFixed(2)} kW × 0.80 = ${(peakLoadW/1000).toFixed(2)} kW (تصميمي)` },
+          { label: "× معامل الأمان 1.25", value: `${(designLoadW/1000).toFixed(2)} kW ← قدرة العاكس المطلوبة` },
+        ],
+      },
+      {
+        step: "ب. سعة البنك المطلوبة",
+        rows: [
+          { label: `÷ عمق التفريغ (${dod})`, value: `${fmt(nightEnergyNeeded_Wh / dod)} Wh` },
+          { label: `÷ تأثير الحرارة (${battTempK})`, value: `${fmt(nightEnergyNeeded_Wh / dod / battTempK)} Wh` },
+          { label: `÷ كفاءة الشحن (${chargeEff})`, value: `${fmt(requiredBankWh)} Wh ← مطلوب` },
+          { label: "البطاريات المختارة", value: `${selectedBattery.qty} × ${selectedBattery.model} = ${fmt(selectedBattery.kwh*1000)} Wh` },
+        ],
+      },
+      {
+        step: "ج. العاكس",
+        rows: [
+          { label: "العاكس المطلوب", value: `≥ ${(designLoadW/1000).toFixed(1)} kW` },
+          { label: "للحمل", value: `${invertersForLoad} × ${inverter.model}` },
+          { label: `للشحن (C=${cRate})`, value: `يحتاج ${fmt(requiredChargeA)}A — ${invertersForCharging} عاكس` },
+          { label: "الإجمالي", value: `${invertersNeeded} عاكس (${(totalInverterPower/1000).toFixed(0)} kW)` },
+        ],
+      },
+      ...(systemType === "full" ? [{
+        step: "د. الألواح",
+        rows: [
+          { label: "طاقة لوح/يوم", value: `615W × ${sunHours}س × ${panelDerate.toFixed(3)} = ${fmt(PANEL_WATT*sunHours*panelDerate)} Wh` },
+          { label: "إجمالي مطلوب", value: `${fmt(totalPVneeded_Wh)} Wh` },
+          { label: "عدد الألواح", value: `${panelsCapped} لوح (${panelsPerInverter}/عاكس)` },
+        ],
+      }] : []),
+      {
+        step: "هـ. وقت التشغيل",
+        rows: [
+          { label: "Wh مفيدة", value: `${fmt(selectedBattery.kwh*1000)} × ${dod} × ${battTempK} = ${fmt(availableWh)} Wh` },
+          { label: "حمل DC فعلي", value: `${nightLoadW}W ÷ 0.90 ÷ 0.97 = ${fmt(nightLoadActual)} W` },
+          { label: "= وقت التشغيل", value: `${runtimeHours.toFixed(2)} ساعة` },
+        ],
+      },
+    ];
+
     let health = 100;
     health -= errors.length * 25;
     health -= warnings.length * 10;
     health = Math.max(0, Math.min(100, health));
 
     const tier = scaleTierFor(invertersNeeded);
+    const rechargeableWh = energyFromPanelsPerDay;
+    const nightDischargedWh = nightEnergyNeeded_Wh;
 
     return {
-      nightLoadW, nightLoadActual, nightEnergyNeeded_Wh, requiredBankWh,
-      batteryOptions, selectedBattery,
+      sunHours, panelDerate, battTempK,
+      nightLoadW, nightLoadActual, nightEnergyNeeded_Wh, nightEnergyWh_raw, requiredBankWh,
+      batteryOptions, selectedBattery, battMaxDischargeW,
       inverter, invertersNeeded, invertersForLoad, invertersForCharging, inverterBottleneck,
       totalInverterPower, systemVoltage, parallelExceeded,
-      panelsNeeded, panelsCapped, totalPVneeded_Wh, panelsPerInverter, stringsPerInverter,
-      availableWh, actualNightRuntimeMin, theoreticalMin,
+      panelsNeeded, panelsCapped, totalPVneeded_Wh, panelsPerInverter, stringsPerInverter, panelsPerInverter_max,
+      availableWh, actualNightRuntimeMin, theoreticalMin, runtimeHours,
       cRate, requiredChargeA, totalChargeAmps, availableChargeAmps,
       fullChargeHoursTheoretical, fullChargeHoursActual,
       rechargeableWh, nightDischargedWh, chargeStatus, daysToFullCharge,
       liModules, modulesPerInverter, maxModulesAllowed, modulesRatioOk,
-      tierComparison,
+      tierComparison, breakdown,
       errors, warnings, oks, health,
-      peakLoadW, tier,
+      peakLoadW: peakLoadW_raw, designLoadW, tier,
     };
   }, [nightAmps, nightHours, dayAmps, dayHours, battType, chargeTier, season, systemType, coverageMode, chosenBattery]);
 
