@@ -632,8 +632,8 @@ export default function SolarSystemDesigner() {
               </div>
             </div>
 
-            <Button onClick={downloadPdf} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 font-bold hover:from-amber-400 hover:to-amber-500" size="lg">
-              <Download className="ml-2 h-5 w-5" /> تحميل تقرير PDF
+            <Button onClick={downloadPdf} disabled={downloading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 font-bold hover:from-amber-400 hover:to-amber-500" size="lg">
+              <Download className="ml-2 h-5 w-5" /> {downloading ? "جاري التحضير..." : "تحميل تقرير PDF"}
             </Button>
           </div>
         )}
