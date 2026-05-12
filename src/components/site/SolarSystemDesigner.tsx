@@ -654,6 +654,110 @@ export default function SolarSystemDesigner() {
           )}
         </div>
       </div>
+
+      {/* Off-screen PDF report (rendered as image so Arabic works) */}
+      <div style={{ position: "fixed", left: "-10000px", top: 0, width: "794px", background: "#ffffff" }} aria-hidden>
+        <div ref={reportRef} dir="rtl" style={{ width: "794px", padding: "24px", background: "#ffffff", color: "#0f172a", fontFamily: "'Cairo', system-ui, sans-serif" }}>
+          {/* Header */}
+          <div style={{ background: "#F59E0B", padding: "18px 16px", borderRadius: "8px", color: "#0f172a", textAlign: "center" }}>
+            <div style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "1px" }}>أُفق البصرة | UFUK AL-Basra</div>
+            <div style={{ fontSize: "12px", marginTop: "4px" }}>IT • Networking • Solar</div>
+            <div style={{ fontSize: "15px", fontWeight: 700, marginTop: "6px" }}>تقرير تصميم منظومة الطاقة الشمسية</div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", fontSize: "12px", color: "#475569" }}>
+            <div>التاريخ: {new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" })}</div>
+            <div>رقم التقرير: #{reportNumber}</div>
+          </div>
+
+          {/* Section 1 — Customer */}
+          <PdfSection title="بيانات العميل">
+            <PdfRow label="الاسم" value={customer.name || "—"} />
+            <PdfRow label="الهاتف" value={customer.phone || "—"} />
+            <PdfRow label="العنوان" value={customer.address || "—"} />
+          </PdfSection>
+
+          {/* Section 2 — Requirements */}
+          <PdfSection title="ملخص المتطلبات">
+            <PdfRow label="نوع المنظومة" value={systemType === "battery" ? "بطاريات + عاكس فقط" : "متكاملة (بطاريات + عاكس + ألواح)"} />
+            <PdfRow label="الحمل الليلي" value={`${nightAmps} A  /  ${calc.nightLoadW} W`} />
+            <PdfRow label="ساعات التشغيل الليلي" value={`${nightHours} ساعة`} />
+            {systemType === "full" && <PdfRow label="الحمل النهاري" value={`${dayAmps} A  /  ${dayAmps * 220} W`} />}
+            {systemType === "full" && <PdfRow label="ساعات التشغيل النهاري" value={`${dayHours} ساعة`} />}
+            <PdfRow label="نوع البطارية" value={battType === "lithium" ? "ليثيوم LiFePO4" : "ليد أسيد"} />
+            <PdfRow label="الموسم" value={season === "summer" ? "صيف" : season === "winter" ? "شتاء" : "معتدل"} />
+          </PdfSection>
+
+          {/* Section 3 — Components */}
+          <PdfSection title="المكونات المقترحة">
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+              <thead>
+                <tr style={{ background: "#F59E0B", color: "#0f172a" }}>
+                  <th style={pdfTh}>المكون</th>
+                  <th style={pdfTh}>الموديل</th>
+                  <th style={pdfTh}>الكمية</th>
+                  <th style={pdfTh}>الملاحظات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style={pdfTd}>العاكس</td><td style={pdfTd}>{calc.inverter.model}</td><td style={pdfTd}>1</td><td style={pdfTd}>{calc.inverter.voltage}V {calc.inverter.mppt ? `، MPPT ${calc.inverter.mppt}` : ""}</td></tr>
+                <tr><td style={pdfTd}>البطاريات</td><td style={pdfTd}>{calc.selectedBattery.model}</td><td style={pdfTd}>{calc.selectedBattery.qty}</td><td style={pdfTd}>{calc.selectedBattery.connection ?? "—"}</td></tr>
+                {systemType === "full" && (
+                  <tr><td style={pdfTd}>الألواح الشمسية</td><td style={pdfTd}>615W Mono</td><td style={pdfTd}>{calc.panelsCapped}</td><td style={pdfTd}>إجمالي {(calc.panelsCapped * PANEL_WATT / 1000).toFixed(2)} kW</td></tr>
+                )}
+              </tbody>
+            </table>
+          </PdfSection>
+
+          {/* Section 4 — Engineering */}
+          <PdfSection title="الحسابات الهندسية">
+            <PdfRow label="الحمل الليلي" value={`${calc.nightLoadW.toFixed(0)} W`} />
+            <PdfRow label="بعد خسائر العاكس والأسلاك" value={`${calc.nightLoadActual.toFixed(0)} W`} />
+            <PdfRow label="الطاقة الليلية المطلوبة" value={`${calc.nightEnergyNeeded_Wh.toFixed(0)} Wh`} />
+            <PdfRow label="سعة البنك المطلوبة (بعد DoD/حرارة)" value={`${calc.requiredBankWh.toFixed(0)} Wh`} />
+            <PdfRow label="سعة البنك المختار" value={`${(calc.selectedBattery.kwh * 1000).toFixed(0)} Wh`} />
+            <PdfRow label="الطاقة المتاحة بعد الخسائر" value={`${calc.availableWh.toFixed(0)} Wh`} />
+            {systemType === "full" && <PdfRow label="إجمالي طاقة الألواح المطلوبة" value={`${calc.totalPVneeded_Wh.toFixed(0)} Wh`} />}
+            {systemType === "full" && <PdfRow label="عدد الألواح المطلوب نظرياً" value={String(calc.panelsNeeded)} />}
+            {systemType === "full" && <PdfRow label="عدد الألواح المثبت (ضمن حد العاكس)" value={String(calc.panelsCapped)} />}
+          </PdfSection>
+
+          {/* Section 5 — Runtime */}
+          <PdfSection title="وقت التشغيل المتوقع">
+            <PdfRow label="نظري (بدون خسائر)" value={`${(calc.theoreticalMin / 60).toFixed(1)} ساعة`} />
+            <PdfRow label="واقعي (بعد الخسائر)" value={`${Math.floor(calc.actualNightRuntimeMin / 60)} ساعة و ${Math.round(calc.actualNightRuntimeMin % 60)} دقيقة`} />
+            <PdfRow label="نهاراً" value={systemType === "full" ? "مستمر مع وجود الشمس" : "—"} />
+          </PdfSection>
+
+          {/* Footer */}
+          <div style={{ marginTop: "20px", borderTop: "2px solid #F59E0B", paddingTop: "10px", fontSize: "11px", color: "#475569", textAlign: "center", lineHeight: 1.7 }}>
+            <div>هذا التقرير صادر من شركة أُفق البصرة للتقنية</div>
+            <div>جميع الحسابات وفق المعايير الهندسية الدولية IEC 62109</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+const pdfTh: React.CSSProperties = { padding: "8px 6px", textAlign: "right", fontWeight: 700, border: "1px solid #fbbf24" };
+const pdfTd: React.CSSProperties = { padding: "7px 6px", textAlign: "right", border: "1px solid #e5e7eb" };
+
+function PdfSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginTop: "14px" }}>
+      <div style={{ background: "#F59E0B", color: "#0f172a", padding: "6px 10px", fontWeight: 700, fontSize: "13px", borderRadius: "4px 4px 0 0" }}>{title}</div>
+      <div style={{ border: "1px solid #fbbf24", borderTop: "none", padding: "8px 10px", borderRadius: "0 0 4px 4px" }}>{children}</div>
+    </div>
+  );
+}
+
+function PdfRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px dashed #e5e7eb", fontSize: "12px" }}>
+      <span style={{ color: "#475569" }}>{label}</span>
+      <span style={{ fontWeight: 700, color: "#0f172a" }}>{value}</span>
+    </div>
+  );
+}
+
