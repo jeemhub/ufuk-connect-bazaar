@@ -442,6 +442,38 @@ export default function SolarSystemDesigner() {
     setStep(5);
   };
 
+            {/* "كيف تم الحساب؟" — verified breakdown */}
+            <div className={CARD}>
+              <Collapsible>
+                <CollapsibleTrigger className="flex w-full items-center justify-between text-right">
+                  <span className="flex items-center gap-2 font-bold text-amber-600">
+                    <Sparkles className="h-5 w-5" /> كيف تم الحساب؟ (تفاصيل هندسية موثقة)
+                  </span>
+                  <ChevronLeft className="h-4 w-4 text-slate-500" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-4">
+                  <div className="rounded-lg bg-amber-50 p-3 text-xs text-slate-600">
+                    المصادر: Must datasheets، IEEE 1562/1013، IEC 60364، NASA SSE (البصرة).
+                    كفاءة العاكس 0.90 — أسلاك 0.97 — MPPT 0.92 — غبار 0.95 — اشتقاق حراري حسب الموسم.
+                    عمق تفريغ {(DOD[battType]*100).toFixed(0)}% ({battType === "lithium" ? "LiFePO4" : "Lead-Acid"}).
+                    ساعات شمسية ذروية = {calc.sunHours} ساعة (NASA SSE — البصرة).
+                  </div>
+                  {calc.breakdown.map((sec) => (
+                    <div key={sec.step} className="rounded-lg border border-amber-200 bg-amber-50/40 p-3">
+                      <div className="mb-2 font-bold text-amber-700">{sec.step}</div>
+                      <div className="space-y-1 text-sm">
+                        {sec.rows.map((r, i) => (
+                          <div key={i} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-amber-100 py-1 last:border-0">
+                            <span className="text-slate-600">{r.label}</span>
+                            <span className="font-mono text-slate-900" dir="ltr">{r.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
   // ───────── Calculations (verified engineering — see SECTION 3 spec)
   const calc = useMemo(() => {
