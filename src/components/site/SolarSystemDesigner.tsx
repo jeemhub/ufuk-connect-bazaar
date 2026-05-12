@@ -296,41 +296,48 @@ export default function SolarSystemDesigner() {
 
     const requiredBankWh = nightEnergyNeeded_Wh / DOD[battType] / TEMP[season] / CHARGE_EFF[battType];
 
-    // ── Inverter sizing (multi-inverter)
+    // ── Inverter sizing (multi-inverter, load-based first)
     const peakAmps = Math.max(nightAmps, systemType === "full" ? dayAmps : 0);
     const peakLoadW = peakAmps * 220;
     const peakLoadWithMargin = peakLoadW * 1.25;
 
-    let invertersNeeded = 1;
+    let invertersForLoad = 1;
     let inverter: Inverter = INVERTERS[0];
-    let parallelExceeded = false;
-
     if (peakLoadWithMargin <= 0) {
       inverter = INVERTERS[0];
     } else if (peakLoadWithMargin <= MAX_INVERTER_W) {
-      // Fits in single inverter — pick smallest 48V unit (or any voltage) that fits
       const candidates = INVERTERS.filter((i) => i.power >= peakLoadWithMargin);
       inverter = candidates[0] ?? INVERTER_12K;
-      invertersNeeded = 1;
+      invertersForLoad = 1;
     } else {
-      invertersNeeded = Math.ceil(peakLoadWithMargin / MAX_INVERTER_W);
+      invertersForLoad = Math.ceil(peakLoadWithMargin / MAX_INVERTER_W);
       inverter = INVERTER_12K;
-      if (invertersNeeded > MAX_PARALLEL_INVERTERS) {
-        parallelExceeded = true;
-      }
     }
 
-    const totalInverterPower = invertersNeeded * inverter.power;
-    const systemVoltage = inverter.voltage;
-
-    // ── Battery options (always sized for required Wh)
+    // ── Battery options
     let batteryOptions: BatteryConfig[] = [];
     if (battType === "lithium") {
       batteryOptions = pickLithiumConfigs(requiredBankWh);
     } else {
-      batteryOptions = [pickLeadAcidConfig(requiredBankWh, systemVoltage as 12 | 24 | 48)];
+      batteryOptions = [pickLeadAcidConfig(requiredBankWh, inverter.voltage as 12 | 24 | 48)];
     }
     const selectedBattery = chosenBattery ?? batteryOptions[0];
+
+    // ── Charging tier — required charge current = bankAh × C-rate
+    const cRate = CHARGE_TIERS[battType][chargeTier];
+    const requiredChargeA = selectedBattery.ah * cRate;
+    const invertersForCharging = Math.max(1, Math.ceil(requiredChargeA / INVERTER_MAX_CHARGE_A));
+
+    // Final inverter count
+    let invertersNeeded = Math.max(invertersForLoad, invertersForCharging);
+    const inverterBottleneck: "load" | "charging" =
+      invertersForCharging > invertersForLoad ? "charging" : "load";
+    let parallelExceeded = false;
+    if (invertersNeeded > 1) inverter = INVERTER_12K;
+    if (invertersNeeded > MAX_PARALLEL_INVERTERS) parallelExceeded = true;
+
+    const totalInverterPower = invertersNeeded * inverter.power;
+    const systemVoltage = inverter.voltage;
 
     // ── Panel sizing distributed across inverters
     let panelsNeeded = 0;
