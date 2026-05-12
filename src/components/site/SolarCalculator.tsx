@@ -421,12 +421,12 @@ export default function SolarCalculator() {
           {step === 4 && result && (
             <div className="space-y-5 reveal-up">
               <div ref={reportRef} dir="rtl" className="space-y-5 bg-white p-3">
-                <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-50 p-4">
-                  <img src={logoUrl} alt="افق البصرة" className="h-12 w-auto" crossOrigin="anonymous" />
+                <div className="flex items-center justify-between rounded-xl border-2 border-amber-500/40 bg-amber-50 p-6">
+                  <img src={logoUrl} alt="افق البصرة" className="h-24 w-auto" crossOrigin="anonymous" />
                   <div className="text-left">
-                    <div className="text-base font-bold text-amber-700">افق البصرة | Ufuk Albasra</div>
-                    <div className="text-xs text-slate-600">تقرير حاسبة الطاقة الشمسية</div>
-                    <div className="text-xs text-slate-500">{new Date().toLocaleString("en-GB")}</div>
+                    <div className="text-2xl font-extrabold text-amber-700">افق البصرة | Ufuk Albasra</div>
+                    <div className="text-base font-semibold text-slate-700 mt-1">تقرير حاسبة الطاقة الشمسية</div>
+                    <div className="text-sm text-slate-500 mt-1">{new Date().toLocaleString("en-GB")}</div>
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
