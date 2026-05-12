@@ -271,6 +271,7 @@ export default function SolarSystemDesigner() {
   const [dayAmps, setDayAmps] = useState(15);
   const [dayHours, setDayHours] = useState(5);
   const [battType, setBattType] = useState<BattType>("lithium");
+  const [chargeTier, setChargeTier] = useState<ChargeTier>("economy");
   const [season, setSeason] = useState<Season>("summer");
 
   const [chosenBattery, setChosenBattery] = useState<BatteryConfig | null>(null);
@@ -281,6 +282,7 @@ export default function SolarSystemDesigner() {
     setNightAmps(150); setNightHours(5);
     setDayAmps(100); setDayHours(6);
     setBattType("lithium");
+    setChargeTier("economy");
     setSeason("summer");
     setChosenBattery(null);
     setStep(5);
