@@ -850,6 +850,65 @@ export default function SolarSystemDesigner() {
               </div>
             </div>
 
+            {/* Charging tier results */}
+            <div className={CARD}>
+              <div className="mb-3 flex items-center gap-2 font-bold text-amber-600">
+                <Zap className="h-5 w-5" /> تفاصيل الشحن
+              </div>
+              <div className="mb-3 inline-block rounded-full bg-amber-500/20 px-3 py-1 text-sm font-bold text-amber-700">
+                فئة الشحن: {chargeTier === "economy" ? "اقتصادي" : chargeTier === "balanced" ? "متوازن" : "سريع"} — C-rate {calc.cRate}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 text-sm">
+                <div className={STAT}>تيار الشحن المطلوب: <b className="text-amber-700">{calc.requiredChargeA.toFixed(0)} A</b></div>
+                <div className={STAT}>تيار الشحن المتاح: <b className="text-amber-700">{calc.totalChargeAmps.toFixed(0)} A</b></div>
+                <div className={STAT}>وقت الشحن (نظري): <b className="text-amber-700">{Math.floor(calc.fullChargeHoursTheoretical)} س {Math.round((calc.fullChargeHoursTheoretical % 1) * 60)} د</b></div>
+                <div className={STAT}>وقت الشحن (مع الأحمال): <b className="text-amber-700">{isFinite(calc.fullChargeHoursActual) ? `${Math.floor(calc.fullChargeHoursActual)} س ${Math.round((calc.fullChargeHoursActual % 1) * 60)} د` : "—"}</b></div>
+                {battType === "lithium" && (
+                  <>
+                    <div className={STAT}>نسبة البطاريات/العواكس: <b className="text-amber-700">{calc.modulesPerInverter} وحدة/عاكس</b></div>
+                    <div className={STAT}>الحد الأقصى للفئة: <b className={calc.modulesRatioOk ? "text-emerald-600" : "text-red-600"}>{calc.maxModulesAllowed} {calc.modulesRatioOk ? "✅" : "❌"}</b></div>
+                  </>
+                )}
+                <div className={cn(STAT, "md:col-span-2")}>
+                  هل تشحن خلال يوم شمسي واحد؟{" "}
+                  {calc.chargeStatus === "ok" && <b className="text-emerald-600">✅ نعم</b>}
+                  {calc.chargeStatus === "tight" && <b className="text-amber-700">⚠️ بشق الأنفس</b>}
+                  {calc.chargeStatus === "fail" && <b className="text-red-600">❌ لا — يحتاج {calc.daysToFullCharge.toFixed(1)} يوم</b>}
+                </div>
+              </div>
+
+              {/* Tier comparison table */}
+              <div className="mt-4">
+                <div className="mb-2 text-sm font-bold text-slate-700">تأثير فئة الشحن على حجم المنظومة:</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-amber-500/20 text-slate-800">
+                        <th className="border border-amber-300 p-2 text-right">الفئة</th>
+                        <th className="border border-amber-300 p-2">العواكس</th>
+                        <th className="border border-amber-300 p-2">البطاريات</th>
+                        {systemType === "full" && <th className="border border-amber-300 p-2">الألواح</th>}
+                        <th className="border border-amber-300 p-2">وقت الشحن</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {calc.tierComparison.map((row) => (
+                        <tr key={row.tier} className={row.tier === chargeTier ? "bg-amber-50 font-bold" : ""}>
+                          <td className="border border-slate-200 p-2 text-right">
+                            {row.tier === "economy" ? "🐢 اقتصادي" : row.tier === "balanced" ? "⚡ متوازن" : "🚀 سريع"}
+                          </td>
+                          <td className="border border-slate-200 p-2 text-center">{row.inverters}</td>
+                          <td className="border border-slate-200 p-2 text-center">{row.batteries}</td>
+                          {systemType === "full" && <td className="border border-slate-200 p-2 text-center">{row.panels}</td>}
+                          <td className="border border-slate-200 p-2 text-center">~{row.hours.toFixed(1)} س</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
             {/* Cards grid */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className={CARD}>
