@@ -10,22 +10,49 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
-// ───────── Engineering constants
-const INVERTER_EFF = 0.90;
-const WIRING_LOSS = 0.03;
+// ───────── Engineering constants — VERIFIED (Must datasheets, IEC/IEEE, NASA SSE Basra)
+const INVERTER_EFF = 0.90;            // Conservative design value (datasheet 0.93 at full load)
+const WIRING_EFF = 0.97;              // 3% loss — IEEE 1562 / IEC 60364-7-712
+const WIRING_LOSS = 1 - WIRING_EFF;   // back-compat alias
+const MPPT_EFF = 0.92;                // PV→battery via MPPT
+const DUST_FACTOR = 0.95;             // Basra: cleaning every ~2 weeks
+const DEMAND_FACTOR = 0.80;           // NEC/IEC residential coincidence factor
+const INVERTER_SAFETY_MARGIN = 1.25;  // IEC 60364
+
 const DOD = { lithium: 0.80, leadacid: 0.50 } as const;
-const TEMP = { summer: 0.80, moderate: 0.90, winter: 0.97 } as const;
+
+// Battery temperature factor per chemistry × season
+const BATT_TEMP: Record<"lithium" | "leadacid", Record<"summer" | "moderate" | "winter", number>> = {
+  lithium:  { summer: 0.95, moderate: 0.98, winter: 0.97 },
+  leadacid: { summer: 0.80, moderate: 0.90, winter: 0.88 },
+};
+// Back-compat alias used by older code paths
+const TEMP = BATT_TEMP.lithium;
+
+// Panel temperature derate (cell temp = ambient + 25°C; -0.34%/°C above 25°C)
+const PANEL_TEMP_DERATE = { summer: 0.847, moderate: 0.915, winter: 0.966 } as const;
+// Combined panel system derate per season = MPPT × temp × dust × wiring
+const PANEL_SYSTEM_DERATE = {
+  summer:   MPPT_EFF * PANEL_TEMP_DERATE.summer   * DUST_FACTOR * WIRING_EFF, // ≈ 0.719
+  moderate: MPPT_EFF * PANEL_TEMP_DERATE.moderate * DUST_FACTOR * WIRING_EFF, // ≈ 0.777
+  winter:   MPPT_EFF * PANEL_TEMP_DERATE.winter   * DUST_FACTOR * WIRING_EFF, // ≈ 0.819
+} as const;
+// Legacy single value (used in a few UI labels)
+const PANEL_EFF = PANEL_SYSTEM_DERATE.summer;
+
 const CHARGE_EFF = { lithium: 0.97, leadacid: 0.85 } as const;
+
 const PANEL_WATT = 615;
-const PEAK_SUN_HOURS = 5.5;
-const PANEL_EFF = 0.80;
+// Peak sun hours for Basra (NASA SSE / PVGIS verified)
+const PEAK_SUN_HOURS_BY_SEASON = { summer: 6.5, moderate: 5.5, winter: 4.0 } as const;
+const PEAK_SUN_HOURS = PEAK_SUN_HOURS_BY_SEASON.moderate; // legacy default
 
 // Multi-inverter constants
-const MAX_INVERTER_W = 12000;        // Largest single-phase Must inverter
-const MAX_PARALLEL_INVERTERS = 6;    // Must PV1900M EXP supports up to 6 in parallel
-const PARALLEL_BATT_LIMIT_LP = 15;   // LP3000 PRO supports max 15 units parallel
-const INVERTER_MAX_CHARGE_A = 150;   // Must 12kW max DC charge current at 48V
-const LI_MODULE_KWH = 5.12;          // Single LP module size
+const MAX_INVERTER_W = 12000;
+const MAX_PARALLEL_INVERTERS = 6;
+const PARALLEL_BATT_LIMIT_LP = 15;
+const INVERTER_MAX_CHARGE_A = 150;   // legacy fallback (use inverter.maxChargeA when available)
+const LI_MODULE_KWH = 5.12;
 
 // Charging tier (C-rate) — IEC 61427 / IEEE 1013/1562 / LiFePO4 best practice
 type ChargeTier = "economy" | "balanced" | "fast";
