@@ -659,6 +659,42 @@ export default function SolarSystemDesigner() {
             </div>
 
             <div className={CARD}>
+              <h3 className="mb-1 text-lg font-bold text-amber-600">سرعة شحن البطاريات</h3>
+              <p className="mb-3 text-xs text-slate-500">معيار C-rate وفق IEC 61427 / IEEE 1013/1562 — يحدد التوازن بين عدد العواكس وعمر البطاريات</p>
+              <RadioGroup value={chargeTier} onValueChange={(v) => setChargeTier(v as ChargeTier)} className="grid gap-3 md:grid-cols-3">
+                {([
+                  { v: "economy" as ChargeTier, icon: "🐢", title: "اقتصادي",
+                    cLi: "C/5 (0.2C)", cPb: "C/10 (0.1C)",
+                    pros: ["أطول عمر للبطارية", "أقل حرارة", "موصى به IEC 61427", "عواكس أقل = تكلفة أقل"] },
+                  { v: "balanced" as ChargeTier, icon: "⚡", title: "متوازن",
+                    cLi: "C/2 (0.5C)", cPb: "C/7 (0.15C)",
+                    pros: ["توازن جيد", "شحن سريع نسبياً", "عمر طبيعي للبطارية"] },
+                  { v: "fast" as ChargeTier, icon: "🚀", title: "سريع",
+                    cLi: "1C", cPb: "C/5 (0.2C)",
+                    pros: ["شحن أسرع", "للأنظمة التجارية مع تبريد", "يقلل عمر البطارية"] },
+                ]).map((o) => (
+                  <label key={o.v} className={cn(
+                    "flex cursor-pointer flex-col gap-2 rounded-xl border p-3 text-right transition",
+                    chargeTier === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-300 bg-white hover:border-amber-500/40"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value={o.v} />
+                      <span className="text-2xl">{o.icon}</span>
+                      <span className="font-bold">{o.title}</span>
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      <div>ليثيوم: <b>{o.cLi}</b></div>
+                      <div>ليد أسيد: <b>{o.cPb}</b></div>
+                    </div>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-slate-500">
+                      {o.pros.map((p) => <li key={p}>• {p}</li>)}
+                    </ul>
+                  </label>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <div className={CARD}>
               <h3 className="mb-3 text-lg font-bold text-amber-600">الموسم (للتعويض الحراري)</h3>
               <RadioGroup value={season} onValueChange={(v) => setSeason(v as Season)} className="grid gap-3 md:grid-cols-3">
                 {[
