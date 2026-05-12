@@ -839,6 +839,35 @@ export default function SolarSystemDesigner() {
         {/* STEP 2 */}
         {step === 2 && (
           <div className="reveal space-y-5">
+            {/* Mode toggle — appliance vs amps */}
+            <div className={CARD}>
+              <h3 className="mb-3 text-lg font-bold text-amber-600">كيف تريد إدخال الأحمال؟</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setLoadMode("easy")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-xl border-2 p-4 font-bold transition",
+                    loadMode === "easy"
+                      ? "border-amber-400 bg-amber-500/10 text-amber-700"
+                      : "border-slate-300 bg-white text-slate-600 hover:border-amber-500/40"
+                  )}
+                >
+                  <List className="h-5 w-5" /> 📱 سهل — قائمة الأجهزة
+                </button>
+                <button
+                  onClick={() => setLoadMode("advanced")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-xl border-2 p-4 font-bold transition",
+                    loadMode === "advanced"
+                      ? "border-amber-400 bg-amber-500/10 text-amber-700"
+                      : "border-slate-300 bg-white text-slate-600 hover:border-amber-500/40"
+                  )}
+                >
+                  <SlidersHorizontal className="h-5 w-5" /> ⚙️ متقدم — أمبير
+                </button>
+              </div>
+            </div>
+
             {/* Building preset */}
             <div className={CARD}>
               <h3 className="mb-3 text-lg font-bold text-amber-600">نوع المبنى — اختيار سريع</h3>
