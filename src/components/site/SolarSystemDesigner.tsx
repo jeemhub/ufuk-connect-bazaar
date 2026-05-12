@@ -129,28 +129,36 @@ type SystemType = "battery" | "full";
 type BattType = "lithium" | "leadacid";
 type Season = "summer" | "moderate" | "winter";
 
-// ───────── Must product database
-type LithiumOpt = { model: string; kwh: number; voltage: number; ah: number; maxCurrent: number };
+// ───────── Must product database (VERIFIED — mustpower.com datasheets)
+type LithiumOpt = {
+  model: string; kwh: number; voltage: number; ah: number;
+  maxCurrent: number;          // continuous discharge current (A)
+  maxDischargeW: number;       // continuous discharge power (W) — BMS limit
+  peakDischargeW: number;      // 30-second surge
+  maxChargeA: number;
+};
 const LITHIUM_OPTIONS: LithiumOpt[] = [
-  { model: "Must LP1600 SE — 5kWh", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100 },
-  { model: "Must LP3000 PRO — 5kWh module", kwh: 5.12, voltage: 48, ah: 100, maxCurrent: 100 },
-  { model: "Must LP3000 PRO — 10kWh (2 modules)", kwh: 10.24, voltage: 48, ah: 200, maxCurrent: 200 },
-  { model: "Must LP3000 PRO — 15kWh (3 modules)", kwh: 15.36, voltage: 48, ah: 300, maxCurrent: 200 },
+  { model: "Must LP3000 PRO — 5.12kWh (1 module)",  kwh: 5.12,  voltage: 48, ah: 100, maxCurrent: 100, maxDischargeW: 5000,  peakDischargeW: 6000,  maxChargeA: 100 },
+  { model: "Must LP3000 PRO — 10.24kWh (2 modules)", kwh: 10.24, voltage: 48, ah: 200, maxCurrent: 200, maxDischargeW: 10000, peakDischargeW: 12000, maxChargeA: 200 },
+  { model: "Must LP3000 PRO — 15.36kWh (3 modules)", kwh: 15.36, voltage: 48, ah: 300, maxCurrent: 200, maxDischargeW: 10000, peakDischargeW: 12000, maxChargeA: 200 },
+  { model: "Must LP3000 PRO — 20.48kWh (4 modules)", kwh: 20.48, voltage: 48, ah: 400, maxCurrent: 200, maxDischargeW: 10000, peakDischargeW: 12000, maxChargeA: 200 },
 ];
 const LEADACID = { model: "Must 12V/200Ah", voltage: 12, ah: 200, kwh: 12 * 200 / 1000 };
 
 type Inverter = {
   model: string; power: number; voltage: 12 | 24 | 48;
   maxPanels: number; maxPVwatt: number; minBattAh: number;
+  maxChargeA: number;          // total DC charge current limit
   mppt?: string; dualMPPT?: boolean; note: string;
 };
+// VERIFIED Must PV1900 EXP series (mustpower.com)
 const INVERTERS: Inverter[] = [
-  { model: "Must PV1900 EXP — 1kW", power: 1000, voltage: 12, maxPanels: 1, maxPVwatt: 615, minBattAh: 100, note: "للأحمال الصغيرة جداً" },
-  { model: "Must PV1900 EXP — 4kW", power: 4000, voltage: 24, maxPanels: 6, maxPVwatt: 3690, minBattAh: 100, mppt: "90~430V", note: "مناسب للمنازل الصغيرة" },
-  { model: "Must PV1900 EXP — 6kW", power: 6000, voltage: 48, maxPanels: 10, maxPVwatt: 6150, minBattAh: 200, mppt: "150~450V", note: "مناسب للمنازل المتوسطة" },
-  { model: "Must PV1900M EXP — 8kW", power: 8000, voltage: 48, maxPanels: 14, maxPVwatt: 8000, minBattAh: 200, mppt: "150~450V", dualMPPT: true, note: "مناسب للمنازل الكبيرة" },
-  { model: "Must PV1900M EXP — 10kW", power: 10000, voltage: 48, maxPanels: 16, maxPVwatt: 10000, minBattAh: 300, mppt: "150~450V", dualMPPT: true, note: "مناسب للمنشآت التجارية" },
-  { model: "Must PV1900M EXP — 12kW Single Phase", power: 12000, voltage: 48, maxPanels: 20, maxPVwatt: 12000, minBattAh: 400, mppt: "150~450V", dualMPPT: true, note: "للمنشآت الكبيرة" },
+  { model: "Must PV1900 EXP — 4kW",        power: 4000,  voltage: 24, maxPanels: 6,  maxPVwatt: 4000,  minBattAh: 100, maxChargeA: 80,  mppt: "90~430V", note: "للأحمال الصغيرة — 24V" },
+  { model: "Must PV1900 EXP — 6kW",        power: 6000,  voltage: 48, maxPanels: 10, maxPVwatt: 6000,  minBattAh: 200, maxChargeA: 120, mppt: "90~450V", note: "مناسب للمنازل المتوسطة" },
+  { model: "Must PV1900M EXP — 6.2kW",     power: 6200,  voltage: 48, maxPanels: 10, maxPVwatt: 6200,  minBattAh: 200, maxChargeA: 120, mppt: "90~450V", dualMPPT: true, note: "أول موديل بـ Dual MPPT" },
+  { model: "Must PV1900M EXP — 8kW",       power: 8000,  voltage: 48, maxPanels: 14, maxPVwatt: 8000,  minBattAh: 200, maxChargeA: 140, mppt: "90~450V", dualMPPT: true, note: "مناسب للمنازل الكبيرة" },
+  { model: "Must PV1900M EXP — 10kW",      power: 10000, voltage: 48, maxPanels: 16, maxPVwatt: 10000, minBattAh: 300, maxChargeA: 150, mppt: "90~450V", dualMPPT: true, note: "للمنشآت التجارية الصغيرة" },
+  { model: "Must PV1900M EXP — 12kW",      power: 12000, voltage: 48, maxPanels: 20, maxPVwatt: 12000, minBattAh: 400, maxChargeA: 150, mppt: "90~450V", dualMPPT: true, note: "الأقوى — أقصى توازي 6 وحدات = 72kW" },
 ];
 const INVERTER_12K = INVERTERS[INVERTERS.length - 1];
 
