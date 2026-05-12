@@ -24,6 +24,16 @@ const PANEL_EFF = 0.80;
 const MAX_INVERTER_W = 12000;        // Largest single-phase Must inverter
 const MAX_PARALLEL_INVERTERS = 6;    // Must PV1900M EXP supports up to 6 in parallel
 const PARALLEL_BATT_LIMIT_LP = 15;   // LP3000 PRO supports max 15 units parallel
+const INVERTER_MAX_CHARGE_A = 150;   // Must 12kW max DC charge current at 48V
+const LI_MODULE_KWH = 5.12;          // Single LP module size
+
+// Charging tier (C-rate) — IEC 61427 / IEEE 1013/1562 / LiFePO4 best practice
+type ChargeTier = "economy" | "balanced" | "fast";
+const CHARGE_TIERS: Record<"lithium" | "leadacid", Record<ChargeTier, number>> = {
+  lithium:  { economy: 0.2, balanced: 0.5, fast: 1.0 },
+  leadacid: { economy: 0.1, balanced: 0.15, fast: 0.2 },
+};
+const MAX_MODULES_PER_INVERTER_LI: Record<ChargeTier, number> = { economy: 7, balanced: 3, fast: 1 };
 
 type SystemType = "battery" | "full";
 type BattType = "lithium" | "leadacid";
@@ -261,6 +271,7 @@ export default function SolarSystemDesigner() {
   const [dayAmps, setDayAmps] = useState(15);
   const [dayHours, setDayHours] = useState(5);
   const [battType, setBattType] = useState<BattType>("lithium");
+  const [chargeTier, setChargeTier] = useState<ChargeTier>("economy");
   const [season, setSeason] = useState<Season>("summer");
 
   const [chosenBattery, setChosenBattery] = useState<BatteryConfig | null>(null);
@@ -271,6 +282,7 @@ export default function SolarSystemDesigner() {
     setNightAmps(150); setNightHours(5);
     setDayAmps(100); setDayHours(6);
     setBattType("lithium");
+    setChargeTier("economy");
     setSeason("summer");
     setChosenBattery(null);
     setStep(5);
@@ -284,41 +296,48 @@ export default function SolarSystemDesigner() {
 
     const requiredBankWh = nightEnergyNeeded_Wh / DOD[battType] / TEMP[season] / CHARGE_EFF[battType];
 
-    // ── Inverter sizing (multi-inverter)
+    // ── Inverter sizing (multi-inverter, load-based first)
     const peakAmps = Math.max(nightAmps, systemType === "full" ? dayAmps : 0);
     const peakLoadW = peakAmps * 220;
     const peakLoadWithMargin = peakLoadW * 1.25;
 
-    let invertersNeeded = 1;
+    let invertersForLoad = 1;
     let inverter: Inverter = INVERTERS[0];
-    let parallelExceeded = false;
-
     if (peakLoadWithMargin <= 0) {
       inverter = INVERTERS[0];
     } else if (peakLoadWithMargin <= MAX_INVERTER_W) {
-      // Fits in single inverter — pick smallest 48V unit (or any voltage) that fits
       const candidates = INVERTERS.filter((i) => i.power >= peakLoadWithMargin);
       inverter = candidates[0] ?? INVERTER_12K;
-      invertersNeeded = 1;
+      invertersForLoad = 1;
     } else {
-      invertersNeeded = Math.ceil(peakLoadWithMargin / MAX_INVERTER_W);
+      invertersForLoad = Math.ceil(peakLoadWithMargin / MAX_INVERTER_W);
       inverter = INVERTER_12K;
-      if (invertersNeeded > MAX_PARALLEL_INVERTERS) {
-        parallelExceeded = true;
-      }
     }
 
-    const totalInverterPower = invertersNeeded * inverter.power;
-    const systemVoltage = inverter.voltage;
-
-    // ── Battery options (always sized for required Wh)
+    // ── Battery options
     let batteryOptions: BatteryConfig[] = [];
     if (battType === "lithium") {
       batteryOptions = pickLithiumConfigs(requiredBankWh);
     } else {
-      batteryOptions = [pickLeadAcidConfig(requiredBankWh, systemVoltage as 12 | 24 | 48)];
+      batteryOptions = [pickLeadAcidConfig(requiredBankWh, inverter.voltage as 12 | 24 | 48)];
     }
     const selectedBattery = chosenBattery ?? batteryOptions[0];
+
+    // ── Charging tier — required charge current = bankAh × C-rate
+    const cRate = CHARGE_TIERS[battType][chargeTier];
+    const requiredChargeA = selectedBattery.ah * cRate;
+    const invertersForCharging = Math.max(1, Math.ceil(requiredChargeA / INVERTER_MAX_CHARGE_A));
+
+    // Final inverter count
+    let invertersNeeded = Math.max(invertersForLoad, invertersForCharging);
+    const inverterBottleneck: "load" | "charging" =
+      invertersForCharging > invertersForLoad ? "charging" : "load";
+    let parallelExceeded = false;
+    if (invertersNeeded > 1) inverter = INVERTER_12K;
+    if (invertersNeeded > MAX_PARALLEL_INVERTERS) parallelExceeded = true;
+
+    const totalInverterPower = invertersNeeded * inverter.power;
+    const systemVoltage = inverter.voltage;
 
     // ── Panel sizing distributed across inverters
     let panelsNeeded = 0;
@@ -342,13 +361,47 @@ export default function SolarSystemDesigner() {
     const actualNightRuntimeMin = (availableWh / nightLoadActual) * 60;
     const theoreticalMin = ((selectedBattery.kwh * 1000) / nightLoadW) * 60;
 
+    // ── Charging feasibility
+    const totalChargeAmps = invertersNeeded * INVERTER_MAX_CHARGE_A;
+    const dayLoadDCamps = systemType === "full"
+      ? (dayAmps * 220) / (systemVoltage * INVERTER_EFF) : 0;
+    const availableChargeAmps = Math.max(0, totalChargeAmps - dayLoadDCamps);
+    const fullChargeHoursTheoretical = requiredChargeA > 0 ? selectedBattery.ah / requiredChargeA : 0;
+    const fullChargeHoursActual = availableChargeAmps > 0
+      ? selectedBattery.ah / availableChargeAmps : Infinity;
+    const rechargeableWh = availableChargeAmps * systemVoltage * PEAK_SUN_HOURS * 0.97;
+    const nightDischargedWh = nightEnergyNeeded_Wh;
+    let chargeStatus: "ok" | "tight" | "fail" = "ok";
+    let daysToFullCharge = 1;
+    if (rechargeableWh >= nightDischargedWh * 1.1) chargeStatus = "ok";
+    else if (rechargeableWh >= nightDischargedWh) chargeStatus = "tight";
+    else { chargeStatus = "fail"; daysToFullCharge = nightDischargedWh / Math.max(1, rechargeableWh); }
+
+    // Modules per inverter ratio (lithium only)
+    const liModules = battType === "lithium" ? Math.round(selectedBattery.kwh / LI_MODULE_KWH) : 0;
+    const modulesPerInverter = invertersNeeded > 0 ? Math.ceil(liModules / invertersNeeded) : 0;
+    const maxModulesAllowed = MAX_MODULES_PER_INVERTER_LI[chargeTier];
+    const modulesRatioOk = battType !== "lithium" || modulesPerInverter <= maxModulesAllowed;
+
+    // Tier comparison
+    const tierComparison = (Object.keys(CHARGE_TIERS[battType]) as ChargeTier[]).map((t) => {
+      const cR = CHARGE_TIERS[battType][t];
+      const reqA = selectedBattery.ah * cR;
+      const invForCharge = Math.max(1, Math.ceil(reqA / INVERTER_MAX_CHARGE_A));
+      const invTotal = Math.max(invertersForLoad, invForCharge);
+      const panelsTier = systemType === "full"
+        ? Math.min(Math.ceil(totalPVneeded_Wh / (PANEL_WATT * PEAK_SUN_HOURS * PANEL_EFF)), inverter.maxPanels * invTotal)
+        : 0;
+      return { tier: t, cRate: cR, inverters: invTotal, batteries: selectedBattery.qty, panels: panelsTier, hours: cR > 0 ? 1 / cR : 0 };
+    });
+
     // Validations
     const errors: string[] = [];
     const warnings: string[] = [];
     const oks: string[] = [];
 
     if (parallelExceeded) {
-      errors.push(`الحمل يتجاوز حد التوازي للعاكس (${MAX_PARALLEL_INVERTERS} × 12kW = 72kW) — يلزم نظام ثلاثي الطور أو تقسيم الأحمال`);
+      errors.push(`الحمل/الشحن يتجاوز حد التوازي للعاكس (${MAX_PARALLEL_INVERTERS} × 12kW = 72kW) — يلزم نظام ثلاثي الطور أو تقسيم الأحمال`);
     }
     if (selectedBattery.voltage !== systemVoltage) {
       errors.push("فولطية البطاريات لا تطابق فولطية العاكس");
@@ -361,7 +414,8 @@ export default function SolarSystemDesigner() {
       oks.push(`الحمل (${(peakLoadW / 1000).toFixed(1)}kW) ضمن قدرة العواكس (${(totalInverterPower / 1000).toFixed(0)}kW)`);
     }
     if (invertersNeeded > 1 && invertersNeeded <= MAX_PARALLEL_INVERTERS) {
-      warnings.push(`نظام موزع: ${invertersNeeded} عواكس على التوازي — يلزم Parallel Cable Kit وضبط Master/Slave`);
+      const reason = inverterBottleneck === "charging" ? "متطلبات سرعة الشحن" : "قدرة الحمل";
+      warnings.push(`نظام موزع: ${invertersNeeded} عواكس على التوازي — عدد العواكس محدد بـ${reason}`);
     }
     if (battType === "leadacid" && selectedBattery.qty > 40) {
       warnings.push(`عدد كبير من بطاريات الليد أسيد (${selectedBattery.qty}) — يُنصح بشدة بالليثيوم للأنظمة الكبيرة`);
@@ -378,6 +432,18 @@ export default function SolarSystemDesigner() {
       } else {
         oks.push("تيار البطاريات يكفي قدرة العواكس");
       }
+    }
+    if (!modulesRatioOk) {
+      errors.push(`نسبة البطاريات للعواكس (${modulesPerInverter}/عاكس) تتجاوز الحد للفئة المختارة (${maxModulesAllowed}/عاكس) — أضف عاكساً أو اختر فئة أبطأ`);
+    } else if (battType === "lithium" && liModules > 0) {
+      oks.push(`نسبة البطاريات/العواكس ${modulesPerInverter}:1 (الحد ${maxModulesAllowed}:1)`);
+    }
+    if (chargeStatus === "fail") {
+      errors.push(`الشحن لا يكتمل في يوم واحد — يحتاج ~${daysToFullCharge.toFixed(1)} يوم. أضف عواكس أو ألواح إضافية`);
+    } else if (chargeStatus === "tight") {
+      warnings.push("الشحن يكتمل بشق الأنفس — لا هامش للأيام الغائمة");
+    } else {
+      oks.push("المنظومة تشحن بالكامل خلال يوم شمسي واحد");
     }
     if (nightEnergyNeeded_Wh > selectedBattery.kwh * 1000 * 0.8) {
       warnings.push("الحمل الليلي يتجاوز 80% من سعة البطاريات — يُنصح بزيادة السعة");
@@ -396,13 +462,19 @@ export default function SolarSystemDesigner() {
     return {
       nightLoadW, nightLoadActual, nightEnergyNeeded_Wh, requiredBankWh,
       batteryOptions, selectedBattery,
-      inverter, invertersNeeded, totalInverterPower, systemVoltage, parallelExceeded,
+      inverter, invertersNeeded, invertersForLoad, invertersForCharging, inverterBottleneck,
+      totalInverterPower, systemVoltage, parallelExceeded,
       panelsNeeded, panelsCapped, totalPVneeded_Wh, panelsPerInverter, stringsPerInverter,
       availableWh, actualNightRuntimeMin, theoreticalMin,
+      cRate, requiredChargeA, totalChargeAmps, availableChargeAmps,
+      fullChargeHoursTheoretical, fullChargeHoursActual,
+      rechargeableWh, nightDischargedWh, chargeStatus, daysToFullCharge,
+      liModules, modulesPerInverter, maxModulesAllowed, modulesRatioOk,
+      tierComparison,
       errors, warnings, oks, health,
       peakLoadW, tier,
     };
-  }, [nightAmps, nightHours, dayAmps, dayHours, battType, season, systemType, chosenBattery]);
+  }, [nightAmps, nightHours, dayAmps, dayHours, battType, chargeTier, season, systemType, chosenBattery]);
 
   // ───────── PDF
   const reportRef = useRef<HTMLDivElement>(null);
@@ -587,6 +659,42 @@ export default function SolarSystemDesigner() {
             </div>
 
             <div className={CARD}>
+              <h3 className="mb-1 text-lg font-bold text-amber-600">سرعة شحن البطاريات</h3>
+              <p className="mb-3 text-xs text-slate-500">معيار C-rate وفق IEC 61427 / IEEE 1013/1562 — يحدد التوازن بين عدد العواكس وعمر البطاريات</p>
+              <RadioGroup value={chargeTier} onValueChange={(v) => setChargeTier(v as ChargeTier)} className="grid gap-3 md:grid-cols-3">
+                {([
+                  { v: "economy" as ChargeTier, icon: "🐢", title: "اقتصادي",
+                    cLi: "C/5 (0.2C)", cPb: "C/10 (0.1C)",
+                    pros: ["أطول عمر للبطارية", "أقل حرارة", "موصى به IEC 61427", "عواكس أقل = تكلفة أقل"] },
+                  { v: "balanced" as ChargeTier, icon: "⚡", title: "متوازن",
+                    cLi: "C/2 (0.5C)", cPb: "C/7 (0.15C)",
+                    pros: ["توازن جيد", "شحن سريع نسبياً", "عمر طبيعي للبطارية"] },
+                  { v: "fast" as ChargeTier, icon: "🚀", title: "سريع",
+                    cLi: "1C", cPb: "C/5 (0.2C)",
+                    pros: ["شحن أسرع", "للأنظمة التجارية مع تبريد", "يقلل عمر البطارية"] },
+                ]).map((o) => (
+                  <label key={o.v} className={cn(
+                    "flex cursor-pointer flex-col gap-2 rounded-xl border p-3 text-right transition",
+                    chargeTier === o.v ? "border-amber-400 bg-amber-500/10" : "border-slate-300 bg-white hover:border-amber-500/40"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value={o.v} />
+                      <span className="text-2xl">{o.icon}</span>
+                      <span className="font-bold">{o.title}</span>
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      <div>ليثيوم: <b>{o.cLi}</b></div>
+                      <div>ليد أسيد: <b>{o.cPb}</b></div>
+                    </div>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-slate-500">
+                      {o.pros.map((p) => <li key={p}>• {p}</li>)}
+                    </ul>
+                  </label>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <div className={CARD}>
               <h3 className="mb-3 text-lg font-bold text-amber-600">الموسم (للتعويض الحراري)</h3>
               <RadioGroup value={season} onValueChange={(v) => setSeason(v as Season)} className="grid gap-3 md:grid-cols-3">
                 {[
@@ -739,6 +847,65 @@ export default function SolarSystemDesigner() {
                 <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-slate-900" /> DC−</span>
                 <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-blue-600" /> AC 220V</span>
                 {systemType === "full" && <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-amber-500" /> PV</span>}
+              </div>
+            </div>
+
+            {/* Charging tier results */}
+            <div className={CARD}>
+              <div className="mb-3 flex items-center gap-2 font-bold text-amber-600">
+                <Zap className="h-5 w-5" /> تفاصيل الشحن
+              </div>
+              <div className="mb-3 inline-block rounded-full bg-amber-500/20 px-3 py-1 text-sm font-bold text-amber-700">
+                فئة الشحن: {chargeTier === "economy" ? "اقتصادي" : chargeTier === "balanced" ? "متوازن" : "سريع"} — C-rate {calc.cRate}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 text-sm">
+                <div className={STAT}>تيار الشحن المطلوب: <b className="text-amber-700">{calc.requiredChargeA.toFixed(0)} A</b></div>
+                <div className={STAT}>تيار الشحن المتاح: <b className="text-amber-700">{calc.totalChargeAmps.toFixed(0)} A</b></div>
+                <div className={STAT}>وقت الشحن (نظري): <b className="text-amber-700">{Math.floor(calc.fullChargeHoursTheoretical)} س {Math.round((calc.fullChargeHoursTheoretical % 1) * 60)} د</b></div>
+                <div className={STAT}>وقت الشحن (مع الأحمال): <b className="text-amber-700">{isFinite(calc.fullChargeHoursActual) ? `${Math.floor(calc.fullChargeHoursActual)} س ${Math.round((calc.fullChargeHoursActual % 1) * 60)} د` : "—"}</b></div>
+                {battType === "lithium" && (
+                  <>
+                    <div className={STAT}>نسبة البطاريات/العواكس: <b className="text-amber-700">{calc.modulesPerInverter} وحدة/عاكس</b></div>
+                    <div className={STAT}>الحد الأقصى للفئة: <b className={calc.modulesRatioOk ? "text-emerald-600" : "text-red-600"}>{calc.maxModulesAllowed} {calc.modulesRatioOk ? "✅" : "❌"}</b></div>
+                  </>
+                )}
+                <div className={cn(STAT, "md:col-span-2")}>
+                  هل تشحن خلال يوم شمسي واحد؟{" "}
+                  {calc.chargeStatus === "ok" && <b className="text-emerald-600">✅ نعم</b>}
+                  {calc.chargeStatus === "tight" && <b className="text-amber-700">⚠️ بشق الأنفس</b>}
+                  {calc.chargeStatus === "fail" && <b className="text-red-600">❌ لا — يحتاج {calc.daysToFullCharge.toFixed(1)} يوم</b>}
+                </div>
+              </div>
+
+              {/* Tier comparison table */}
+              <div className="mt-4">
+                <div className="mb-2 text-sm font-bold text-slate-700">تأثير فئة الشحن على حجم المنظومة:</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-amber-500/20 text-slate-800">
+                        <th className="border border-amber-300 p-2 text-right">الفئة</th>
+                        <th className="border border-amber-300 p-2">العواكس</th>
+                        <th className="border border-amber-300 p-2">البطاريات</th>
+                        {systemType === "full" && <th className="border border-amber-300 p-2">الألواح</th>}
+                        <th className="border border-amber-300 p-2">وقت الشحن</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {calc.tierComparison.map((row) => (
+                        <tr key={row.tier} className={row.tier === chargeTier ? "bg-amber-50 font-bold" : ""}>
+                          <td className="border border-slate-200 p-2 text-right">
+                            {row.tier === "economy" ? "🐢 اقتصادي" : row.tier === "balanced" ? "⚡ متوازن" : "🚀 سريع"}
+                          </td>
+                          <td className="border border-slate-200 p-2 text-center">{row.inverters}</td>
+                          <td className="border border-slate-200 p-2 text-center">{row.batteries}</td>
+                          {systemType === "full" && <td className="border border-slate-200 p-2 text-center">{row.panels}</td>}
+                          <td className="border border-slate-200 p-2 text-center">~{row.hours.toFixed(1)} س</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
@@ -929,7 +1096,20 @@ export default function SolarSystemDesigner() {
             {systemType === "full" && <PdfRow label="عدد الألواح" value={`${calc.panelsCapped} (${calc.panelsPerInverter}/عاكس)`} />}
           </PdfSection>
 
-          {/* Runtime */}
+          {/* Charging tier */}
+          <PdfSection title="معيار الشحن المطبق (C-rate)">
+            <PdfRow label="فئة الشحن" value={chargeTier === "economy" ? "اقتصادي" : chargeTier === "balanced" ? "متوازن" : "سريع"} />
+            <PdfRow label="C-rate" value={`${calc.cRate}  (مرجع IEC 61427: 0.2C للأنظمة المنزلية)`} />
+            <PdfRow label="تيار الشحن المطلوب" value={`${calc.requiredChargeA.toFixed(0)} A على ${calc.systemVoltage} V`} />
+            <PdfRow label="تيار الشحن المتاح من العواكس" value={`${calc.totalChargeAmps.toFixed(0)} A`} />
+            {battType === "lithium" && (
+              <PdfRow label="نسبة البطاريات/العواكس" value={`${calc.modulesPerInverter}:1 (الحد المسموح ${calc.maxModulesAllowed}:1)`} />
+            )}
+            <PdfRow label="وقت إعادة الشحن الكامل (نظري)" value={`${Math.floor(calc.fullChargeHoursTheoretical)} ساعة و ${Math.round((calc.fullChargeHoursTheoretical % 1) * 60)} دقيقة`} />
+            <PdfRow label="تحقق الشحن خلال يوم واحد" value={calc.chargeStatus === "ok" ? "✅ نعم" : calc.chargeStatus === "tight" ? "⚠️ بشق الأنفس" : `❌ يحتاج ${calc.daysToFullCharge.toFixed(1)} يوم`} />
+            <PdfRow label="عدد العواكس محدد بـ" value={calc.inverterBottleneck === "charging" ? "متطلبات سرعة الشحن" : "قدرة الحمل"} />
+          </PdfSection>
+
           <PdfSection title="وقت التشغيل المتوقع">
             <PdfRow label="نظري (بدون خسائر)" value={`${(calc.theoreticalMin / 60).toFixed(1)} ساعة`} />
             <PdfRow label="واقعي (بعد الخسائر)" value={`${Math.floor(calc.actualNightRuntimeMin / 60)} ساعة و ${Math.round(calc.actualNightRuntimeMin % 60)} دقيقة`} />
