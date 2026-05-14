@@ -101,7 +101,7 @@ export default function ProductDetail() {
                 <Badge variant="secondary" className="rounded-full">{product.subcategory}</Badge>
                 <span className="text-xs font-mono text-muted-foreground">SKU: {product.sku}</span>
               </div>
-              <h1 className="text-2xl font-extrabold tracking-tight md:text-4xl">{name}</h1>
+              <h1 className={`text-2xl font-extrabold tracking-tight md:text-4xl ${isFallbackName ? "text-yellow-500" : ""}`}>{name}</h1>
             </div>
 
             {/* Pricing card */}
