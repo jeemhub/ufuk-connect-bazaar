@@ -33,6 +33,7 @@ export function dbToProduct(r: DbProductRow, categoryKey?: string): Product {
     sku: r.sku ?? "",
     nameAr: r.name_ar,
     nameEn: r.name_en,
+    nameData: r.name_data ?? undefined,
     descAr: r.desc_ar ?? undefined,
     descEn: r.desc_en ?? undefined,
     brand: (r.brand as Brand) ?? ("" as Brand),
