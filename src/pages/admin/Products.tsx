@@ -136,8 +136,20 @@ export default function Products() {
   const isMissingImage = (url?: string) => !url || url.includes("unsplash.com/photo-1606904825846");
 
   const filtered = useMemo(() => list.filter((p) => {
-    const q = search.toLowerCase();
-    const matches = !q || (p.nameData ?? "").toLowerCase().includes(q);
+    const q = search.toLowerCase().trim();
+    const haystack = [
+      p.nameAr,
+      p.nameEn,
+      p.nameData,
+      p.brand,
+      p.category,
+      p.subcategory,
+      p.sku,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    const matches = !q || haystack.includes(q);
     if (!matches) return false;
     if (brand !== "all" && p.brand !== brand) return false;
     if (cat !== "all" && p.category !== cat) return false;
@@ -229,7 +241,7 @@ export default function Products() {
 
       <div className="surface-card p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <Input placeholder={lang === "ar" ? "بحث في الاسم في Data" : "Search in Name in Data"} value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={lang === "ar" ? "بحث شامل (الاسم، Data، العلامة، القسم...)" : "Search all fields (name, Data, brand, category...)"} value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={brand} onValueChange={setBrand}>
             <SelectTrigger><SelectValue placeholder={t("all_brands")} /></SelectTrigger>
             <SelectContent>
