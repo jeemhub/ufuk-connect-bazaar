@@ -7,6 +7,7 @@ export interface DbProductRow {
   sku: string | null;
   name_ar: string;
   name_en: string;
+  name_data?: string | null;
   desc_ar: string | null;
   desc_en: string | null;
   brand: string;
