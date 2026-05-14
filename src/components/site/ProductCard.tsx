@@ -10,7 +10,7 @@ import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 export function ProductCard({ product }: { product: Product }) {
   const { t, lang } = useLanguage();
   const { pricingTier } = useAuth();
-  const name = lang === "ar" ? product.nameAr : product.nameEn;
+  const name = (lang === "ar" ? product.nameAr : product.nameEn) || product.nameData || "";
   const showStock = pricingTier === "dealer" || pricingTier === "wholesale";
   const stockBadge = product.stock === 0 ? "out" : product.stock < 5 ? "low" : "in";
 
