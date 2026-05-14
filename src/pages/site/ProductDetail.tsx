@@ -114,8 +114,14 @@ export default function ProductDetail() {
                       {lang === "ar" ? "زبون" : "Customer"}
                     </div>
                     <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-3xl font-extrabold text-primary md:text-4xl">{formatIqd(product.priceIqd)}</span>
-                      <span className="text-xs font-bold text-muted-foreground">{t("currency_iqd")}</span>
+                      {product.priceIqd === 0 ? (
+                        <span className="text-lg font-bold text-muted-foreground">{t("no_price")}</span>
+                      ) : (
+                        <>
+                          <span className="text-3xl font-extrabold text-primary md:text-4xl">{formatIqd(product.priceIqd)}</span>
+                          <span className="text-xs font-bold text-muted-foreground">{t("currency_iqd")}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div
