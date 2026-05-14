@@ -7,6 +7,7 @@ export interface DbProductRow {
   sku: string | null;
   name_ar: string;
   name_en: string;
+  name_data?: string | null;
   desc_ar: string | null;
   desc_en: string | null;
   brand: string;
@@ -32,6 +33,7 @@ export function dbToProduct(r: DbProductRow, categoryKey?: string): Product {
     sku: r.sku ?? "",
     nameAr: r.name_ar,
     nameEn: r.name_en,
+    nameData: r.name_data ?? undefined,
     descAr: r.desc_ar ?? undefined,
     descEn: r.desc_en ?? undefined,
     brand: (r.brand as Brand) ?? ("" as Brand),

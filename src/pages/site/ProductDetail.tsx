@@ -18,9 +18,13 @@ export default function ProductDetail() {
   const { product, loading } = useProduct(id);
   const { products } = useProducts({ activeOnly: true });
 
+  const rawName = product ? (lang === "ar" ? product.nameAr : product.nameEn) : "";
+  const isFallbackName = product ? !rawName?.trim() && !!product.nameData?.trim() : false;
+  const name = rawName?.trim() || product?.nameData || "";
+
   useEffect(() => {
-    if (product) document.title = `${lang === "ar" ? product.nameAr : product.nameEn} · ${t("brand")}`;
-  }, [product, t, lang]);
+    if (product) document.title = `${name} · ${t("brand")}`;
+  }, [product, t, lang, name]);
 
   if (loading) {
     return (
@@ -37,7 +41,6 @@ export default function ProductDetail() {
   }
   if (!product) return <Navigate to="/products" replace />;
 
-  const name = lang === "ar" ? product.nameAr : product.nameEn;
   const desc = lang === "ar" ? product.descAr : product.descEn;
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
   const Chevron = lang === "ar" ? ChevronLeft : ChevronRight;
@@ -98,7 +101,7 @@ export default function ProductDetail() {
                 <Badge variant="secondary" className="rounded-full">{product.subcategory}</Badge>
                 <span className="text-xs font-mono text-muted-foreground">SKU: {product.sku}</span>
               </div>
-              <h1 className="text-2xl font-extrabold tracking-tight md:text-4xl">{name}</h1>
+              <h1 className={`text-2xl font-extrabold tracking-tight md:text-4xl ${isFallbackName ? "text-yellow-500" : ""}`}>{name}</h1>
             </div>
 
             {/* Pricing card */}
@@ -111,8 +114,14 @@ export default function ProductDetail() {
                       {lang === "ar" ? "زبون" : "Customer"}
                     </div>
                     <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-3xl font-extrabold text-primary md:text-4xl">{formatIqd(product.priceIqd)}</span>
-                      <span className="text-xs font-bold text-muted-foreground">{t("currency_iqd")}</span>
+                      {product.priceIqd === 0 ? (
+                        <span className="text-lg font-bold text-muted-foreground">{t("no_price")}</span>
+                      ) : (
+                        <>
+                          <span className="text-3xl font-extrabold text-primary md:text-4xl">{formatIqd(product.priceIqd)}</span>
+                          <span className="text-xs font-bold text-muted-foreground">{t("currency_iqd")}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div

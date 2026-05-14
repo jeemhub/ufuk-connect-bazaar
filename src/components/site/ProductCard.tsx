@@ -10,7 +10,9 @@ import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 export function ProductCard({ product }: { product: Product }) {
   const { t, lang } = useLanguage();
   const { pricingTier } = useAuth();
-  const name = lang === "ar" ? product.nameAr : product.nameEn;
+  const rawName = lang === "ar" ? product.nameAr : product.nameEn;
+  const isFallbackName = !rawName?.trim() && !!product.nameData?.trim();
+  const name = rawName?.trim() || product.nameData || "";
   const showStock = pricingTier === "dealer" || pricingTier === "wholesale";
   const stockBadge = product.stock === 0 ? "out" : product.stock < 5 ? "low" : "in";
 
@@ -66,13 +68,19 @@ export function ProductCard({ product }: { product: Product }) {
 
       {/* Body */}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="line-clamp-2 min-h-[2.6rem] text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+        <h3 className={`line-clamp-2 min-h-[2.6rem] text-sm font-semibold transition-colors group-hover:text-primary ${isFallbackName ? "text-yellow-500" : "text-foreground"}`}>
           {name}
         </h3>
         <div className="mt-auto space-y-0.5">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-extrabold text-primary">{formatIqd(product.priceIqd)}</span>
-            <span className="text-[10px] font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+            {product.priceIqd === 0 ? (
+              <span className="text-sm font-bold text-muted-foreground">{t("no_price")}</span>
+            ) : (
+              <>
+                <span className="text-lg font-extrabold text-primary">{formatIqd(product.priceIqd)}</span>
+                <span className="text-[10px] font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+              </>
+            )}
           </div>
           {tierPrice && (
             <div className="flex items-baseline gap-1.5">
