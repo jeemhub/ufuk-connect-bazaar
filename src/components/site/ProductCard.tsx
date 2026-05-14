@@ -73,8 +73,14 @@ export function ProductCard({ product }: { product: Product }) {
         </h3>
         <div className="mt-auto space-y-0.5">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-extrabold text-primary">{formatIqd(product.priceIqd)}</span>
-            <span className="text-[10px] font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+            {product.priceIqd === 0 ? (
+              <span className="text-sm font-bold text-muted-foreground">{t("no_price")}</span>
+            ) : (
+              <>
+                <span className="text-lg font-extrabold text-primary">{formatIqd(product.priceIqd)}</span>
+                <span className="text-[10px] font-semibold text-muted-foreground">{t("currency_iqd")}</span>
+              </>
+            )}
           </div>
           {tierPrice && (
             <div className="flex items-baseline gap-1.5">
