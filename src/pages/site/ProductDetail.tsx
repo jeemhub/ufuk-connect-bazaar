@@ -41,7 +41,6 @@ export default function ProductDetail() {
   }
   if (!product) return <Navigate to="/products" replace />;
 
-  const name = lang === "ar" ? product.nameAr : product.nameEn;
   const desc = lang === "ar" ? product.descAr : product.descEn;
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
   const Chevron = lang === "ar" ? ChevronLeft : ChevronRight;
