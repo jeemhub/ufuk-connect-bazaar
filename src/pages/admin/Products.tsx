@@ -137,7 +137,7 @@ export default function Products() {
 
   const filtered = useMemo(() => list.filter((p) => {
     const q = search.toLowerCase();
-    const matches = !q || p.nameAr.includes(search) || p.nameEn.toLowerCase().includes(q);
+    const matches = !q || (p.nameData ?? "").toLowerCase().includes(q);
     if (!matches) return false;
     if (brand !== "all" && p.brand !== brand) return false;
     if (cat !== "all" && p.category !== cat) return false;
@@ -229,7 +229,7 @@ export default function Products() {
 
       <div className="surface-card p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <Input placeholder={t("search_products")} value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={lang === "ar" ? "بحث في الاسم في Data" : "Search in Name in Data"} value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={brand} onValueChange={setBrand}>
             <SelectTrigger><SelectValue placeholder={t("all_brands")} /></SelectTrigger>
             <SelectContent>
