@@ -68,7 +68,7 @@ export function ProductCard({ product }: { product: Product }) {
 
       {/* Body */}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="line-clamp-2 min-h-[2.6rem] text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+        <h3 className={`line-clamp-2 min-h-[2.6rem] text-sm font-semibold transition-colors group-hover:text-primary ${isFallbackName ? "text-yellow-500" : "text-foreground"}`}>
           {name}
         </h3>
         <div className="mt-auto space-y-0.5">
