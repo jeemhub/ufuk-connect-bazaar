@@ -18,9 +18,13 @@ export default function ProductDetail() {
   const { product, loading } = useProduct(id);
   const { products } = useProducts({ activeOnly: true });
 
+  const rawName = product ? (lang === "ar" ? product.nameAr : product.nameEn) : "";
+  const isFallbackName = product ? !rawName?.trim() && !!product.nameData?.trim() : false;
+  const name = rawName?.trim() || product?.nameData || "";
+
   useEffect(() => {
-    if (product) document.title = `${lang === "ar" ? product.nameAr : product.nameEn} · ${t("brand")}`;
-  }, [product, t, lang]);
+    if (product) document.title = `${name} · ${t("brand")}`;
+  }, [product, t, lang, name]);
 
   if (loading) {
     return (
