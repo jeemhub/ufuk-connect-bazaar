@@ -408,6 +408,7 @@ export const translations = {
     remove: "حذف",
 
     currency_iqd: "د.ع",
+    no_price: "لا يوجد سعر حالياً",
     backend_note: "",
   },
   en: {
