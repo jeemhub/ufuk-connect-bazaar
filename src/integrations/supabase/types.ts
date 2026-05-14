@@ -924,6 +924,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean | null
           name_ar: string | null
+          name_data: string | null
           name_en: string | null
           price_dealer_iqd: number | null
           price_iqd: number | null
@@ -944,6 +945,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           name_ar?: string | null
+          name_data?: string | null
           name_en?: string | null
           price_dealer_iqd?: never
           price_iqd?: number | null
@@ -964,6 +966,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           name_ar?: string | null
+          name_data?: string | null
           name_en?: string | null
           price_dealer_iqd?: never
           price_iqd?: number | null
