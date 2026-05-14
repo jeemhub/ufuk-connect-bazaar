@@ -310,7 +310,14 @@ export default function Products() {
                   <td className="px-4 py-3"><img src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{lang === "ar" ? p.nameAr : p.nameEn}</span>
+                      {(() => {
+                        const display = lang === "ar" ? p.nameAr : p.nameEn;
+                        const hasNames = !!(p.nameAr?.trim() && p.nameEn?.trim());
+                        if (!hasNames && p.nameData?.trim()) {
+                          return <span className="font-medium text-yellow-500">{p.nameData}</span>;
+                        }
+                        return <span className="font-medium">{display}</span>;
+                      })()}
                       {!p.is_active && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                           <EyeOff className="h-3 w-3" />{lang === "ar" ? "مخفي" : "Hidden"}
