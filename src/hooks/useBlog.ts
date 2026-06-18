@@ -60,17 +60,25 @@ export function usePost(slug: string | undefined) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!slug) return;
+    let cancelled = false;
+    setPost(null);
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     supabase
       .from("blog_posts")
       .select("*")
       .eq("slug", slug)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) console.error("usePost error:", error);
         setPost((data as BlogPost) ?? null);
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, [slug]);
 
   return { post, loading };
