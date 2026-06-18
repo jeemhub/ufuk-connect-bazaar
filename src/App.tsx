@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { CartProvider } from "@/cart/CartContext";
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { AppShell } from "@/components/site/AppShell";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 
 import SiteLayout from "@/components/site/SiteLayout";
 import Home from "./pages/site/Home";
@@ -86,7 +87,9 @@ const App = () => {
                 <Sonner />
                 <CartDrawer />
                 <AppShell>
+                  <ChunkErrorBoundary>
                   <Suspense fallback={null}>
+
                     <Routes>
                       <Route element={<SiteLayout />}>
                         <Route path="/" element={<Home />} />
@@ -129,6 +132,7 @@ const App = () => {
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
+                  </ChunkErrorBoundary>
                 </AppShell>
               </TooltipProvider>
             </CartProvider>

@@ -38,56 +38,62 @@ export default function BlogPostPage() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
 
+  const userId = user?.id;
+
   const loadEngagement = useCallback(async (postId: string) => {
-    const { data: countData } = await supabase.rpc("get_blog_like_count", { _post_id: postId });
-    setLikes(Number(countData ?? 0));
-    if (user) {
-      const { data } = await supabase.from("blog_likes").select("post_id").eq("post_id", postId).eq("user_id", user.id).maybeSingle();
-      setLiked(!!data);
-    } else setLiked(false);
+    try {
+      const { data: countData } = await supabase.rpc("get_blog_like_count", { _post_id: postId });
+      setLikes(Number(countData ?? 0));
+      if (userId) {
+        const { data } = await supabase.from("blog_likes").select("post_id").eq("post_id", postId).eq("user_id", userId).maybeSingle();
+        setLiked(!!data);
+      } else setLiked(false);
 
-    const { data: cs } = await supabase
-      .from("blog_comments")
-      .select("id, body, user_id, created_at, parent_id")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true });
-    const list = (cs ?? []) as Comment[];
-    setComments(list);
+      const { data: cs } = await supabase
+        .from("blog_comments")
+        .select("id, body, user_id, created_at, parent_id")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
+      const list = (cs ?? []) as Comment[];
+      setComments(list);
 
-    const userIds = Array.from(new Set(list.map((c) => c.user_id)));
-    if (userIds.length > 0) {
-      const [{ data: profs }, { data: roles }] = await Promise.all([
-        supabase.from("public_profiles" as any).select("id, full_name, avatar_url, is_verified").in("id", userIds),
-        supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
-      ]);
-      const tierByUser: Record<string, Tier> = {};
-      // Priority: admin > sales > dealer > wholesale > retail
-      (roles ?? []).forEach((r: any) => {
-        const cur = tierByUser[r.user_id];
-        if (r.role === "admin") tierByUser[r.user_id] = "admin";
-        else if (r.role === "sales" && cur !== "admin") tierByUser[r.user_id] = "sales";
-        else if (r.role === "dealer" && cur !== "admin" && cur !== "sales") tierByUser[r.user_id] = "dealer";
-        else if (r.role === "wholesale" && cur !== "admin" && cur !== "sales" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
-        else if (!cur) tierByUser[r.user_id] = "retail";
-      });
-      const map: Record<string, Profile> = {};
-      (profs ?? []).forEach((p: any) => {
-        map[p.id] = {
-          full_name: p.full_name,
-          avatar_url: p.avatar_url,
-          is_verified: Boolean(p.is_verified),
-          tier: tierByUser[p.id] ?? "retail",
-        };
-      });
-      setProfiles(map);
-    } else {
-      setProfiles({});
+      const userIds = Array.from(new Set(list.map((c) => c.user_id)));
+      if (userIds.length > 0) {
+        const [{ data: profs }, { data: roles }] = await Promise.all([
+          supabase.from("public_profiles" as any).select("id, full_name, avatar_url, is_verified").in("id", userIds),
+          supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
+        ]);
+        const tierByUser: Record<string, Tier> = {};
+        (roles ?? []).forEach((r: any) => {
+          const cur = tierByUser[r.user_id];
+          if (r.role === "admin") tierByUser[r.user_id] = "admin";
+          else if (r.role === "sales" && cur !== "admin") tierByUser[r.user_id] = "sales";
+          else if (r.role === "dealer" && cur !== "admin" && cur !== "sales") tierByUser[r.user_id] = "dealer";
+          else if (r.role === "wholesale" && cur !== "admin" && cur !== "sales" && cur !== "dealer") tierByUser[r.user_id] = "wholesale";
+          else if (!cur) tierByUser[r.user_id] = "retail";
+        });
+        const map: Record<string, Profile> = {};
+        (profs ?? []).forEach((p: any) => {
+          map[p.id] = {
+            full_name: p.full_name,
+            avatar_url: p.avatar_url,
+            is_verified: Boolean(p.is_verified),
+            tier: tierByUser[p.id] ?? "retail",
+          };
+        });
+        setProfiles(map);
+      } else {
+        setProfiles({});
+      }
+    } catch (err) {
+      console.error("loadEngagement failed:", err);
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     if (!post) return;
-    document.title = `${lang === "ar" ? post.title_ar : post.title_en} — ${t("brand")}`;
+    const title = lang === "ar" ? post.title_ar : post.title_en;
+    document.title = `${title || post.slug} — ${t("brand")}`;
     loadEngagement(post.id);
   }, [post, loadEngagement, lang, t]);
 
