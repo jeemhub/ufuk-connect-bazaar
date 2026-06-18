@@ -87,7 +87,9 @@ const App = () => {
                 <Sonner />
                 <CartDrawer />
                 <AppShell>
+                  <ChunkErrorBoundary>
                   <Suspense fallback={null}>
+
                     <Routes>
                       <Route element={<SiteLayout />}>
                         <Route path="/" element={<Home />} />
