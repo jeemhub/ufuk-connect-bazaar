@@ -267,8 +267,11 @@ export function WiringDiagram({ batteries, connection, rows = 1, cols = 1, bankV
         <Load x={loadX} y={invY + 32} />
 
         {/* labels */}
-        <text x={padding} y={24} fill="#fbbf24" fontSize="12" fontWeight="700">
-          البنك: {bankVoltage}V — {bankAh}Ah
+        <text x={padding} y={24} fill="#d97706" fontSize="12" fontWeight="700" direction="rtl">
+          <tspan>البنك: </tspan>
+          <tspan direction="ltr" unicodeBidi="isolate">{bankVoltage}V</tspan>
+          <tspan> — </tspan>
+          <tspan direction="ltr" unicodeBidi="isolate">{bankAh}Ah</tspan>
         </text>
         {extra > 0 && (
           <text x={padding} y={height - 14} fill="#475569" fontSize="11">
