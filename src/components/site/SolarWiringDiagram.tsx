@@ -275,10 +275,6 @@ export function WiringDiagram({ batteries, connection, rows = 1, cols = 1, bankV
             + {extra} بطارية إضافية
           </text>
         )}
-          <text x={padding} y={height - 14} fill="#475569" fontSize="11">
-            + {extra} بطارية إضافية
-          </text>
-        )}
       </svg>
     </div>
   );
