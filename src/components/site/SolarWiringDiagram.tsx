@@ -222,6 +222,10 @@ export function WiringDiagram({ batteries, connection, rows = 1, cols = 1, bankV
 
   return (
     <div className="w-full overflow-x-auto rounded-xl border border-amber-500/20 bg-[#F8FAFC] p-4">
+      <div dir="rtl" className="mb-2 text-sm font-bold text-amber-700">
+        البنك:&nbsp;
+        <span dir="ltr" style={{ unicodeBidi: "isolate" }}>{bankVoltage}V — {bankAh}Ah</span>
+      </div>
       <style>{`@keyframes solar-flow { to { stroke-dashoffset: -20; } }`}</style>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ minWidth: 640 }}>
         <defs>
