@@ -73,50 +73,70 @@ export default function SolarCalculator() {
     if (!reportRef.current || !result) return;
     setDownloading(true);
     try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-
-      // Body image (no top header banner)
       const marginX = 8;
+      const marginTop = 10;
+      const marginBottom = 18; // room for footer
       const availW = pageW - marginX * 2;
-      const ratio = canvas.height / canvas.width;
-      const imgH = availW * ratio;
-      let y = 10;
-      let remaining = imgH;
-      let srcY = 0;
-      const maxBodyH = pageH - y - 12;
+      const maxBodyH = pageH - marginTop - marginBottom;
 
-      if (imgH <= maxBodyH) {
-        pdf.addImage(imgData, "JPEG", marginX, y, availW, imgH);
-      } else {
-        // Slice into pages
-        const pxPerMm = canvas.width / availW;
+      const sections = Array.from(reportRef.current.children) as HTMLElement[];
+      let y = marginTop;
+
+      const renderNode = async (node: HTMLElement) => {
+        const c = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+        return {
+          data: c.toDataURL("image/jpeg", 0.95),
+          canvas: c,
+          heightMm: (availW * c.height) / c.width,
+        };
+      };
+
+      for (const node of sections) {
+        const img = await renderNode(node);
+
+        // If this section fits on the current page, place it and continue
+        if (img.heightMm <= maxBodyH - (y - marginTop)) {
+          pdf.addImage(img.data, "JPEG", marginX, y, availW, img.heightMm);
+          y += img.heightMm + 4;
+          continue;
+        }
+
+        // Doesn't fit — start a new page
+        if (y > marginTop) {
+          pdf.addPage();
+          y = marginTop;
+        }
+
+        // Fits on a fresh page
+        if (img.heightMm <= maxBodyH) {
+          pdf.addImage(img.data, "JPEG", marginX, y, availW, img.heightMm);
+          y += img.heightMm + 4;
+          continue;
+        }
+
+        // Too tall for one page — slice
+        const pxPerMm = img.canvas.width / availW;
+        let srcY = 0;
+        let remaining = img.heightMm;
         while (remaining > 0) {
           const sliceMm = Math.min(maxBodyH, remaining);
-          const slicePx = sliceMm * pxPerMm;
+          const slicePx = Math.round(sliceMm * pxPerMm);
           const sliceCanvas = document.createElement("canvas");
-          sliceCanvas.width = canvas.width;
+          sliceCanvas.width = img.canvas.width;
           sliceCanvas.height = slicePx;
           const ctx = sliceCanvas.getContext("2d")!;
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-          ctx.drawImage(canvas, 0, srcY, canvas.width, slicePx, 0, 0, canvas.width, slicePx);
-          const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.95);
-          pdf.addImage(sliceData, "JPEG", marginX, y, availW, sliceMm);
+          ctx.drawImage(img.canvas, 0, srcY, img.canvas.width, slicePx, 0, 0, img.canvas.width, slicePx);
+          pdf.addImage(sliceCanvas.toDataURL("image/jpeg", 0.95), "JPEG", marginX, marginTop, availW, sliceMm);
           srcY += slicePx;
           remaining -= sliceMm;
-          if (remaining > 0) {
-            pdf.addPage();
-            y = 10;
-          }
+          if (remaining > 0) pdf.addPage();
         }
+        y = marginTop + Math.min(img.heightMm % maxBodyH || maxBodyH, maxBodyH) + 4;
       }
 
       // Footer
