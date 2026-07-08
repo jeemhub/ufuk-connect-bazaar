@@ -584,10 +584,15 @@ function ResultCard({ icon, title, value, sub }: { icon: React.ReactNode; title:
 
 function StatusBadge({ status }: { status: "ok" | "warn" | "error" }) {
   const map = {
-    ok: { label: "✅ سليمة", cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40" },
-    warn: { label: "⚠️ تحذير", cls: "bg-amber-500/15 text-amber-700 border-amber-500/40" },
-    error: { label: "❌ خطأ", cls: "bg-red-500/15 text-red-300 border-red-500/40" },
+    ok: { icon: "✅", text: "سليمة", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/40" },
+    warn: { icon: "⚠️", text: "تحذير", cls: "bg-amber-500/15 text-amber-700 border-amber-500/40" },
+    error: { icon: "❌", text: "خطأ", cls: "bg-red-500/15 text-red-600 border-red-500/40" },
   };
   const s = map[status];
-  return <span className={cn("rounded-full border px-3 py-1 text-sm font-bold", s.cls)}>{s.label}</span>;
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-bold leading-none", s.cls)}>
+      <span className="inline-flex items-center leading-none">{s.icon}</span>
+      <span className="leading-none">{s.text}</span>
+    </span>
+  );
 }
