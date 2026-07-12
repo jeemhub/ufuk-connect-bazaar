@@ -72,6 +72,28 @@ export default function SolarCalculator() {
   const downloadPdf = async () => {
     if (!reportRef.current || !result) return;
     setDownloading(true);
+
+    // Render off-screen at a fixed desktop width so mobile PDFs match desktop.
+    const RENDER_WIDTH_PX = 900;
+    const stage = document.createElement("div");
+    stage.style.position = "fixed";
+    stage.style.left = "-10000px";
+    stage.style.top = "0";
+    stage.style.width = `${RENDER_WIDTH_PX}px`;
+    stage.style.background = "#ffffff";
+    stage.style.zIndex = "-1";
+    stage.setAttribute("dir", "rtl");
+    stage.style.fontFamily = "'Cairo', system-ui, sans-serif";
+
+    const clone = reportRef.current.cloneNode(true) as HTMLElement;
+    clone.style.width = `${RENDER_WIDTH_PX}px`;
+    clone.style.maxWidth = "none";
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
+
+    // Wait a frame for layout/fonts
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+
     try {
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageW = pdf.internal.pageSize.getWidth();
@@ -82,11 +104,17 @@ export default function SolarCalculator() {
       const availW = pageW - marginX * 2;
       const maxBodyH = pageH - marginTop - marginBottom;
 
-      const sections = Array.from(reportRef.current.children) as HTMLElement[];
+      const sections = Array.from(clone.children) as HTMLElement[];
       let y = marginTop;
 
       const renderNode = async (node: HTMLElement) => {
-        const c = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+        const c = await html2canvas(node, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          windowWidth: RENDER_WIDTH_PX,
+          width: RENDER_WIDTH_PX,
+        });
         return {
           data: c.toDataURL("image/jpeg", 0.95),
           canvas: c,
@@ -97,27 +125,23 @@ export default function SolarCalculator() {
       for (const node of sections) {
         const img = await renderNode(node);
 
-        // If this section fits on the current page, place it and continue
         if (img.heightMm <= maxBodyH - (y - marginTop)) {
           pdf.addImage(img.data, "JPEG", marginX, y, availW, img.heightMm);
           y += img.heightMm + 4;
           continue;
         }
 
-        // Doesn't fit — start a new page
         if (y > marginTop) {
           pdf.addPage();
           y = marginTop;
         }
 
-        // Fits on a fresh page
         if (img.heightMm <= maxBodyH) {
           pdf.addImage(img.data, "JPEG", marginX, y, availW, img.heightMm);
           y += img.heightMm + 4;
           continue;
         }
 
-        // Too tall for one page — slice
         const pxPerMm = img.canvas.width / availW;
         let srcY = 0;
         let remaining = img.heightMm;
@@ -139,7 +163,6 @@ export default function SolarCalculator() {
         y = marginTop + Math.min(img.heightMm % maxBodyH || maxBodyH, maxBodyH) + 4;
       }
 
-      // Footer
       const pageCount = pdf.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i);
@@ -152,9 +175,11 @@ export default function SolarCalculator() {
 
       pdf.save(`ufuk-solar-report-${Date.now()}.pdf`);
     } finally {
+      document.body.removeChild(stage);
       setDownloading(false);
     }
   };
+
 
   const progress = step === 4 ? 100 : ((step - 1) / 3) * 100;
 
