@@ -288,7 +288,14 @@ export default function Products() {
               </button>
             );
           })}
+          <div className="ms-auto flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1">
+            <Switch id="show-hidden" checked={showHidden} onCheckedChange={setShowHidden} disabled={missingFilters.hidden} />
+            <Label htmlFor="show-hidden" className="cursor-pointer text-xs font-medium text-muted-foreground">
+              {lang === "ar" ? "إظهار المنتجات المخفية" : "Show hidden products"}
+            </Label>
+          </div>
         </div>
+
       </div>
 
       <div className="surface-card overflow-hidden">
