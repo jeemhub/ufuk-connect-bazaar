@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Package, FolderTree, Award, Newspaper, Hammer, ShoppingCart, MessageSquareQuote, ArrowUpRight, Headset } from "lucide-react";
+import { Package, FolderTree, Award, Newspaper, Hammer, ShoppingCart, MessageSquareQuote, ArrowUpRight, Headset, FileWarning } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth, type SalesPermissions } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 type TileDef = {
+  key?: string;
   perm: keyof SalesPermissions;
   to: string;
   icon: typeof Package;
   label: string;
+  hideInPerms?: boolean;
   fetcher?: () => Promise<{ value: string; sub?: string }>;
 };
+
 
 export default function SalesDashboard() {
   const { t, lang } = useLanguage();
@@ -30,6 +33,22 @@ export default function SalesDashboard() {
         const { count } = await supabase.from("products").select("id", { count: "exact", head: true });
         const { count: low } = await supabase.from("products").select("id", { count: "exact", head: true }).lt("stock", 5);
         return { value: fmt(count ?? 0), sub: `${fmt(low ?? 0)} ${lang === "ar" ? "مخزون منخفض" : "low stock"}` };
+      },
+    },
+    {
+
+      key: "incomplete_products",
+      perm: "can_manage_products",
+      to: "/admin/products?filter=incomplete",
+      icon: FileWarning,
+      label: lang === "ar" ? "منتجات غير مكتملة" : "Incomplete Products",
+      hideInPerms: true,
+      fetcher: async () => {
+        const { count } = await supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .or("name_ar.is.null,name_ar.eq.,name_en.is.null,name_en.eq.");
+        return { value: fmt(count ?? 0), sub: lang === "ar" ? "بدون اسم" : "missing name" };
       },
     },
     {
@@ -107,9 +126,9 @@ export default function SalesDashboard() {
         allowed.map(async (tile) => {
           if (!tile.fetcher) return;
           try {
-            out[tile.perm] = await tile.fetcher();
+            out[tile.key ?? tile.perm] = await tile.fetcher();
           } catch {
-            out[tile.perm] = { value: "—" };
+            out[tile.key ?? tile.perm] = { value: "—" };
           }
         }),
       );
@@ -162,11 +181,11 @@ export default function SalesDashboard() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {allowed.map((tile) => {
-            const stat = stats[tile.perm];
+            const stat = stats[tile.key ?? tile.perm];
             const Icon = tile.icon;
             return (
               <Link
-                key={tile.perm}
+                key={tile.key ?? tile.perm}
                 to={tile.to}
                 className="stat-tile group block transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-elegant"
               >
@@ -195,7 +214,7 @@ export default function SalesDashboard() {
           {lang === "ar" ? "صلاحياتك الحالية" : "Your current permissions"}
         </h2>
         <div className="flex flex-wrap gap-2">
-          {tiles.map((tile) => {
+          {tiles.filter((tl) => !tl.hideInPerms).map((tile) => {
             const enabled = salesPerms[tile.perm];
             return (
               <span
