@@ -36,8 +36,24 @@ export default function SalesDashboard() {
       },
     },
     {
+    {
+      key: "incomplete_products",
+      perm: "can_manage_products",
+      to: "/admin/products?filter=incomplete",
+      icon: FileWarning,
+      label: lang === "ar" ? "منتجات غير مكتملة" : "Incomplete Products",
+      hideInPerms: true,
+      fetcher: async () => {
+        const { count } = await supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .or("name_ar.is.null,name_ar.eq.,name_en.is.null,name_en.eq.");
+        return { value: fmt(count ?? 0), sub: lang === "ar" ? "بدون اسم" : "missing name" };
+      },
+    },
+    {
       perm: "can_manage_orders",
-      to: "/admin/orders",
+
       icon: ShoppingCart,
       label: lang === "ar" ? "الطلبات" : "Orders",
       fetcher: async () => {
