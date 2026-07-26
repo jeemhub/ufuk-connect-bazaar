@@ -53,6 +53,8 @@ export default function SalesDashboard() {
     },
     {
       perm: "can_manage_orders",
+      to: "/admin/orders",
+
 
       icon: ShoppingCart,
       label: lang === "ar" ? "الطلبات" : "Orders",
