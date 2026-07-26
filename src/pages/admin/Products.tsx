@@ -160,8 +160,10 @@ export default function Products() {
     if (missingFilters.noName && (p.nameAr?.trim() && p.nameEn?.trim())) return false;
     if (missingFilters.noImage && !isMissingImage(p.image)) return false;
     if (missingFilters.hidden && p.is_active) return false;
+    if (!showHidden && !missingFilters.hidden && p.is_active === false) return false;
     return true;
-  }), [list, search, brand, cat, lowStockOnly, missingFilters]);
+  }), [list, search, brand, cat, lowStockOnly, missingFilters, showHidden]);
+
 
   async function toggleVisibility(p: Product & { is_active?: boolean }) {
     const next = !p.is_active;
