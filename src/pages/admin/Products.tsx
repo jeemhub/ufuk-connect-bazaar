@@ -132,6 +132,8 @@ export default function Products() {
     noImage: false,
     hidden: false,
   });
+  const [showHidden, setShowHidden] = useState(true);
+
 
   const isMissingImage = (url?: string) => !url || url.includes("unsplash.com/photo-1606904825846");
 
@@ -158,8 +160,10 @@ export default function Products() {
     if (missingFilters.noName && (p.nameAr?.trim() && p.nameEn?.trim())) return false;
     if (missingFilters.noImage && !isMissingImage(p.image)) return false;
     if (missingFilters.hidden && p.is_active) return false;
+    if (!showHidden && !missingFilters.hidden && p.is_active === false) return false;
     return true;
-  }), [list, search, brand, cat, lowStockOnly, missingFilters]);
+  }), [list, search, brand, cat, lowStockOnly, missingFilters, showHidden]);
+
 
   async function toggleVisibility(p: Product & { is_active?: boolean }) {
     const next = !p.is_active;
@@ -284,7 +288,14 @@ export default function Products() {
               </button>
             );
           })}
+          <div className="ms-auto flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1">
+            <Switch id="show-hidden" checked={showHidden} onCheckedChange={setShowHidden} disabled={missingFilters.hidden} />
+            <Label htmlFor="show-hidden" className="cursor-pointer text-xs font-medium text-muted-foreground">
+              {lang === "ar" ? "إظهار المنتجات المخفية" : "Show hidden products"}
+            </Label>
+          </div>
         </div>
+
       </div>
 
       <div className="surface-card overflow-hidden">
