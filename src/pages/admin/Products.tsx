@@ -132,6 +132,8 @@ export default function Products() {
     noImage: false,
     hidden: false,
   });
+  const [showHidden, setShowHidden] = useState(true);
+
 
   const isMissingImage = (url?: string) => !url || url.includes("unsplash.com/photo-1606904825846");
 
