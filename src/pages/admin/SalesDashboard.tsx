@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Package, FolderTree, Award, Newspaper, Hammer, ShoppingCart, MessageSquareQuote, ArrowUpRight, Headset } from "lucide-react";
+import { Package, FolderTree, Award, Newspaper, Hammer, ShoppingCart, MessageSquareQuote, ArrowUpRight, Headset, FileWarning } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth, type SalesPermissions } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 type TileDef = {
+  key?: string;
   perm: keyof SalesPermissions;
   to: string;
   icon: typeof Package;
   label: string;
+  hideInPerms?: boolean;
   fetcher?: () => Promise<{ value: string; sub?: string }>;
 };
+
 
 export default function SalesDashboard() {
   const { t, lang } = useLanguage();
