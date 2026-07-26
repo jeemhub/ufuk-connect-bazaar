@@ -36,7 +36,7 @@ export default function SalesDashboard() {
       },
     },
     {
-    {
+
       key: "incomplete_products",
       perm: "can_manage_products",
       to: "/admin/products?filter=incomplete",
