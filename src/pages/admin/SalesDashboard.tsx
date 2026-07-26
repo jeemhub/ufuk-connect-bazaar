@@ -126,9 +126,9 @@ export default function SalesDashboard() {
         allowed.map(async (tile) => {
           if (!tile.fetcher) return;
           try {
-            out[tile.perm] = await tile.fetcher();
+            out[tile.key ?? tile.perm] = await tile.fetcher();
           } catch {
-            out[tile.perm] = { value: "—" };
+            out[tile.key ?? tile.perm] = { value: "—" };
           }
         }),
       );
@@ -181,11 +181,11 @@ export default function SalesDashboard() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {allowed.map((tile) => {
-            const stat = stats[tile.perm];
+            const stat = stats[tile.key ?? tile.perm];
             const Icon = tile.icon;
             return (
               <Link
-                key={tile.perm}
+                key={tile.key ?? tile.perm}
                 to={tile.to}
                 className="stat-tile group block transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-elegant"
               >
@@ -214,7 +214,7 @@ export default function SalesDashboard() {
           {lang === "ar" ? "صلاحياتك الحالية" : "Your current permissions"}
         </h2>
         <div className="flex flex-wrap gap-2">
-          {tiles.map((tile) => {
+          {tiles.filter((tl) => !tl.hideInPerms).map((tile) => {
             const enabled = salesPerms[tile.perm];
             return (
               <span
