@@ -172,6 +172,20 @@ export default function AdminBrands() {
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 w-full gap-1.5"
+                  onClick={() => exportBrandProducts(b)}
+                  disabled={exportingBrand === b.id}
+                >
+                  {exportingBrand === b.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                  )}
+                  {t("export_brand_excel")}
+                </Button>
               </div>
             </div>
           ))}
