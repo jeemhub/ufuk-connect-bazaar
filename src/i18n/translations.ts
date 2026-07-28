@@ -374,6 +374,11 @@ export const translations = {
     drop_to_upload: "أفلت الصورة هنا للرفع",
     drop_file_here: "اسحب وأفلت أو انقر للرفع",
     no_logo: "لا يوجد شعار",
+    export_brand_excel: "تصدير Excel",
+    product_name: "اسم المنتج",
+    current_stock: "الكمية المتوفرة",
+    no_products_in_brand: "لا توجد منتجات ضمن هذه العلامة",
+    export_success: "تم التصدير بنجاح",
 
     // About / Projects / Editor
     nav_projects: "المشاريع",
