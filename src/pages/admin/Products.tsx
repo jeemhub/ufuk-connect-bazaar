@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
+import { ImportProductsFullDialog } from "@/components/admin/ImportProductsFullDialog";
+import { exportProductsToExcel } from "@/lib/exportProductsExcel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -62,7 +64,21 @@ export default function Products() {
   const [cropOpen, setCropOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [importFullOpen, setImportFullOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const imgInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const count = await exportProductsToExcel();
+      toast.success(lang === "ar" ? `تم تصدير ${count} منتج` : `Exported ${count} products`);
+    } catch (e: any) {
+      toast.error(e?.message || (lang === "ar" ? "فشل التصدير" : "Export failed"));
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function loadCatsAndSubs() {
     const [{ data: cats }, { data: subs }] = await Promise.all([
@@ -232,8 +248,15 @@ export default function Products() {
           <p className="mt-1 text-sm text-muted-foreground">{t("products_subtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {lang === "ar" ? "تصدير Excel" : "Export to Excel"}
+          </Button>
+          <Button variant="outline" onClick={() => setImportFullOpen(true)} className="gap-2">
+            <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد تحديث كامل" : "Import full update"}
+          </Button>
           <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
-            <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد Excel" : "Import Excel"}
+            <Upload className="h-4 w-4" /> {lang === "ar" ? "استيراد الرصيد فقط" : "Import stock only"}
           </Button>
           <Button onClick={openNew} className="gap-2 bg-gradient-brand shadow-elegant hover:opacity-95">
             <Plus className="h-4 w-4" /> {t("add_product")}
@@ -242,6 +265,7 @@ export default function Products() {
       </div>
 
       <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} onDone={refetch} />
+      <ImportProductsFullDialog open={importFullOpen} onOpenChange={setImportFullOpen} onDone={refetch} />
 
       <div className="surface-card p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
