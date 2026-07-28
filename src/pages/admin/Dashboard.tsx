@@ -16,6 +16,7 @@ export default function Dashboard() {
       const { count } = await supabase
         .from("products")
         .select("id", { count: "exact", head: true })
+        .eq("is_active", true)
         .or("name_ar.is.null,name_ar.eq.,name_en.is.null,name_en.eq.");
       setIncompleteCount(count ?? 0);
     })();
