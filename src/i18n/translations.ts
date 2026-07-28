@@ -777,6 +777,10 @@ export const translations = {
     saved: "Saved",
     error_generic: "Something went wrong, please try again.",
     no_logo: "No logo",
+    export_brand_excel: "Export Excel",
+    current_stock: "Current stock",
+    no_products_in_brand: "No products in this brand",
+    export_success: "Exported successfully",
     drop_to_upload: "Drop image here to upload",
     drop_file_here: "Drag & drop or click to upload",
 
