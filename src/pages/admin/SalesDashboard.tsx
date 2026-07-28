@@ -47,6 +47,7 @@ export default function SalesDashboard() {
         const { count } = await supabase
           .from("products")
           .select("id", { count: "exact", head: true })
+          .eq("is_active", true)
           .or("name_ar.is.null,name_ar.eq.,name_en.is.null,name_en.eq.");
         return { value: fmt(count ?? 0), sub: lang === "ar" ? "بدون اسم" : "missing name" };
       },
