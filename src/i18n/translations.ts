@@ -506,6 +506,7 @@ export const translations = {
 
     nav_dashboard: "Overview",
     nav_products: "Products",
+    products: "Products",
     nav_categories: "Categories",
     nav_orders: "Orders",
     nav_customers: "Customers",
