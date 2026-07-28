@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# MCP server secrets (service role key - never commit)
+mcp-server/.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

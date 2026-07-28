@@ -1,0 +1,17 @@
+{
+  "name": "ufuk-admin-mcp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server exposing the Ufuk Al-Basra admin dashboard's Supabase tables as tools for an MCP client (e.g. Claude Desktop, Claude Code).",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@supabase/supabase-js": "^2.104.1",
+    "dotenv": "^16.4.5",
+    "zod": "^3.25.76"
+  }
+}
