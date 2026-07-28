@@ -97,6 +97,7 @@ export const translations = {
     // Admin nav
     nav_dashboard: "النظرة العامة",
     nav_products: "المنتجات",
+    products: "المنتجات",
     nav_categories: "الأقسام",
     nav_orders: "الطلبات",
     nav_customers: "الزبائن",
@@ -374,6 +375,10 @@ export const translations = {
     drop_to_upload: "أفلت الصورة هنا للرفع",
     drop_file_here: "اسحب وأفلت أو انقر للرفع",
     no_logo: "لا يوجد شعار",
+    export_brand_excel: "تصدير Excel",
+    current_stock: "الكمية المتوفرة",
+    no_products_in_brand: "لا توجد منتجات ضمن هذه العلامة",
+    export_success: "تم التصدير بنجاح",
 
     // About / Projects / Editor
     nav_projects: "المشاريع",
@@ -501,6 +506,7 @@ export const translations = {
 
     nav_dashboard: "Overview",
     nav_products: "Products",
+    products: "Products",
     nav_categories: "Categories",
     nav_orders: "Orders",
     nav_customers: "Customers",
@@ -773,6 +779,10 @@ export const translations = {
     saved: "Saved",
     error_generic: "Something went wrong, please try again.",
     no_logo: "No logo",
+    export_brand_excel: "Export Excel",
+    current_stock: "Current stock",
+    no_products_in_brand: "No products in this brand",
+    export_success: "Exported successfully",
     drop_to_upload: "Drop image here to upload",
     drop_file_here: "Drag & drop or click to upload",
 
