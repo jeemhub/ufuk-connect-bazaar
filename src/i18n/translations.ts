@@ -97,6 +97,7 @@ export const translations = {
     // Admin nav
     nav_dashboard: "النظرة العامة",
     nav_products: "المنتجات",
+    products: "المنتجات",
     nav_categories: "الأقسام",
     nav_orders: "الطلبات",
     nav_customers: "الزبائن",
