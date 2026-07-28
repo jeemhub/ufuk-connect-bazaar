@@ -1110,6 +1110,7 @@ export type Database = {
         Args: { _perm: string; _user_id: string }
         Returns: boolean
       }
+      import_products_apply: { Args: { p_items: Json }; Returns: Json }
       is_current_user_blocked: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
