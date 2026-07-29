@@ -420,7 +420,7 @@ export default function Products() {
           <DialogHeader>
             <DialogTitle>{editing ? t("edit_product") : t("new_product")}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <form onSubmit={onSubmit} data-product-form className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="nameAr">{t("name_ar")}</Label>
               <Input id="nameAr" name="nameAr" defaultValue={editing?.nameAr} />
