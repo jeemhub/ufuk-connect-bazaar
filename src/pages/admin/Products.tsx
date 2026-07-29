@@ -67,6 +67,41 @@ export default function Products() {
   const [importFullOpen, setImportFullOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const imgInputRef = useRef<HTMLInputElement>(null);
+  const [autoFetching, setAutoFetching] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<{ url: string; thumb: string; credit: string }[]>([]);
+  const [suggestPick, setSuggestPick] = useState<string>("");
+
+  async function autoFetchImage() {
+    const form = document.querySelector<HTMLFormElement>("form[data-product-form]");
+    const fd = form ? new FormData(form) : null;
+    const query =
+      String(fd?.get("nameEn") || "").trim() ||
+      String(fd?.get("nameData") || "").trim() ||
+      String(fd?.get("nameAr") || "").trim();
+    if (!query) {
+      toast.error(lang === "ar" ? "أدخل اسم المنتج أولاً" : "Enter a product name first");
+      return;
+    }
+    setAutoFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("image-search", { body: { query } });
+      if (error) throw error;
+      const results = (data?.results ?? []) as { url: string; thumb: string; credit: string }[];
+      if (!results.length) {
+        toast.error(lang === "ar" ? "لم يتم العثور على صور" : "No images found");
+        return;
+      }
+      setSuggestions(results);
+      setSuggestPick(results[0].url);
+      setSuggestOpen(true);
+    } catch (e: any) {
+      toast.error(e?.message || (lang === "ar" ? "فشل جلب الصور" : "Image search failed"));
+    } finally {
+      setAutoFetching(false);
+    }
+  }
+
 
   async function handleExport() {
     setExporting(true);
