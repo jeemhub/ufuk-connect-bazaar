@@ -628,6 +628,41 @@ export default function Products() {
       </Dialog>
 
       <ImageCropper open={cropOpen} src={rawImage || imageSrc} onClose={() => setCropOpen(false)} onCropped={(url) => setImageSrc(url)} />
+
+      <Dialog open={suggestOpen} onOpenChange={setSuggestOpen}>
+        <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{lang === "ar" ? "صور مقترحة" : "Suggested images"}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {suggestions.map((s) => (
+              <button
+                key={s.url}
+                type="button"
+                onClick={() => setSuggestPick(s.url)}
+                className={`overflow-hidden rounded-md border-2 transition ${suggestPick === s.url ? "border-primary" : "border-border"}`}
+              >
+                <img src={s.thumb} alt={s.credit} className="h-24 w-full object-cover" loading="lazy" />
+                <span className="block truncate px-1 py-0.5 text-[10px] text-muted-foreground">{s.credit}</span>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setSuggestOpen(false)}>
+              {lang === "ar" ? "رفض" : "Reject"}
+            </Button>
+            <Button
+              type="button"
+              className="bg-gradient-brand"
+              disabled={!suggestPick}
+              onClick={() => { setImageSrc(suggestPick); setRawImage(""); setSuggestOpen(false); }}
+            >
+              {lang === "ar" ? "اعتماد الصورة" : "Use image"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
