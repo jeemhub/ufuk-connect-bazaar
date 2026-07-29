@@ -7,3 +7,7 @@ verify_jwt = true
 
 [functions.import-products]
 verify_jwt = true
+
+[functions.image-search]
+verify_jwt = true
+

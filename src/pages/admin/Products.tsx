@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { ImportProductsFullDialog } from "@/components/admin/ImportProductsFullDialog";
 import { exportProductsToExcel } from "@/lib/exportProductsExcel";
@@ -67,6 +67,41 @@ export default function Products() {
   const [importFullOpen, setImportFullOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const imgInputRef = useRef<HTMLInputElement>(null);
+  const [autoFetching, setAutoFetching] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<{ url: string; thumb: string; credit: string }[]>([]);
+  const [suggestPick, setSuggestPick] = useState<string>("");
+
+  async function autoFetchImage() {
+    const form = document.querySelector<HTMLFormElement>("form[data-product-form]");
+    const fd = form ? new FormData(form) : null;
+    const query =
+      String(fd?.get("nameEn") || "").trim() ||
+      String(fd?.get("nameData") || "").trim() ||
+      String(fd?.get("nameAr") || "").trim();
+    if (!query) {
+      toast.error(lang === "ar" ? "أدخل اسم المنتج أولاً" : "Enter a product name first");
+      return;
+    }
+    setAutoFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("image-search", { body: { query } });
+      if (error) throw error;
+      const results = (data?.results ?? []) as { url: string; thumb: string; credit: string }[];
+      if (!results.length) {
+        toast.error(lang === "ar" ? "لم يتم العثور على صور" : "No images found");
+        return;
+      }
+      setSuggestions(results);
+      setSuggestPick(results[0].url);
+      setSuggestOpen(true);
+    } catch (e: any) {
+      toast.error(e?.message || (lang === "ar" ? "فشل جلب الصور" : "Image search failed"));
+    } finally {
+      setAutoFetching(false);
+    }
+  }
+
 
   async function handleExport() {
     setExporting(true);
@@ -385,7 +420,7 @@ export default function Products() {
           <DialogHeader>
             <DialogTitle>{editing ? t("edit_product") : t("new_product")}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <form onSubmit={onSubmit} data-product-form className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="nameAr">{t("name_ar")}</Label>
               <Input id="nameAr" name="nameAr" defaultValue={editing?.nameAr} />
@@ -539,6 +574,10 @@ export default function Products() {
                       <Button type="button" variant="outline" size="sm" onClick={() => imgInputRef.current?.click()} className="gap-2">
                         <Upload className="h-4 w-4" />{imageSrc ? t("change_image") : t("upload_image")}
                       </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={autoFetchImage} disabled={autoFetching} className="gap-2">
+                        {autoFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        {lang === "ar" ? "جلب صورة تلقائياً" : "Auto-fetch image"}
+                      </Button>
                       {imageSrc && rawImage && (
                         <Button type="button" variant="outline" size="sm" onClick={() => setCropOpen(true)} className="gap-2">
                           <CropIcon className="h-4 w-4" />{t("crop_image")}
@@ -552,6 +591,7 @@ export default function Products() {
               </Dropzone>
               <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
             </div>
+
 
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="datasheet">{t("datasheet")}</Label>
@@ -588,6 +628,41 @@ export default function Products() {
       </Dialog>
 
       <ImageCropper open={cropOpen} src={rawImage || imageSrc} onClose={() => setCropOpen(false)} onCropped={(url) => setImageSrc(url)} />
+
+      <Dialog open={suggestOpen} onOpenChange={setSuggestOpen}>
+        <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{lang === "ar" ? "صور مقترحة" : "Suggested images"}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {suggestions.map((s) => (
+              <button
+                key={s.url}
+                type="button"
+                onClick={() => setSuggestPick(s.url)}
+                className={`overflow-hidden rounded-md border-2 transition ${suggestPick === s.url ? "border-primary" : "border-border"}`}
+              >
+                <img src={s.thumb} alt={s.credit} className="h-24 w-full object-cover" loading="lazy" />
+                <span className="block truncate px-1 py-0.5 text-[10px] text-muted-foreground">{s.credit}</span>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setSuggestOpen(false)}>
+              {lang === "ar" ? "رفض" : "Reject"}
+            </Button>
+            <Button
+              type="button"
+              className="bg-gradient-brand"
+              disabled={!suggestPick}
+              onClick={() => { setImageSrc(suggestPick); setRawImage(""); setSuggestOpen(false); }}
+            >
+              {lang === "ar" ? "اعتماد الصورة" : "Use image"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
