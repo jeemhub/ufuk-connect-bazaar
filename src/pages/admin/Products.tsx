@@ -71,8 +71,9 @@ export default function Products() {
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<{ url: string; thumb: string; credit: string }[]>([]);
   const [suggestPick, setSuggestPick] = useState<string>("");
+  const [urlInput, setUrlInput] = useState<string>("");
 
-  async function autoFetchImage() {
+  function autoFetchImage() {
     const form = document.querySelector<HTMLFormElement>("form[data-product-form]");
     const fd = form ? new FormData(form) : null;
     const query =
@@ -83,24 +84,21 @@ export default function Products() {
       toast.error(lang === "ar" ? "أدخل اسم المنتج أولاً" : "Enter a product name first");
       return;
     }
-    setAutoFetching(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("image-search", { body: { query } });
-      if (error) throw error;
-      const results = (data?.results ?? []) as { url: string; thumb: string; credit: string }[];
-      if (!results.length) {
-        toast.error(lang === "ar" ? "لم يتم العثور على صور" : "No images found");
-        return;
-      }
-      setSuggestions(results);
-      setSuggestPick(results[0].url);
-      setSuggestOpen(true);
-    } catch (e: any) {
-      toast.error(e?.message || (lang === "ar" ? "فشل جلب الصور" : "Image search failed"));
-    } finally {
-      setAutoFetching(false);
-    }
+    window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`, "_blank", "noopener,noreferrer");
   }
+
+  function applyImageUrl() {
+    const url = urlInput.trim();
+    if (!/^https?:\/\/.+/i.test(url)) {
+      toast.error(lang === "ar" ? "أدخل رابط صورة صحيح" : "Enter a valid image URL");
+      return;
+    }
+    setImageSrc(url);
+    setRawImage("");
+    setUrlInput("");
+    toast.success(lang === "ar" ? "تم تعيين الصورة" : "Image applied");
+  }
+
 
 
   async function handleExport() {
@@ -574,8 +572,8 @@ export default function Products() {
                       <Button type="button" variant="outline" size="sm" onClick={() => imgInputRef.current?.click()} className="gap-2">
                         <Upload className="h-4 w-4" />{imageSrc ? t("change_image") : t("upload_image")}
                       </Button>
-                      <Button type="button" variant="outline" size="sm" onClick={autoFetchImage} disabled={autoFetching} className="gap-2">
-                        {autoFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      <Button type="button" variant="outline" size="sm" onClick={autoFetchImage} className="gap-2">
+                        <Sparkles className="h-4 w-4" />
                         {lang === "ar" ? "جلب صورة تلقائياً" : "Auto-fetch image"}
                       </Button>
                       {imageSrc && rawImage && (
@@ -586,11 +584,33 @@ export default function Products() {
                     </div>
                     <p className="text-xs text-muted-foreground">{t("drop_file_here")}</p>
                     <p className="text-xs text-muted-foreground">{t("image_preview_hint")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lang === "ar"
+                        ? "سيفتح بحث صور Google في تبويب جديد — انسخ عنوان الصورة ثم الصقه بالأسفل."
+                        : "Google Images opens in a new tab — copy the image address, then paste it below."}
+                    </p>
                   </div>
                 </div>
               </Dropzone>
               <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
+              <div className="space-y-1.5">
+                <Label htmlFor="imageUrlPaste">{lang === "ar" ? "أو الصق رابط الصورة" : "Or paste image URL"}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="imageUrlPaste"
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyImageUrl(); } }}
+                    placeholder="https://..."
+                    dir="ltr"
+                  />
+                  <Button type="button" variant="secondary" size="sm" onClick={applyImageUrl}>
+                    {lang === "ar" ? "تطبيق" : "Apply"}
+                  </Button>
+                </div>
+              </div>
             </div>
+
 
 
             <div className="space-y-1.5 md:col-span-2">
