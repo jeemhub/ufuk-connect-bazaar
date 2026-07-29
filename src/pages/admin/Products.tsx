@@ -539,6 +539,10 @@ export default function Products() {
                       <Button type="button" variant="outline" size="sm" onClick={() => imgInputRef.current?.click()} className="gap-2">
                         <Upload className="h-4 w-4" />{imageSrc ? t("change_image") : t("upload_image")}
                       </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={autoFetchImage} disabled={autoFetching} className="gap-2">
+                        {autoFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        {lang === "ar" ? "جلب صورة تلقائياً" : "Auto-fetch image"}
+                      </Button>
                       {imageSrc && rawImage && (
                         <Button type="button" variant="outline" size="sm" onClick={() => setCropOpen(true)} className="gap-2">
                           <CropIcon className="h-4 w-4" />{t("crop_image")}
@@ -552,6 +556,7 @@ export default function Products() {
               </Dropzone>
               <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
             </div>
+
 
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="datasheet">{t("datasheet")}</Label>
