@@ -328,6 +328,7 @@ export default function Products() {
             { key: "noName" as const, label: lang === "ar" ? "بدون اسم" : "No name", icon: Type },
             { key: "noDesc" as const, label: lang === "ar" ? "بدون وصف" : "No description", icon: FileQuestion },
             { key: "noImage" as const, label: lang === "ar" ? "بدون صورة" : "No image", icon: ImageOff },
+            { key: "noPrice" as const, label: lang === "ar" ? "بدون سعر" : "No price", icon: DollarSign },
             { key: "hidden" as const, label: lang === "ar" ? "المخفية" : "Hidden", icon: EyeOff },
           ].map(({ key, label, icon: Icon }) => {
             const active = missingFilters[key];
