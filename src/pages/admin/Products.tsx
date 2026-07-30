@@ -180,6 +180,7 @@ export default function Products() {
     noName: false,
     noImage: false,
     hidden: false,
+    noPrice: false,
   });
   const [showHidden, setShowHidden] = useState(true);
 
