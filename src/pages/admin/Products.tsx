@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles, DollarSign } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { ImportProductsFullDialog } from "@/components/admin/ImportProductsFullDialog";
 import { exportProductsToExcel } from "@/lib/exportProductsExcel";
@@ -180,6 +180,7 @@ export default function Products() {
     noName: false,
     noImage: false,
     hidden: false,
+    noPrice: false,
   });
   const [showHidden, setShowHidden] = useState(true);
 
@@ -205,6 +206,7 @@ export default function Products() {
     if (brand !== "all" && p.brand !== brand) return false;
     if (cat !== "all" && p.category !== cat) return false;
     if (lowStockOnly && p.stock >= 5) return false;
+    if (missingFilters.noPrice && p.priceIqd > 0) return false;
     if (missingFilters.noDesc && (p.descAr?.trim() || p.descEn?.trim())) return false;
     if (missingFilters.noName && ((p.nameAr?.trim() && p.nameEn?.trim()) || p.is_active === false)) return false;
     if (missingFilters.noImage && !isMissingImage(p.image)) return false;
@@ -326,6 +328,7 @@ export default function Products() {
             { key: "noName" as const, label: lang === "ar" ? "بدون اسم" : "No name", icon: Type },
             { key: "noDesc" as const, label: lang === "ar" ? "بدون وصف" : "No description", icon: FileQuestion },
             { key: "noImage" as const, label: lang === "ar" ? "بدون صورة" : "No image", icon: ImageOff },
+            { key: "noPrice" as const, label: lang === "ar" ? "بدون سعر" : "No price", icon: DollarSign },
             { key: "hidden" as const, label: lang === "ar" ? "المخفية" : "Hidden", icon: EyeOff },
           ].map(({ key, label, icon: Icon }) => {
             const active = missingFilters[key];
