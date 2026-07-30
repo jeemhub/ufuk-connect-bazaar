@@ -206,6 +206,7 @@ export default function Products() {
     if (brand !== "all" && p.brand !== brand) return false;
     if (cat !== "all" && p.category !== cat) return false;
     if (lowStockOnly && p.stock >= 5) return false;
+    if (missingFilters.noPrice && p.priceIqd > 0) return false;
     if (missingFilters.noDesc && (p.descAr?.trim() || p.descEn?.trim())) return false;
     if (missingFilters.noName && ((p.nameAr?.trim() && p.nameEn?.trim()) || p.is_active === false)) return false;
     if (missingFilters.noImage && !isMissingImage(p.image)) return false;
