@@ -9,8 +9,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
-
-const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"];
+import { useBrands } from "@/hooks/useBrands";
 
 export default function ProductsPage() {
   const { t, lang } = useLanguage();
