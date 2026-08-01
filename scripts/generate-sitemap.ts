@@ -76,17 +76,17 @@ async function main() {
     entries.push({ path: `/products?category=${key}`, changefreq: "daily", priority: "0.8" });
   }
 
-  const products = await fetchRows("products", "id", "&is_active=eq.true");
+  const products = await fetchRows("products_public", "id");
   products.forEach((p) => {
     if (p.id) entries.push({ path: `/products/${p.id}`, changefreq: "weekly", priority: "0.7" });
   });
 
-  const projects = await fetchRows("projects", "slug", "&is_published=eq.true");
+  const projects = await fetchRows("projects", "slug");
   projects.forEach((p) => {
     if (p.slug) entries.push({ path: `/projects/${p.slug}`, changefreq: "monthly", priority: "0.6" });
   });
 
-  const posts = await fetchRows("blog_posts", "slug", "&is_published=eq.true");
+  const posts = await fetchRows("blog_posts", "slug", "&status=eq.published");
   posts.forEach((p) => {
     if (p.slug) entries.push({ path: `/blog/${p.slug}`, changefreq: "monthly", priority: "0.6" });
   });
