@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 export const SITE_URL = "https://ufukalbasra.com";
@@ -30,6 +31,27 @@ export function Seo({ title, description, path, image, type = "website", lang, j
   const url = absoluteUrl(path);
   const desc = clamp(description);
   const img = image ? absoluteUrl(image) : undefined;
+
+  // The static tags in index.html are not managed by Helmet, so they would keep
+  // shadowing the per-page values. Keep them in sync with the active page.
+  useEffect(() => {
+    const sync = (selector: string, content: string | undefined) => {
+      if (!content) return;
+      document.head.querySelectorAll(selector).forEach((el) => {
+        if (el.hasAttribute("data-rh")) return;
+        el.setAttribute("content", content);
+      });
+    };
+    sync('meta[name="description"]', desc);
+    sync('meta[property="og:title"]', title);
+    sync('meta[name="twitter:title"]', title);
+    sync('meta[property="og:description"]', desc);
+    sync('meta[name="twitter:description"]', desc);
+    if (img) {
+      sync('meta[property="og:image"]', img);
+      sync('meta[name="twitter:image"]', img);
+    }
+  }, [title, desc, img]);
 
   return (
     <Helmet>
