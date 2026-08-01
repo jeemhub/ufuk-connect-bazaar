@@ -819,7 +819,7 @@ export const translations = {
     remove: "Remove",
 
     currency_iqd: "IQD",
-    no_price: "No price currently",
+    no_price: "Price is unstable",
     backend_note: "",
   },
 } as const;
