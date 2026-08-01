@@ -10,6 +10,7 @@ import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { useBrands } from "@/hooks/useBrands";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
 export default function ProductsPage() {
   const { t, lang } = useLanguage();
