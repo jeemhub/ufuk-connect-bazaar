@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { useProduct, useProducts } from "@/hooks/useProducts";
 import { useAuth } from "@/auth/AuthProvider";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
+import { Seo, clamp, absoluteUrl, SITE_NAME } from "@/components/seo/Seo";
 
 export default function ProductDetail() {
   const { id } = useParams();
