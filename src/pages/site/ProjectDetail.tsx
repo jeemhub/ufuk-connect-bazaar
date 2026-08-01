@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, MapPin, User, Calendar } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { sanitizeHTML } from "@/components/admin/RichTextEditor";
 
 type Project = {
@@ -79,6 +80,17 @@ export default function ProjectDetail() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 md:px-6">
+      <Seo
+        title={`${lang === "ar" ? p.title_ar : p.title_en} | ${SITE_NAME}`}
+        description={
+          (lang === "ar" ? p.summary_ar : p.summary_en) ||
+          (lang === "ar" ? p.body_ar : p.body_en) ||
+          (lang === "ar" ? "مشروع منفّذ من أُفُق البصرة." : "A project delivered by UFUK AL-Basra.")
+        }
+        path={`/projects/${p.slug}`}
+        image={p.cover_url || undefined}
+        type="article"
+      />
       <Link
         to="/projects"
         className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"

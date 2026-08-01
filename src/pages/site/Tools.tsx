@@ -3,6 +3,7 @@ import SolarCalculator from "@/components/site/SolarCalculator";
 import SolarSystemDesigner from "@/components/site/SolarSystemDesigner";
 import { cn } from "@/lib/utils";
 import { Calculator, Sun } from "lucide-react";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
 type Tool = "calculator" | "designer";
 
@@ -11,6 +12,12 @@ export default function ToolsPage() {
 
   return (
     <div dir="rtl">
+      <Seo
+        title={`أدوات هندسية — حاسبة ومصمم منظومات الطاقة الشمسية | ${SITE_NAME}`}
+        description="أدوات مجانية من أُفُق البصرة: حاسبة وقت تشغيل الأحمال ومصمم منظومات الطاقة الشمسية مع تقارير PDF هندسية جاهزة للطباعة."
+        path="/tools"
+        lang="ar"
+      />
       <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
       <div className="bg-white border-b border-amber-200" style={{ fontFamily: "'Cairo', system-ui, sans-serif" }}>
         <div className="container mx-auto max-w-5xl px-4 py-4">
