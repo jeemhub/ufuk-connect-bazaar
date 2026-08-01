@@ -5,6 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useEffect } from "react";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { useProducts } from "@/hooks/useProducts";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { BrandStrip } from "@/components/site/BrandStrip";
@@ -39,6 +40,24 @@ const Home = () => {
 
   return (
     <>
+      <Seo
+        title={lang === "ar" ? "أُفُق البصرة | شبكات وطاقة شمسية و UPS في العراق" : "UFUK AL-Basra | Networking, Solar & UPS in Iraq"}
+        description={
+          lang === "ar"
+            ? "أُفُق البصرة: موزع معتمد لحلول MikroTik و Ruijie و Must — معدات شبكات، منظومات طاقة شمسية، أنظمة UPS بأسعار الجملة والوكالة في العراق."
+            : "UFUK AL-Basra: authorized distributor of MikroTik, Ruijie and Must — networking gear, solar systems and UPS with wholesale & dealer pricing in Iraq."
+        }
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "UFUK AL-Basra",
+          url: "https://ufukalbasra.com",
+          email: "sales@ufukbasra.com.iq",
+          telephone: "+964 771 699 2955",
+          address: { "@type": "PostalAddress", addressCountry: "IQ", addressLocality: "Basra" },
+        }}
+      />
       {/* 1. Hero — light mode, rich background */}
       <section className="relative overflow-hidden bg-background text-foreground">
         {/* Soft animated blobs */}

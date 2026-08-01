@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { usePublishedPosts } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +16,15 @@ export default function BlogList() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <Seo
+        title={lang === "ar" ? `المدونة التقنية | ${SITE_NAME}` : `Technical Blog | ${SITE_NAME}`}
+        description={
+          lang === "ar"
+            ? "مقالات ودلائل تقنية من أُفُق البصرة حول الشبكات، الطاقة الشمسية، أنظمة UPS واختيار المعدات المناسبة في العراق."
+            : "Technical articles and guides from UFUK AL-Basra on networking, solar energy, UPS systems and choosing the right equipment in Iraq."
+        }
+        path="/blog"
+      />
       <div className="mb-10">
         <h1 className="text-3xl md:text-4xl font-extrabold">{t("blog_title")}</h1>
         <p className="mt-2 text-muted-foreground">{t("blog_subtitle")}</p>

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import logo from "@/assets/logo.png";
 import { sanitizeHTML } from "@/components/admin/RichTextEditor";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
 type Page = {
   title_ar: string;
@@ -36,6 +37,17 @@ export default function AboutPage() {
 
   return (
     <div className="relative">
+      <Seo
+        title={lang === "ar" ? `من نحن — أُفُق البصرة | ${SITE_NAME}` : `About Us — UFUK AL-Basra | ${SITE_NAME}`}
+        description={
+          (lang === "ar" ? page?.content_ar : page?.content_en) ||
+          (lang === "ar"
+            ? "أُفُق البصرة: موزّع معتمد لحلول MikroTik و Ruijie و Must في العراق — شبكات، طاقة شمسية، UPS، ومشاريع بنية تحتية لتكنولوجيا المعلومات."
+            : "UFUK AL-Basra: authorized distributor of MikroTik, Ruijie and Must in Iraq — networking, solar energy, UPS and IT infrastructure projects.")
+        }
+        path="/about"
+        image={page?.cover_url || undefined}
+      />
       {/* Hero with large logo */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/10">
         <div

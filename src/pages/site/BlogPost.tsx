@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, Trash2, Reply, X } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -184,6 +185,21 @@ export default function BlogPostPage() {
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 md:px-6">
+      <Seo
+        title={`${title || post.slug} | ${SITE_NAME}`}
+        description={body || (lang === "ar" ? "مقال تقني من أُفُق البصرة." : "A technical article from UFUK AL-Basra.")}
+        path={`/blog/${post.slug}`}
+        image={post.cover_url || undefined}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: title || post.slug,
+          image: post.cover_url || undefined,
+          author: { "@type": "Organization", name: SITE_NAME },
+          publisher: { "@type": "Organization", name: SITE_NAME },
+        }}
+      />
       <Link to="/blog" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
         <ArrowLeft className="h-4 w-4" /> {t("blog_back")}
       </Link>

@@ -10,6 +10,7 @@ import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { useBrands } from "@/hooks/useBrands";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
 export default function ProductsPage() {
   const { t, lang } = useLanguage();
@@ -60,8 +61,22 @@ export default function ProductsPage() {
 
   const hasFilters = category !== "all" || brand !== "all" || !!search || sort !== "newest";
 
+  // ---- SEO: title/description reflect the active category & brand ----
+  const catMeta = categories.find((c) => c.key === category);
+  const catLabel = catMeta ? (lang === "ar" ? catMeta.ar : catMeta.en) : "";
+  const seoPath = category !== "all" ? `/products?category=${category}` : "/products";
+  const seoTitle =
+    lang === "ar"
+      ? `${catLabel || "جميع المنتجات"}${brand !== "all" ? ` - ${brand}` : ""} | ${SITE_NAME}`
+      : `${catLabel || "All Products"}${brand !== "all" ? ` - ${brand}` : ""} | ${SITE_NAME}`;
+  const seoDesc =
+    lang === "ar"
+      ? `تسوّق ${catLabel || "معدات الشبكات والطاقة الشمسية و UPS"}${brand !== "all" ? ` من ${brand}` : ""} في أُفُق البصرة — أسعار الجملة والوكالة، توفر فوري، دعم فني في العراق.`
+      : `Shop ${catLabel || "networking, solar and UPS equipment"}${brand !== "all" ? ` from ${brand}` : ""} at UFUK AL-Basra — wholesale & dealer pricing, in-stock items, technical support in Iraq.`;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
+      <Seo title={seoTitle} description={seoDesc} path={seoPath} />
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-border/50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,hsl(var(--primary)/0.15),transparent_50%),radial-gradient(circle_at_80%_70%,hsl(var(--primary)/0.1),transparent_50%)]" />
