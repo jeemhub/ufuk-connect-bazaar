@@ -35,6 +35,11 @@ export default function ProductsPage() {
     setSort("newest");
   };
   const { products, loading } = useProducts({ activeOnly: true });
+  const { brands } = useBrands({ activeOnly: true });
+  const brandNames = useMemo(
+    () => ["all", ...Array.from(new Set((brands ?? []).map((b) => b.name).filter(Boolean)))],
+    [brands]
+  );
 
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
 
