@@ -48,8 +48,54 @@ export default function ProductDetail() {
 
   const inStock = product.stock > 0;
 
+  // ---- SEO (per-product title / description / og / canonical / JSON-LD) ----
+  const seoNameAr = product.nameAr?.trim() || product.nameData || "";
+  const seoNameEn = product.nameEn?.trim() || "";
+  const seoTitle = [seoNameAr, seoNameEn].filter(Boolean).join(" - ") + ` | ${SITE_NAME}`;
+  const seoDesc =
+    clamp(product.descAr || product.descEn) ||
+    clamp(
+      lang === "ar"
+        ? `${seoNameAr || seoNameEn} من ${product.brand} — ${product.subcategory}. متوفر في أُفُق البصرة لحلول الشبكات والطاقة الشمسية في العراق.`
+        : `${seoNameEn || seoNameAr} by ${product.brand} — ${product.subcategory}. Available at UFUK AL-Basra, Iraq.`
+    );
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: [seoNameAr, seoNameEn].filter(Boolean).join(" - "),
+    description: seoDesc,
+    image: absoluteUrl(product.image),
+    sku: product.sku || undefined,
+    brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
+    category: product.subcategory || product.category || undefined,
+    url: absoluteUrl(`/products/${product.id}`),
+    ...(product.priceIqd > 0
+      ? {
+          offers: {
+            "@type": "Offer",
+            price: product.priceIqd,
+            priceCurrency: "IQD",
+            url: absoluteUrl(`/products/${product.id}`),
+            availability: inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            itemCondition: "https://schema.org/NewCondition",
+            seller: { "@type": "Organization", name: SITE_NAME },
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
+      <Seo
+        title={seoTitle}
+        description={seoDesc}
+        path={`/products/${product.id}`}
+        image={product.image}
+        type="product"
+        jsonLd={productJsonLd}
+      />
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
         {/* Breadcrumb */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
