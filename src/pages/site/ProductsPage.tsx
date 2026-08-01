@@ -9,8 +9,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
-
-const brands = ["MikroTik", "Ruijie", "Must", "Ubiquiti", "TP-Link"];
+import { useBrands } from "@/hooks/useBrands";
 
 export default function ProductsPage() {
   const { t, lang } = useLanguage();
@@ -36,6 +35,11 @@ export default function ProductsPage() {
     setSort("newest");
   };
   const { products, loading } = useProducts({ activeOnly: true });
+  const { brands } = useBrands({ activeOnly: true });
+  const brandNames = useMemo(
+    () => ["all", ...Array.from(new Set((brands ?? []).map((b) => b.name).filter(Boolean)))],
+    [brands]
+  );
 
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
 
@@ -118,9 +122,11 @@ export default function ProductsPage() {
             </div>
             <Select value={brand} onValueChange={setBrand}>
               <SelectTrigger className="rounded-xl"><SelectValue placeholder={t("filter_brand")} /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72 overflow-y-auto">
                 <SelectItem value="all">{t("all_brands")}</SelectItem>
-                {brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                {brandNames.filter((n) => n !== "all").map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={sort} onValueChange={setSort}>
