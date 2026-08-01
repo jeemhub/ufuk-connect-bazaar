@@ -4,6 +4,7 @@ import { ArrowRight, ArrowLeft, ImageIcon } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
 type Project = {
   id: string;
@@ -39,6 +40,15 @@ export default function ProjectsPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <Seo
+        title={lang === "ar" ? `مشاريعنا المنفّذة | ${SITE_NAME}` : `Our Projects | ${SITE_NAME}`}
+        description={
+          lang === "ar"
+            ? "مشاريع منفّذة من أُفُق البصرة: منظومات طاقة شمسية، شبكات ألياف ضوئية، أنظمة UPS وبنية تحتية لتكنولوجيا المعلومات في العراق."
+            : "Completed projects by UFUK AL-Basra: solar power systems, fiber networks, UPS systems and IT infrastructure across Iraq."
+        }
+        path="/projects"
+      />
       <div className="mb-10 max-w-2xl">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
           {t("nav_projects")}

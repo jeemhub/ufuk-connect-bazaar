@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { ArrowRight, ArrowLeft, Sparkles, ShieldCheck, Award, TrendingUp } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useBrands } from "@/hooks/useBrands";
@@ -25,6 +26,15 @@ export default function BrandsPage() {
 
   return (
     <div className="relative">
+      <Seo
+        title={lang === "ar" ? `العلامات التجارية — MikroTik، Ruijie، Must | ${SITE_NAME}` : `Brands — MikroTik, Ruijie, Must | ${SITE_NAME}`}
+        description={
+          lang === "ar"
+            ? "العلامات التجارية التي نوزّعها رسمياً في العراق: MikroTik، Ruijie، Must وغيرها — معدات شبكات وطاقة شمسية وأنظمة UPS أصلية بضمان."
+            : "Brands we officially distribute in Iraq: MikroTik, Ruijie, Must and more — genuine networking, solar and UPS equipment with warranty."
+        }
+        path="/brands"
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-hero py-20 text-primary-foreground md:py-28">
         {/* Parallax animated blobs */}
