@@ -122,9 +122,11 @@ export default function ProductsPage() {
             </div>
             <Select value={brand} onValueChange={setBrand}>
               <SelectTrigger className="rounded-xl"><SelectValue placeholder={t("filter_brand")} /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72 overflow-y-auto">
                 <SelectItem value="all">{t("all_brands")}</SelectItem>
-                {brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                {brandNames.filter((n) => n !== "all").map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={sort} onValueChange={setSort}>
