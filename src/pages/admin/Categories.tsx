@@ -59,6 +59,10 @@ export default function Categories() {
   const [subNameAr, setSubNameAr] = useState("");
   const [subNameEn, setSubNameEn] = useState("");
 
+  // Delete confirmations
+  const [confirmCat, setConfirmCat] = useState<Category | null>(null);
+  const [confirmSub, setConfirmSub] = useState<Subcategory | null>(null);
+
   async function load() {
     setLoading(true);
     const [{ data: c }, { data: s }, { data: p }] = await Promise.all([
