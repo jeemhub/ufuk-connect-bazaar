@@ -12,6 +12,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 type Project = {
@@ -153,8 +154,9 @@ export default function AdminProjects() {
     refresh();
   };
 
+  const [confirmDelete, setConfirmDelete] = useState<Project | null>(null);
+
   const remove = async (p: Project) => {
-    if (!confirm(lang === "ar" ? "هل تريد حذف هذا المشروع؟" : "Delete this project?")) return;
     const { error } = await supabase.from("projects").delete().eq("id", p.id);
     if (error) return toast.error(error.message);
     toast.success("✓");
@@ -204,7 +206,7 @@ export default function AdminProjects() {
                   <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => remove(p)}>
+                  <Button size="icon" variant="ghost" onClick={() => setConfirmDelete(p)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
@@ -390,6 +392,13 @@ export default function AdminProjects() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDeleteDialog
+        open={!!confirmDelete}
+        onOpenChange={(o) => !o && setConfirmDelete(null)}
+        onConfirm={() => confirmDelete && remove(confirmDelete)}
+        title={lang === "ar" ? "حذف المشروع؟" : "Delete project?"}
+        itemName={confirmDelete ? (lang === "ar" ? confirmDelete.title_ar : confirmDelete.title_en) : null}
+      />
     </div>
   );
 }

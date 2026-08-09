@@ -12,6 +12,7 @@ import { useAllPostsAdmin, BlogPost } from "@/hooks/useBlog";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
 import { useAuth } from "@/auth/AuthProvider";
 import { ImageCropper } from "@/components/admin/ImageCropper";
 import { Dropzone } from "@/components/ui/dropzone";
@@ -119,8 +120,9 @@ export default function AdminBlog() {
     refresh();
   };
 
+  const [confirmDelete, setConfirmDelete] = useState<BlogPost | null>(null);
+
   const remove = async (p: BlogPost) => {
-    if (!confirm(t("admin_blog_confirm_delete"))) return;
     const { error } = await supabase.from("blog_posts").delete().eq("id", p.id);
     if (error) return toast.error(error.message);
     toast.success("✓");
@@ -163,7 +165,7 @@ export default function AdminBlog() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Edit className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => remove(p)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => setConfirmDelete(p)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               </div>
             ))}
@@ -352,6 +354,14 @@ export default function AdminBlog() {
           onCropped={(url) => uploadDataUrl(url)}
         />
       )}
+      <ConfirmDeleteDialog
+        open={!!confirmDelete}
+        onOpenChange={(o) => !o && setConfirmDelete(null)}
+        onConfirm={() => confirmDelete && remove(confirmDelete)}
+        title={lang === "ar" ? "حذف المقال؟" : "Delete post?"}
+        description={t("admin_blog_confirm_delete")}
+        itemName={confirmDelete ? (lang === "ar" ? confirmDelete.title_ar : confirmDelete.title_en) : null}
+      />
     </div>
   );
 }
