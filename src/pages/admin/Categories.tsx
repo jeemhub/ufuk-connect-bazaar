@@ -131,7 +131,7 @@ export default function Categories() {
   }
 
   async function deleteCat(c: Category) {
-    if (!confirm(lang === "ar" ? `حذف القسم "${c.name_ar || c.name_en}"؟` : `Delete category "${c.name_en || c.name_ar}"?`)) return;
+    async function deleteCat(c: Category) {
     const { error } = await supabase.from("categories").delete().eq("id", c.id);
     if (error) toast.error(error.message);
     else {
