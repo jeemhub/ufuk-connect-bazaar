@@ -131,7 +131,6 @@ export default function Categories() {
   }
 
   async function deleteCat(c: Category) {
-    async function deleteCat(c: Category) {
     const { error } = await supabase.from("categories").delete().eq("id", c.id);
     if (error) toast.error(error.message);
     else {
