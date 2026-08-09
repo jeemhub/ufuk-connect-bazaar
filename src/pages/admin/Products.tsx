@@ -54,6 +54,8 @@ export default function Products() {
   const [brand, setBrand] = useState<string>("all");
   const [cat, setCat] = useState<string>("all");
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
   const [editing, setEditing] = useState<EditState>(null);
   const [formCat, setFormCat] = useState<string>("__none__"); // selected category key in dialog
   const [formSubs, setFormSubs] = useState<string[]>([]);
