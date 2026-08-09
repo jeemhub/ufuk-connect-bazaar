@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles, DollarSign } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
@@ -10,6 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -54,6 +58,8 @@ export default function Products() {
   const [brand, setBrand] = useState<string>("all");
   const [cat, setCat] = useState<string>("all");
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
   const [editing, setEditing] = useState<EditState>(null);
   const [formCat, setFormCat] = useState<string>("__none__"); // selected category key in dialog
   const [formSubs, setFormSubs] = useState<string[]>([]);
@@ -376,9 +382,20 @@ export default function Products() {
               {loading && (
                 <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">…</td></tr>
               )}
-              {!loading && filtered.map((p) => (
-                <tr key={p.id} className={`border-t border-border hover:bg-secondary/30 ${!p.is_active ? "opacity-60" : ""}`}>
-                  <td className="px-4 py-3"><img src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" /></td>
+              {!loading && filtered.map((p) => {
+                const isOpen = expanded === p.id;
+                return (
+                <Fragment key={p.id}>
+                <tr
+                  onClick={() => setExpanded(isOpen ? null : p.id)}
+                  className={`cursor-pointer border-t border-border hover:bg-secondary/30 ${isOpen ? "bg-secondary/40" : ""} ${!p.is_active ? "opacity-60" : ""}`}
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                      <img src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" />
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {(() => {
@@ -400,21 +417,73 @@ export default function Products() {
                   <td className="px-4 py-3 text-muted-foreground">{p.subcategory}</td>
                   <td className="px-4 py-3 font-semibold">{formatIqd(p.priceIqd)} {t("currency_iqd")}</td>
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={() => toggleVisibility(p)} className="h-8 w-8 hover:text-primary" title={p.is_active ? (lang === "ar" ? "إخفاء" : "Hide") : (lang === "ar" ? "إظهار" : "Show")}>
                         {p.is_active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="h-8 w-8 hover:text-primary"><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(p.id)} className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(p)} className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
                   </td>
                 </tr>
-              ))}
+                {isOpen && (
+                  <tr className="border-t border-border bg-secondary/20">
+                    <td colSpan={7} className="px-4 py-4">
+                      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                        {[
+                          { label: lang === "ar" ? "سعر المفرد" : "Retail price", value: p.priceIqd },
+                          { label: lang === "ar" ? "سعر الجملة" : "Wholesale price", value: p.priceWholesale ?? 0 },
+                          { label: lang === "ar" ? "سعر الوكيل" : "Dealer price", value: p.priceDealer ?? 0 },
+                        ].map((it) => (
+                          <div key={it.label} className="rounded-lg border border-border bg-background p-3">
+                            <div className="text-xs text-muted-foreground">{it.label}</div>
+                            <div className="mt-1 font-semibold">
+                              {it.value > 0 ? `${formatIqd(it.value)} ${t("currency_iqd")}` : (lang === "ar" ? "—" : "—")}
+                            </div>
+                          </div>
+                        ))}
+                        <div className="rounded-lg border border-border bg-background p-3">
+                          <div className="text-xs text-muted-foreground">{t("product_stock")}</div>
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="font-semibold">{p.stock}</span>
+                            <StockBadge stock={p.stock} />
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
+                );
+              })}
+
             </tbody>
           </table>
         </div>
       </div>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{lang === "ar" ? "حذف المنتج؟" : "Delete product?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {lang === "ar"
+                ? `لا يمكن التراجع عن هذا الإجراء. سيتم حذف "${confirmDelete?.nameAr || confirmDelete?.nameEn || ""}" نهائياً.`
+                : `This action cannot be undone. "${confirmDelete?.nameEn || confirmDelete?.nameAr || ""}" will be permanently deleted.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{lang === "ar" ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (confirmDelete) remove(confirmDelete.id); setConfirmDelete(null); }}
+            >
+              {lang === "ar" ? "حذف" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">

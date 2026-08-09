@@ -14,6 +14,7 @@ import {
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
 
 type Category = {
   id: string;
@@ -58,6 +59,10 @@ export default function Categories() {
   const [addSubFor, setAddSubFor] = useState<string | null>(null);
   const [subNameAr, setSubNameAr] = useState("");
   const [subNameEn, setSubNameEn] = useState("");
+
+  // Delete confirmations
+  const [confirmCat, setConfirmCat] = useState<Category | null>(null);
+  const [confirmSub, setConfirmSub] = useState<Subcategory | null>(null);
 
   async function load() {
     setLoading(true);
@@ -131,7 +136,6 @@ export default function Categories() {
   }
 
   async function deleteCat(c: Category) {
-    if (!confirm(lang === "ar" ? `حذف القسم "${c.name_ar || c.name_en}"؟` : `Delete category "${c.name_en || c.name_ar}"?`)) return;
     const { error } = await supabase.from("categories").delete().eq("id", c.id);
     if (error) toast.error(error.message);
     else {
@@ -232,7 +236,7 @@ export default function Categories() {
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => deleteCat(c)}
+                        onClick={() => setConfirmCat(c)}
                         className="rounded p-1.5 hover:bg-white/20"
                         title={lang === "ar" ? "حذف" : "Delete"}
                       >
@@ -282,7 +286,7 @@ export default function Categories() {
                         <li key={s.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm">
                           <span>{lang === "ar" ? s.name_ar : s.name_en}</span>
                           <button
-                            onClick={() => deleteSub(s.id)}
+                            onClick={() => setConfirmSub(s)}
                             className="text-muted-foreground hover:text-destructive"
                             title={lang === "ar" ? "حذف" : "Delete"}
                           >
@@ -298,6 +302,20 @@ export default function Categories() {
           })}
         </div>
       )}
+      <ConfirmDeleteDialog
+        open={!!confirmCat}
+        onOpenChange={(o) => !o && setConfirmCat(null)}
+        onConfirm={() => confirmCat && deleteCat(confirmCat)}
+        title={lang === "ar" ? "حذف القسم؟" : "Delete category?"}
+        itemName={confirmCat ? (lang === "ar" ? confirmCat.name_ar || confirmCat.name_en : confirmCat.name_en || confirmCat.name_ar) : null}
+      />
+      <ConfirmDeleteDialog
+        open={!!confirmSub}
+        onOpenChange={(o) => !o && setConfirmSub(null)}
+        onConfirm={() => confirmSub && deleteSub(confirmSub.id)}
+        title={lang === "ar" ? "حذف الفئة الفرعية؟" : "Delete subcategory?"}
+        itemName={confirmSub ? (lang === "ar" ? confirmSub.name_ar || confirmSub.name_en : confirmSub.name_en || confirmSub.name_ar) : null}
+      />
     </div>
   );
 }
