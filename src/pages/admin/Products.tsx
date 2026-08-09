@@ -459,6 +459,28 @@ export default function Products() {
         </div>
       </div>
 
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{lang === "ar" ? "حذف المنتج؟" : "Delete product?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {lang === "ar"
+                ? `لا يمكن التراجع عن هذا الإجراء. سيتم حذف "${confirmDelete?.nameAr || confirmDelete?.nameEn || ""}" نهائياً.`
+                : `This action cannot be undone. "${confirmDelete?.nameEn || confirmDelete?.nameAr || ""}" will be permanently deleted.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{lang === "ar" ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (confirmDelete) remove(confirmDelete.id); setConfirmDelete(null); }}
+            >
+              {lang === "ar" ? "حذف" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
