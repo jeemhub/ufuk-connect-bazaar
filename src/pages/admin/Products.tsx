@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles, DollarSign } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles, DollarSign, Copy } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { ImportProductsFullDialog } from "@/components/admin/ImportProductsFullDialog";
 import { exportProductsToExcel } from "@/lib/exportProductsExcel";
@@ -419,6 +419,26 @@ export default function Products() {
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 hover:text-primary"
+                        title={lang === "ar" ? "نسخ الاسم في Data" : "Copy data name"}
+                        onClick={async () => {
+                          const val = p.nameData?.trim();
+                          if (!val) { toast.error(lang === "ar" ? "لا يوجد اسم في Data" : "No data name"); return; }
+                          try {
+                            await navigator.clipboard.writeText(val);
+                          } catch {
+                            const ta = document.createElement("textarea");
+                            ta.value = val; document.body.appendChild(ta); ta.select();
+                            document.execCommand("copy"); ta.remove();
+                          }
+                          toast.success(lang === "ar" ? "تم نسخ الاسم في Data" : "Data name copied");
+                        }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => toggleVisibility(p)} className="h-8 w-8 hover:text-primary" title={p.is_active ? (lang === "ar" ? "إخفاء" : "Hide") : (lang === "ar" ? "إظهار" : "Show")}>
                         {p.is_active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                       </Button>
