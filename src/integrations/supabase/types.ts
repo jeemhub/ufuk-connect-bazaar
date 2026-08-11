@@ -519,6 +519,8 @@ export type Database = {
         Row: {
           brand: string | null
           category_id: string | null
+          cost_iqd: number | null
+          cost_usd: number
           created_at: string
           datasheet_name: string | null
           datasheet_url: string | null
@@ -541,6 +543,8 @@ export type Database = {
         Insert: {
           brand?: string | null
           category_id?: string | null
+          cost_iqd?: number | null
+          cost_usd?: number
           created_at?: string
           datasheet_name?: string | null
           datasheet_url?: string | null
@@ -563,6 +567,8 @@ export type Database = {
         Update: {
           brand?: string | null
           category_id?: string | null
+          cost_iqd?: number | null
+          cost_usd?: number
           created_at?: string
           datasheet_name?: string | null
           datasheet_url?: string | null
