@@ -26,6 +26,7 @@ import { useBrands } from "@/hooks/useBrands";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dropzone } from "@/components/ui/dropzone";
+import { useAuth } from "@/auth/AuthProvider";
 
 // Brands are loaded from the database (see useBrands below)
 
@@ -40,6 +41,7 @@ type EditState = (Product & {
 
 export default function Products() {
   const { t, lang } = useLanguage();
+  const { isAdmin } = useAuth();
   const { rows, loading, refetch } = useAdminProducts();
   const { brands: brandRows } = useBrands({ activeOnly: false });
   const brands = useMemo(() => (brandRows ?? []).map((b) => b.name), [brandRows]);
@@ -50,6 +52,7 @@ export default function Products() {
       priceWholesale: Number(r.price_wholesale_iqd ?? 0),
       priceDealer: Number(r.price_dealer_iqd ?? 0),
       nameData: (r as AdminProductRow & { name_data?: string | null }).name_data ?? null,
+      costUsd: Number((r as AdminProductRow & { cost_usd?: number | null }).cost_usd ?? 0),
     })),
     [rows]
   );
@@ -80,6 +83,7 @@ export default function Products() {
   const [suggestions, setSuggestions] = useState<{ url: string; thumb: string; credit: string }[]>([]);
   const [suggestPick, setSuggestPick] = useState<string>("");
   const [urlInput, setUrlInput] = useState<string>("");
+  const [costPreview, setCostPreview] = useState<number>(0);
 
   function autoFetchImage() {
     const form = document.querySelector<HTMLFormElement>("form[data-product-form]");
@@ -232,8 +236,8 @@ export default function Products() {
     refetch();
   }
 
-  const openNew = () => { setEditing(null); setOpen(true); };
-  const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
+  const openNew = () => { setEditing(null); setCostPreview(0); setOpen(true); };
+  const openEdit = (p: EditState) => { setEditing(p); setCostPreview(p?.costUsd ?? 0); setOpen(true); };
 
   async function remove(id: string) {
     const { error } = await supabase.from("products").delete().eq("id", id);
@@ -268,6 +272,7 @@ export default function Products() {
       price_wholesale_iqd: Number(f.get("priceWholesale") || 0),
       price_dealer_iqd: Number(f.get("priceDealer") || 0),
       stock: Number(f.get("stock") || 0),
+      cost_usd: Number(f.get("costUsd") || 0),
       image_url: finalImage,
       datasheet_url: datasheet?.url ?? null,
       datasheet_name: datasheet?.name ?? null,
@@ -291,13 +296,17 @@ export default function Products() {
           <p className="mt-1 text-sm text-muted-foreground">{t("products_subtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {lang === "ar" ? "تصدير Excel" : "Export to Excel"}
-          </Button>
-          <Button variant="outline" onClick={() => setImportFullOpen(true)} className="gap-2">
-            <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد تحديث كامل" : "Import full update"}
-          </Button>
+          {isAdmin && (
+            <>
+              <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
+                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {lang === "ar" ? "تصدير Excel" : "Export to Excel"}
+              </Button>
+              <Button variant="outline" onClick={() => setImportFullOpen(true)} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد تحديث كامل" : "Import full update"}
+              </Button>
+            </>
+          )}
           <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
             <Upload className="h-4 w-4" /> {lang === "ar" ? "استيراد الرصيد فقط" : "Import stock only"}
           </Button>
@@ -308,7 +317,7 @@ export default function Products() {
       </div>
 
       <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} onDone={refetch} />
-      <ImportProductsFullDialog open={importFullOpen} onOpenChange={setImportFullOpen} onDone={refetch} />
+      {isAdmin && <ImportProductsFullDialog open={importFullOpen} onOpenChange={setImportFullOpen} onDone={refetch} />}
 
       <div className="surface-card p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -457,6 +466,7 @@ export default function Products() {
                           { label: lang === "ar" ? "سعر المفرد" : "Retail price", value: p.priceIqd },
                           { label: lang === "ar" ? "سعر الجملة" : "Wholesale price", value: p.priceWholesale ?? 0 },
                           { label: lang === "ar" ? "سعر الوكيل" : "Dealer price", value: p.priceDealer ?? 0 },
+                          { label: lang === "ar" ? "الكلفة (دينار)" : "Cost (IQD)", value: Math.round((p.costUsd ?? 0) * 1500) },
                         ].map((it) => (
                           <div key={it.label} className="rounded-lg border border-border bg-background p-3">
                             <div className="text-xs text-muted-foreground">{it.label}</div>
@@ -465,6 +475,12 @@ export default function Products() {
                             </div>
                           </div>
                         ))}
+                        <div className="rounded-lg border border-border bg-background p-3">
+                          <div className="text-xs text-muted-foreground">{lang === "ar" ? "الكلفة (دولار)" : "Cost (USD)"}</div>
+                          <div className="mt-1 font-semibold">
+                            {(p.costUsd ?? 0) > 0 ? `$${(p.costUsd ?? 0).toFixed(2)}` : "—"}
+                          </div>
+                        </div>
                         <div className="rounded-lg border border-border bg-background p-3">
                           <div className="text-xs text-muted-foreground">{t("product_stock")}</div>
                           <div className="mt-1 flex items-center gap-2">
@@ -641,6 +657,23 @@ export default function Products() {
             <div className="space-y-1.5">
               <Label htmlFor="stock">{t("product_stock")}</Label>
               <Input id="stock" name="stock" type="number" min="0" defaultValue={editing?.stock ?? 0} required />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="costUsd">{lang === "ar" ? "كلفة المنتج ($)" : "Product cost ($)"}</Label>
+              <Input
+                id="costUsd"
+                name="costUsd"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={editing?.costUsd ?? 0}
+                onChange={(e) => setCostPreview(Number(e.target.value) || 0)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {lang === "ar"
+                  ? `= ${formatIqd(Math.round(costPreview * 1500))} ${t("currency_iqd")} — داخلية فقط، لا تظهر للعملاء`
+                  : `= ${formatIqd(Math.round(costPreview * 1500))} ${t("currency_iqd")} — internal only, never shown to customers`}
+              </p>
             </div>
             <div className="flex items-center justify-between rounded-md border border-border p-3 md:col-span-2">
               <div>
