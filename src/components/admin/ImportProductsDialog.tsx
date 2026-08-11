@@ -45,13 +45,14 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
   const [skipHeader, setSkipHeader] = useState(true);
   const [nameCol, setNameCol] = useState(2); // 1-indexed
   const [stockCol, setStockCol] = useState(3);
+  const [costCol, setCostCol] = useState(4);
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const reset = () => {
     setFileName(""); setRows([]); setProgress(0);
-    setNameCol(2); setStockCol(3); setSkipHeader(true);
+    setNameCol(2); setStockCol(3); setCostCol(4); setSkipHeader(true);
   };
 
   const handleFile = async (file: File) => {
@@ -86,13 +87,20 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
     setImporting(true); setProgress(0);
 
     // Build map: name_data -> stock (last value wins if duplicates)
-    const incoming = new Map<string, number>();
+    const incoming = new Map<string, { stock: number; cost_usd: number | null }>();
     for (const r of validRows) {
       const name = String(r[nameCol - 1] ?? "").trim();
       if (!name) continue;
       const stockRaw = r[stockCol - 1];
       const stockNum = parseInt(String(stockRaw ?? "0").replace(/[^\d-]/g, ""), 10);
-      incoming.set(name, Number.isFinite(stockNum) ? stockNum : 0);
+      const costRaw = costCol > 0 ? r[costCol - 1] : null;
+      const costNum = Number(String(costRaw ?? "").replace(/[^\d.-]/g, ""));
+      incoming.set(name, {
+        stock: Number.isFinite(stockNum) ? stockNum : 0,
+        cost_usd: costRaw != null && String(costRaw).trim() !== "" && Number.isFinite(costNum)
+          ? Math.round(costNum * 100) / 100
+          : null,
+      });
     }
 
     let updated = 0, inserted = 0, fail = 0;
@@ -100,7 +108,7 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
     try {
       // Send everything in parallel chunks to a single bulk RPC.
       // The RPC does the diff (update existing stock vs. insert new) in one SQL pass per chunk.
-      const items = Array.from(incoming, ([name_data, stock]) => ({ name_data, stock }));
+      const items = Array.from(incoming, ([name_data, v]) => ({ name_data, stock: v.stock, cost_usd: v.cost_usd }));
       const CHUNK = 1000;
       const CONCURRENCY = 4;
       const chunks: typeof items[] = [];
@@ -190,6 +198,14 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
                   <Input type="number" min={1} max={rows[0]?.length || 10} value={stockCol}
                     onChange={(e) => setStockCol(Math.max(1, Number(e.target.value) || 1))} />
                 </div>
+                <div className="space-y-1.5 col-span-2">
+                  <Label>{ar ? "عمود الكلفة بالدولار (0 = تجاهل)" : "Cost column in USD (0 = skip)"}</Label>
+                  <Input type="number" min={0} max={rows[0]?.length || 10} value={costCol}
+                    onChange={(e) => setCostCol(Math.max(0, Number(e.target.value) || 0))} />
+                  <p className="text-xs text-muted-foreground">
+                    {ar ? "الكلفة بالدينار = الكلفة بالدولار × 1500" : "Cost in IQD = USD cost × 1500"}
+                  </p>
+                </div>
               </div>
 
               <div className="rounded-md border border-border">
@@ -200,7 +216,17 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
                   {preview.map((r, i) => (
                     <div key={i} className="flex justify-between gap-3 px-3 py-1.5">
                       <span className="truncate">{String(r[nameCol - 1] ?? "")}</span>
-                      <span className="text-muted-foreground">{String(r[stockCol - 1] ?? "0")}</span>
+                      <span className="shrink-0 text-muted-foreground">
+                        {String(r[stockCol - 1] ?? "0")}
+                        {costCol > 0 && (
+                          <>
+                            {" · "}${String(r[costCol - 1] ?? "0")}
+                            {" · "}
+                            {Math.round((Number(String(r[costCol - 1] ?? "0").replace(/[^\d.-]/g, "")) || 0) * 1500).toLocaleString("en-US")}
+                            {ar ? " د.ع" : " IQD"}
+                          </>
+                        )}
+                      </span>
                     </div>
                   ))}
                   {!preview.length && (
