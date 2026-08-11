@@ -34,7 +34,9 @@ type EditState = (Product & {
   priceWholesale?: number;
   priceDealer?: number;
   nameData?: string | null;
+  costUsd?: number;
 }) | null;
+
 
 export default function Products() {
   const { t, lang } = useLanguage();
