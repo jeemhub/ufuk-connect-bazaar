@@ -59,6 +59,8 @@ export default function Orders() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
 
   useEffect(() => { document.title = `${t("orders_title")} · ${t("admin_panel")}`; }, [t]);
 
