@@ -329,7 +329,15 @@ export default function Orders() {
             </div>
           )}
         </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && removeOrder(deleteId)}
+        title={ar ? "حذف الطلب" : "Delete order"}
+        description={ar ? "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الطلب وعناصره نهائياً." : "This action cannot be undone. The order and its items will be permanently deleted."}
+        itemName={deleteTarget?.order_no ?? null}
+      />
     </div>
   );
 }
+
