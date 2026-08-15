@@ -329,6 +329,8 @@ export default function Orders() {
             </div>
           )}
         </DialogContent>
+      </Dialog>
+
       <ConfirmDeleteDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
@@ -338,6 +340,7 @@ export default function Orders() {
         itemName={deleteTarget?.order_no ?? null}
       />
     </div>
+
   );
 }
 
