@@ -34,7 +34,10 @@ interface OrderItemRow {
   product_name: string;
   quantity: number;
   unit_price_iqd: number;
+  product_id: string | null;
+  products: { name_data: string | null } | null;
 }
+
 
 const STATUS_STYLE: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-700 border-amber-500/30",
