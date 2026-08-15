@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatIqd } from "@/data/mockData";
-import { generateInvoicePdf } from "@/lib/invoice";
+import { generateInvoicePdf, resolveEnglishNames } from "@/lib/invoice";
 import { toast } from "sonner";
 
 interface OrderRow {
@@ -28,6 +28,7 @@ interface OrderItemRow {
   product_name: string;
   quantity: number;
   unit_price_iqd: number;
+  product_id?: string | null;
 }
 
 const STATUS_META: Record<
@@ -89,7 +90,7 @@ export function MyOrders() {
     if (!itemsByOrder[orderId]) {
       const { data } = await supabase
         .from("order_items")
-        .select("id, product_name, quantity, unit_price_iqd")
+        .select("id, product_name, quantity, unit_price_iqd, product_id")
         .eq("order_id", orderId);
       setItemsByOrder((prev) => ({ ...prev, [orderId]: (data ?? []) as OrderItemRow[] }));
     }
@@ -101,11 +102,12 @@ export function MyOrders() {
       if (!items) {
         const { data } = await supabase
           .from("order_items")
-          .select("id, product_name, quantity, unit_price_iqd")
+          .select("id, product_name, quantity, unit_price_iqd, product_id")
           .eq("order_id", order.id);
         items = (data ?? []) as OrderItemRow[];
         setItemsByOrder((prev) => ({ ...prev, [order.id]: items }));
       }
+      const enNames = await resolveEnglishNames(items.map((i) => i.product_id));
       await generateInvoicePdf({
         orderNo: order.order_no,
         createdAt: new Date(order.created_at),
@@ -115,7 +117,7 @@ export function MyOrders() {
         customerAddress: order.customer_address,
         notes: order.notes,
         items: items.map((i) => ({
-          name: i.product_name,
+          name: (i.product_id ? enNames[i.product_id] : undefined) ?? i.product_name,
           quantity: i.quantity,
           unitPriceIqd: i.unit_price_iqd,
         })),

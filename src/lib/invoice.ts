@@ -165,3 +165,26 @@ export async function generateInvoicePdf(data: InvoiceData) {
 
   doc.save(`Invoice-${data.orderNo}.pdf`);
 }
+
+/**
+ * Resolve English product names (fallback: name_data, then provided fallback)
+ * so invoices are always generated in English regardless of UI language.
+ */
+export async function resolveEnglishNames(
+  ids: (string | null | undefined)[],
+): Promise<Record<string, string>> {
+  const clean = Array.from(new Set(ids.filter((v): v is string => !!v)));
+  if (!clean.length) return {};
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data } = await supabase
+    .from("products")
+    .select("id, name_en, name_data")
+    .in("id", clean);
+  const map: Record<string, string> = {};
+  for (const p of data ?? []) {
+    const n = (p as { name_en: string | null; name_data: string | null });
+    const name = (n.name_en || n.name_data || "").trim();
+    if (name) map[(p as { id: string }).id] = name;
+  }
+  return map;
+}
