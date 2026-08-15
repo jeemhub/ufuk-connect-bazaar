@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Eye, Phone, MapPin, Package2 } from "lucide-react";
+import { Eye, Phone, MapPin, Package2, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,8 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { formatIqd } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
+
 
 type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "canceled";
 const statuses: OrderStatus[] = ["pending", "processing", "shipped", "delivered", "canceled"];
@@ -32,7 +34,10 @@ interface OrderItemRow {
   product_name: string;
   quantity: number;
   unit_price_iqd: number;
+  product_id: string | null;
+  products: { name_data: string | null } | null;
 }
+
 
 const STATUS_STYLE: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-700 border-amber-500/30",
@@ -54,6 +59,8 @@ export default function Orders() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
 
   useEffect(() => { document.title = `${t("orders_title")} · ${t("admin_panel")}`; }, [t]);
 
@@ -107,14 +114,24 @@ export default function Orders() {
     setItemsLoading(true);
     const { data, error } = await supabase
       .from("order_items")
-      .select("id, product_name, quantity, unit_price_iqd")
+      .select("id, product_name, quantity, unit_price_iqd, product_id, products(name_data)")
       .eq("order_id", id);
     if (error) toast.error(error.message);
-    else setItems((data ?? []) as OrderItemRow[]);
+    else setItems((data ?? []) as unknown as OrderItemRow[]);
     setItemsLoading(false);
   };
 
+  const removeOrder = async (id: string) => {
+    const { error } = await supabase.from("orders").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setList((p) => p.filter((o) => o.id !== id));
+    setDeleteId(null);
+    toast.success(ar ? "تم حذف الطلب" : "Order deleted");
+  };
+
   const current = list.find((o) => o.id === openId) ?? null;
+  const deleteTarget = list.find((o) => o.id === deleteId) ?? null;
+
 
   return (
     <div className="space-y-6">
@@ -156,13 +173,14 @@ export default function Orders() {
                 <th className="px-4 py-3 text-start font-medium">{t("status")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("update_status")}</th>
                 <th className="px-4 py-3 text-end font-medium">{ar ? "تفاصيل" : "Details"}</th>
+                <th className="px-4 py-3 text-end font-medium">{t("delete")}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{ar ? "جاري التحميل..." : "Loading..."}</td></tr>
+                <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">{ar ? "جاري التحميل..." : "Loading..."}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{ar ? "لا توجد طلبات" : "No orders"}</td></tr>
+                <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">{ar ? "لا توجد طلبات" : "No orders"}</td></tr>
               ) : filtered.map((o) => (
                 <tr key={o.id} className="border-t border-border hover:bg-secondary/30">
                   <td className="px-4 py-3 font-mono text-xs font-bold text-primary">{o.order_no}</td>
@@ -193,9 +211,21 @@ export default function Orders() {
                       <Eye className="h-3.5 w-3.5" /> {ar ? "عرض" : "View"}
                     </Button>
                   </td>
+                  <td className="px-4 py-3 text-end">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                      title={ar ? "حذف الطلب" : "Delete order"}
+                      onClick={() => setDeleteId(o.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
+
           </table>
         </div>
       </div>
@@ -251,14 +281,40 @@ export default function Orders() {
                         </tr>
                       </thead>
                       <tbody>
-                        {items.map((it) => (
-                          <tr key={it.id} className="border-t border-border">
-                            <td className="px-3 py-2">{it.product_name}</td>
-                            <td className="px-3 py-2 text-center font-bold">{it.quantity}</td>
-                            <td className="px-3 py-2 text-end">{formatIqd(it.unit_price_iqd)}</td>
-                            <td className="px-3 py-2 text-end font-semibold">{formatIqd(it.unit_price_iqd * it.quantity)}</td>
-                          </tr>
-                        ))}
+                        {items.map((it) => {
+                          const dataName = it.products?.name_data?.trim() || it.product_name;
+                          return (
+                            <tr key={it.id} className="border-t border-border">
+                              <td className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <span>{it.product_name}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 hover:text-primary"
+                                    title={ar ? "نسخ الاسم في Data" : "Copy data name"}
+                                    onClick={async () => {
+                                      try {
+                                        await navigator.clipboard.writeText(dataName);
+                                      } catch {
+                                        const ta = document.createElement("textarea");
+                                        ta.value = dataName; document.body.appendChild(ta); ta.select();
+                                        document.execCommand("copy"); ta.remove();
+                                      }
+                                      toast.success(ar ? "تم نسخ الاسم في Data" : "Data name copied");
+                                    }}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 text-center font-bold">{it.quantity}</td>
+                              <td className="px-3 py-2 text-end">{formatIqd(it.unit_price_iqd)}</td>
+                              <td className="px-3 py-2 text-end font-semibold">{formatIqd(it.unit_price_iqd * it.quantity)}</td>
+                            </tr>
+                          );
+                        })}
+
                       </tbody>
                       <tfoot>
                         <tr className="border-t border-border bg-muted/30">
@@ -274,6 +330,17 @@ export default function Orders() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && removeOrder(deleteId)}
+        title={ar ? "حذف الطلب" : "Delete order"}
+        description={ar ? "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الطلب وعناصره نهائياً." : "This action cannot be undone. The order and its items will be permanently deleted."}
+        itemName={deleteTarget?.order_no ?? null}
+      />
     </div>
+
   );
 }
+
