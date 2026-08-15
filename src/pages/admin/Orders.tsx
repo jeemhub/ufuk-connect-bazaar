@@ -114,14 +114,24 @@ export default function Orders() {
     setItemsLoading(true);
     const { data, error } = await supabase
       .from("order_items")
-      .select("id, product_name, quantity, unit_price_iqd")
+      .select("id, product_name, quantity, unit_price_iqd, product_id, products(name_data)")
       .eq("order_id", id);
     if (error) toast.error(error.message);
-    else setItems((data ?? []) as OrderItemRow[]);
+    else setItems((data ?? []) as unknown as OrderItemRow[]);
     setItemsLoading(false);
   };
 
+  const removeOrder = async (id: string) => {
+    const { error } = await supabase.from("orders").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setList((p) => p.filter((o) => o.id !== id));
+    setDeleteId(null);
+    toast.success(ar ? "تم حذف الطلب" : "Order deleted");
+  };
+
   const current = list.find((o) => o.id === openId) ?? null;
+  const deleteTarget = list.find((o) => o.id === deleteId) ?? null;
+
 
   return (
     <div className="space-y-6">
