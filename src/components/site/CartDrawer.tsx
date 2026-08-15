@@ -12,7 +12,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { formatIqd } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { generateInvoicePdf, type InvoiceData } from "@/lib/invoice";
+import { generateInvoicePdf, resolveEnglishNames, type InvoiceData } from "@/lib/invoice";
 
 type Step = "cart" | "checkout" | "done";
 
@@ -76,6 +76,7 @@ export function CartDrawer() {
       const { error: itemsErr } = await supabase.from("order_items").insert(itemsPayload);
       if (itemsErr) throw itemsErr;
 
+      const enNames = await resolveEnglishNames(items.map((i) => i.id));
       const invoice: InvoiceData = {
         orderNo: order.order_no,
         createdAt: new Date(),
@@ -85,7 +86,7 @@ export function CartDrawer() {
         customerAddress: address.trim(),
         notes: notes.trim() || null,
         items: items.map((i) => ({
-          name: i.name,
+          name: enNames[i.id] ?? i.name,
           quantity: i.quantity,
           unitPriceIqd: i.priceIqd,
         })),
