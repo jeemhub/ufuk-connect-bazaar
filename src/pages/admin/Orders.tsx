@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Eye, Phone, MapPin, Package2 } from "lucide-react";
+import { Eye, Phone, MapPin, Package2, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,8 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { formatIqd } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
+
 
 type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "canceled";
 const statuses: OrderStatus[] = ["pending", "processing", "shipped", "delivered", "canceled"];
