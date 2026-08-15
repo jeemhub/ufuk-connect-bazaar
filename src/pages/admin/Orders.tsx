@@ -281,14 +281,40 @@ export default function Orders() {
                         </tr>
                       </thead>
                       <tbody>
-                        {items.map((it) => (
-                          <tr key={it.id} className="border-t border-border">
-                            <td className="px-3 py-2">{it.product_name}</td>
-                            <td className="px-3 py-2 text-center font-bold">{it.quantity}</td>
-                            <td className="px-3 py-2 text-end">{formatIqd(it.unit_price_iqd)}</td>
-                            <td className="px-3 py-2 text-end font-semibold">{formatIqd(it.unit_price_iqd * it.quantity)}</td>
-                          </tr>
-                        ))}
+                        {items.map((it) => {
+                          const dataName = it.products?.name_data?.trim() || it.product_name;
+                          return (
+                            <tr key={it.id} className="border-t border-border">
+                              <td className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <span>{it.product_name}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 hover:text-primary"
+                                    title={ar ? "نسخ الاسم في Data" : "Copy data name"}
+                                    onClick={async () => {
+                                      try {
+                                        await navigator.clipboard.writeText(dataName);
+                                      } catch {
+                                        const ta = document.createElement("textarea");
+                                        ta.value = dataName; document.body.appendChild(ta); ta.select();
+                                        document.execCommand("copy"); ta.remove();
+                                      }
+                                      toast.success(ar ? "تم نسخ الاسم في Data" : "Data name copied");
+                                    }}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 text-center font-bold">{it.quantity}</td>
+                              <td className="px-3 py-2 text-end">{formatIqd(it.unit_price_iqd)}</td>
+                              <td className="px-3 py-2 text-end font-semibold">{formatIqd(it.unit_price_iqd * it.quantity)}</td>
+                            </tr>
+                          );
+                        })}
+
                       </tbody>
                       <tfoot>
                         <tr className="border-t border-border bg-muted/30">
