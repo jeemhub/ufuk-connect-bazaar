@@ -173,13 +173,14 @@ export default function Orders() {
                 <th className="px-4 py-3 text-start font-medium">{t("status")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("update_status")}</th>
                 <th className="px-4 py-3 text-end font-medium">{ar ? "تفاصيل" : "Details"}</th>
+                <th className="px-4 py-3 text-end font-medium">{t("delete")}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{ar ? "جاري التحميل..." : "Loading..."}</td></tr>
+                <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">{ar ? "جاري التحميل..." : "Loading..."}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{ar ? "لا توجد طلبات" : "No orders"}</td></tr>
+                <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">{ar ? "لا توجد طلبات" : "No orders"}</td></tr>
               ) : filtered.map((o) => (
                 <tr key={o.id} className="border-t border-border hover:bg-secondary/30">
                   <td className="px-4 py-3 font-mono text-xs font-bold text-primary">{o.order_no}</td>
@@ -210,9 +211,21 @@ export default function Orders() {
                       <Eye className="h-3.5 w-3.5" /> {ar ? "عرض" : "View"}
                     </Button>
                   </td>
+                  <td className="px-4 py-3 text-end">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                      title={ar ? "حذف الطلب" : "Delete order"}
+                      onClick={() => setDeleteId(o.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
+
           </table>
         </div>
       </div>
