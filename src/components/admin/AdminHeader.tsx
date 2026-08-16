@@ -22,13 +22,26 @@ export function AdminHeader() {
     <header className="glass-panel sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border bg-card/80 px-4 backdrop-blur-md md:px-6">
       <SidebarTrigger className="text-foreground" />
 
-      <div className="relative ms-2 hidden max-w-md flex-1 md:block">
+      <form
+        className="relative ms-2 hidden max-w-md flex-1 md:block"
+        onSubmit={(e) => {
+          e.preventDefault();
+          navigate(`/admin/products?q=${encodeURIComponent(q.trim())}`);
+        }}
+      >
         <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          value={q}
+          onChange={(e) => {
+            const v = e.target.value;
+            setQ(v);
+            navigate(`/admin/products?q=${encodeURIComponent(v)}`, { replace: true });
+          }}
           placeholder={t("search_products")}
           className="ps-10 bg-secondary/60 border-transparent focus-visible:bg-card"
         />
-      </div>
+      </form>
+
 
       <div className="ms-auto flex items-center gap-2">
         <TooltipProvider delayDuration={250}>
