@@ -187,6 +187,9 @@ export default function Products() {
 
   const [searchParams] = useSearchParams();
   const lowStockOnly = searchParams.get("filter") === "low_stock";
+  const queryParam = searchParams.get("q") ?? "";
+  useEffect(() => { setSearch(queryParam); }, [queryParam]);
+
   const [missingFilters, setMissingFilters] = useState({
     noDesc: false,
     noName: false,
