@@ -1,5 +1,7 @@
 import { Search, Languages, Home, Sparkles, Moon, Sun, LogOut, User as UserIcon, ShieldCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
