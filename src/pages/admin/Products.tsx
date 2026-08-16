@@ -253,7 +253,7 @@ export default function Products() {
     if (missingFilters.hidden && p.is_active) return false;
     if (!showHidden && !missingFilters.hidden && p.is_active === false) return false;
     return true;
-  }), [list, search, brand, cat, lowStockOnly, missingFilters, showHidden]);
+  }), [list, search, brand, cat, catRows, lowStockOnly, missingFilters, showHidden]);
 
 
   async function toggleVisibility(p: Product & { is_active?: boolean }) {
