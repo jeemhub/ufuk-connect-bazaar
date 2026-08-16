@@ -122,13 +122,24 @@ export function useAdminProducts() {
 
   const refetch = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, categories(key)")
-      .order("created_at", { ascending: false });
-    setRows((data as unknown as AdminProductRow[]) ?? []);
+    // Fetch in pages: PostgREST caps a single request at 1000 rows.
+    const pageSize = 1000;
+    const all: AdminProductRow[] = [];
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*, categories(key)")
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error) break;
+      const chunk = (data as unknown as AdminProductRow[]) ?? [];
+      all.push(...chunk);
+      if (chunk.length < pageSize) break;
+    }
+    setRows(all);
     setLoading(false);
   };
+
 
   useEffect(() => { refetch(); }, []);
   return { rows, loading, refetch };
