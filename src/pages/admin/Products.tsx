@@ -199,22 +199,50 @@ export default function Products() {
 
   const isMissingImage = (url?: string) => !url || url.includes("unsplash.com/photo-1606904825846");
 
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[\u064B-\u065F\u0670]/g, "")
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ى/g, "ي")
+      .replace(/ة/g, "ه")
+      .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+      .replace(/\s+/g, " ")
+      .trim();
+
   const filtered = useMemo(() => list.filter((p) => {
-    const q = search.toLowerCase().trim();
-    const haystack = [
-      p.nameAr,
-      p.nameEn,
-      p.nameData,
-      p.brand,
-      p.category,
-      p.subcategory,
-      p.sku,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-    const matches = !q || haystack.includes(q);
+    const tokens = normalize(search).split(" ").filter(Boolean);
+    const catRow = catRows.find((c) => c.key === p.category);
+    const haystack = normalize(
+      [
+        p.id,
+        p.sku,
+        p.nameAr,
+        p.nameEn,
+        p.nameData,
+        p.descAr,
+        p.descEn,
+        p.brand,
+        p.category,
+        catRow?.name_ar,
+        catRow?.name_en,
+        p.subcategory,
+        p.datasheetName,
+        p.priceIqd,
+        p.priceWholesale,
+        p.priceDealer,
+        p.costUsd,
+        p.stock,
+        p.is_active ? "مرئي visible active" : "مخفي hidden inactive",
+        (p.priceIqd ?? 0) === 0 ? "بدون سعر no price" : "",
+        (p.stock ?? 0) === 0 ? "نافذ out of stock" : "",
+      ]
+        .filter((v) => v !== null && v !== undefined && v !== "")
+        .join(" ")
+    );
+    const matches = tokens.every((t) => haystack.includes(t));
     if (!matches) return false;
+
     if (brand !== "all" && p.brand !== brand) return false;
     if (cat !== "all" && p.category !== cat) return false;
     if (lowStockOnly && p.stock >= 5) return false;
@@ -225,7 +253,7 @@ export default function Products() {
     if (missingFilters.hidden && p.is_active) return false;
     if (!showHidden && !missingFilters.hidden && p.is_active === false) return false;
     return true;
-  }), [list, search, brand, cat, lowStockOnly, missingFilters, showHidden]);
+  }), [list, search, brand, cat, catRows, lowStockOnly, missingFilters, showHidden]);
 
 
   async function toggleVisibility(p: Product & { is_active?: boolean }) {
