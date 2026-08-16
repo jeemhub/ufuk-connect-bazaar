@@ -20,6 +20,16 @@ export function AdminHeader() {
   const ar = lang === "ar";
   const initials = (fullName || user?.email || "A").trim().slice(0, 2).toUpperCase();
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const [q, setQ] = useState(searchParams.get("q") ?? "");
+  useEffect(() => {
+    if (location.pathname !== "/admin/products") setQ("");
+  }, [location.pathname]);
+
+
+
   return (
     <header className="glass-panel sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border bg-card/80 px-4 backdrop-blur-md md:px-6">
       <SidebarTrigger className="text-foreground" />
