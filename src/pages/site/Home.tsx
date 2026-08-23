@@ -131,10 +131,10 @@ const Home = () => {
         </div>
 
         <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 py-20 text-center md:px-6 md:py-32 lg:py-40">
-          <div className="mb-6 inline-flex animate-fade-in-up items-center gap-2 rounded-full border border-border bg-card/80 px-5 py-2 text-sm font-semibold text-foreground shadow-sm backdrop-blur-md">
-            <Sparkles className="h-4 w-4 animate-pulse text-primary" />
-            {t("hero_eyebrow")}
+          <div className="mb-8 w-full">
+            <GlobalSearch />
           </div>
+
           <h1 className="text-balance text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl lg:text-[88px]">
             {lang === "ar" ? (
               <span className="bg-gradient-brand bg-clip-text text-transparent">شركة افق البصرة</span>
