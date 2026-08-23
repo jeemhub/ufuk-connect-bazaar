@@ -46,13 +46,14 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
   const [nameCol, setNameCol] = useState(2); // 1-indexed
   const [stockCol, setStockCol] = useState(3);
   const [costCol, setCostCol] = useState(4);
+  const [zeroMissing, setZeroMissing] = useState(true);
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const reset = () => {
     setFileName(""); setRows([]); setProgress(0);
-    setNameCol(2); setStockCol(3); setCostCol(4); setSkipHeader(true);
+    setNameCol(2); setStockCol(3); setCostCol(4); setSkipHeader(true); setZeroMissing(true);
   };
 
   const handleFile = async (file: File) => {
@@ -103,7 +104,7 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
       });
     }
 
-    let updated = 0, inserted = 0, fail = 0;
+    let updated = 0, inserted = 0, fail = 0, zeroed = 0;
 
     try {
       // Send everything in parallel chunks to a single bulk RPC.
@@ -145,9 +146,33 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
       return;
     }
 
+    // The sheet is the full stock picture, so anything it omits is out of stock.
+    // Only safe once every chunk landed: a failed chunk means some names never
+    // reached the database, and zeroing on top of that would hide real stock.
+    if (zeroMissing && fail === 0) {
+      const { data, error } = await supabase.rpc("zero_stock_missing_from_import", {
+        names: Array.from(incoming.keys()),
+      });
+      if (error) {
+        toast.error(
+          (ar ? "تعذّر تصفير المواد غير الموجودة في الملف: " : "Could not zero products missing from the sheet: ") +
+            error.message
+        );
+      } else {
+        zeroed = Number(data ?? 0);
+      }
+    } else if (zeroMissing && fail > 0) {
+      toast.warning(
+        ar
+          ? "لم يتم تصفير المواد الغائبة لأن جزءاً من الاستيراد فشل"
+          : "Skipped zeroing missing products because part of the import failed"
+      );
+    }
+
     setImporting(false);
     if (updated > 0) toast.success(ar ? `تم تحديث ${updated} منتج` : `Updated ${updated} products`);
     if (inserted > 0) toast.success(ar ? `تم إضافة ${inserted} منتج جديد` : `Added ${inserted} new products`);
+    if (zeroed > 0) toast.success(ar ? `تم تصفير رصيد ${zeroed} منتج غير موجود في الملف` : `Zeroed stock for ${zeroed} products missing from the sheet`);
     if (fail > 0) toast.error(ar ? `فشل ${fail}` : `Failed: ${fail}`);
     onDone();
     onOpenChange(false);
@@ -206,6 +231,20 @@ export function ImportProductsDialog({ open, onOpenChange, onDone }: Props) {
                     {ar ? "الكلفة بالدينار = الكلفة بالدولار × 1500" : "Cost in IQD = USD cost × 1500"}
                   </p>
                 </div>
+              </div>
+
+              <div className="rounded-md border border-border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="zeroMissing" className="cursor-pointer">
+                    {ar ? "تصفير رصيد المواد غير الموجودة في الملف" : "Zero the stock of products missing from the sheet"}
+                  </Label>
+                  <Switch id="zeroMissing" checked={zeroMissing} onCheckedChange={setZeroMissing} />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {ar
+                    ? "يُعامَل الملف كصورة كاملة للمخزن: أي مادة في الموقع لا يذكرها الملف يصبح رصيدها صفر. المواد التي ليس لها عمود Data لا تتأثر."
+                    : "The sheet is treated as the full warehouse picture: any product it does not list drops to zero. Products with no Data value are left alone."}
+                </p>
               </div>
 
               <div className="rounded-md border border-border">

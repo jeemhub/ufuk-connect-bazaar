@@ -1135,6 +1135,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      zero_stock_missing_from_import: {
+        Args: { names: Json }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "customer" | "wholesale" | "dealer" | "sales"
