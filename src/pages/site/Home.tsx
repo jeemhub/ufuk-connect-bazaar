@@ -11,6 +11,7 @@ import { HeroSlider } from "@/components/site/HeroSlider";
 import { BrandStrip } from "@/components/site/BrandStrip";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
+import { GlobalSearch } from "@/components/site/GlobalSearch";
 
 const Home = () => {
   const { t, lang } = useLanguage();

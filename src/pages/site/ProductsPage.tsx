@@ -15,7 +15,7 @@ import { Seo, SITE_NAME } from "@/components/seo/Seo";
 export default function ProductsPage() {
   const { t, lang } = useLanguage();
   const [params, setParams] = useSearchParams();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(params.get("q") ?? "");
   const [sort, setSort] = useState("newest");
   const category = params.get("category") || "all";
   const brand = params.get("brand") || "all";
@@ -50,7 +50,11 @@ export default function ProductsPage() {
       if (brand !== "all" && p.brand !== brand) return false;
       if (search) {
         const q = search.toLowerCase();
-        return p.nameAr.toLowerCase().includes(q) || p.nameEn.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+        const hay = [p.nameAr, p.nameEn, (p as any).nameData, p.brand, p.category, p.subcategory, p.sku]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return q.split(/\s+/).filter(Boolean).every((tk) => hay.includes(tk));
       }
       return true;
     });
