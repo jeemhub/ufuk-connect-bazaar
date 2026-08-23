@@ -42,6 +42,8 @@ export default function ProductsPage() {
     [brands]
   );
 
+  useEffect(() => { setSearch(params.get("q") ?? ""); }, [params]);
+
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
 
   const filtered = useMemo(() => {
