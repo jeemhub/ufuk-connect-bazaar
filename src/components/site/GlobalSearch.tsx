@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useProducts } from "@/hooks/useProducts";
-import { img } from "@/lib/img";
+import { optimizedImage } from "@/lib/img";
 
 type Suggestion =
   | { kind: "product"; id: string; label: string; sub?: string; image?: string; to: string }
@@ -68,7 +68,7 @@ export function GlobalSearch() {
         id: p.id,
         label: (ar ? p.nameAr || p.nameEn : p.nameEn || p.nameAr) || p.nameData || p.sku,
         sub: p.brand,
-        image: p.images?.[0],
+        image: p.image,
         to: `/products/${p.id}`,
       }));
 
@@ -159,7 +159,7 @@ export function GlobalSearch() {
                     {r.kind === "product" ? (
                       r.image ? (
                         <img
-                          src={img(r.image, 80)}
+                          src={optimizedImage(r.image, { width: 80 })}
                           alt=""
                           loading="lazy"
                           className="h-10 w-10 shrink-0 rounded-lg border border-border object-contain bg-background"
