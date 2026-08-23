@@ -11,6 +11,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { useBrands } from "@/hooks/useBrands";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
+import { expandTokens, matchesAllTokens, normalizeSearchText, searchTokens } from "@/lib/search";
 
 export default function ProductsPage() {
   const { t, lang } = useLanguage();
@@ -48,16 +49,18 @@ export default function ProductsPage() {
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
 
   const filtered = useMemo(() => {
+    const searchTerms = search ? expandTokens(searchTokens(search)) : [];
     let list = products.filter((p) => {
       if (category !== "all" && p.category !== category) return false;
       if (brand !== "all" && p.brand !== brand) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const hay = [p.nameAr, p.nameEn, (p as any).nameData, p.brand, p.category, p.subcategory, p.sku]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return q.split(/\s+/).filter(Boolean).every((tk) => hay.includes(tk));
+      if (searchTerms.length) {
+        const catMeta = categories.find((c) => c.key === p.category);
+        const hay = normalizeSearchText(
+          [p.nameAr, p.nameEn, p.nameData, p.brand, catMeta ? `${catMeta.ar} ${catMeta.en}` : p.category, p.subcategory, p.sku]
+            .filter(Boolean)
+            .join(" ")
+        );
+        return matchesAllTokens(hay, searchTerms);
       }
       return true;
     });
