@@ -117,10 +117,10 @@ const Home = () => {
 
         {/* Floating icon chips */}
         <div aria-hidden className="pointer-events-none absolute inset-0 hidden md:block">
-          <div className="absolute start-[8%] top-[18%] flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card shadow-card animate-float">
+          <div className="absolute start-[8%] top-[32%] flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card shadow-card animate-float">
             <Cable className="h-6 w-6 text-primary" />
           </div>
-          <div className="absolute end-[10%] top-[28%] flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card shadow-card animate-float-slow">
+          <div className="absolute end-[10%] top-[40%] flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card shadow-card animate-float-slow">
             <Sun className="h-6 w-6 text-warning" />
           </div>
           <div className="absolute start-[12%] bottom-[22%] flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card shadow-card animate-float [animation-delay:1.5s]">
@@ -131,8 +131,8 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 py-20 text-center md:px-6 md:py-32 lg:py-40">
-          <div className="mb-8 w-full">
+        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 pb-20 pt-8 text-center md:px-6 md:pb-28 md:pt-12 lg:pb-36 lg:pt-14">
+          <div className="mb-10 w-full md:mb-12">
             <GlobalSearch />
           </div>
 
