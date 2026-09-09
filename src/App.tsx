@@ -23,6 +23,7 @@ const QuotePage = lazy(() => import("./pages/site/QuotePage"));
 const BlogList = lazy(() => import("./pages/site/BlogList"));
 const BlogPost = lazy(() => import("./pages/site/BlogPost"));
 const AuthPage = lazy(() => import("./pages/Auth"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPassword"));
 const AccountPage = lazy(() => import("./pages/site/Account"));
 const BrandsPage = lazy(() => import("@/pages/site/BrandsPage"));
 const AboutPage = lazy(() => import("@/pages/site/About"));
@@ -106,6 +107,7 @@ const App = () => {
                         <Route path="/tools" element={<ToolsPage />} />
                       </Route>
                       <Route path="/auth" element={<AuthPage />} />
+                      <Route path="/auth/reset" element={<ResetPasswordPage />} />
                       <Route
                         path="/admin"
                         element={
