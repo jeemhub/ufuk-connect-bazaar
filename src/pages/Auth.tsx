@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck } from "lucide-react";
 
@@ -43,7 +42,8 @@ export default function AuthPage() {
   const { t, lang, toggle } = useLanguage();
   const { session, loading } = useAuth();
   const location = useLocation();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [resetSent, setResetSent] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -51,9 +51,12 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const titleKey =
+    mode === "login" ? "auth_title_login" : mode === "signup" ? "auth_title_signup" : "auth_forgot_title";
+
   useEffect(() => {
-    document.title = `${t(mode === "login" ? "auth_title_login" : "auth_title_signup")} · ${t("brand")}`;
-  }, [mode, t]);
+    document.title = `${t(titleKey)} · ${t("brand")}`;
+  }, [titleKey, t]);
 
   if (loading) return null;
   if (session) {
@@ -65,6 +68,18 @@ export default function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
+      if (mode === "forgot") {
+        const parsed = loginSchema.pick({ email: true }).safeParse({ email });
+        if (!parsed.success) { toast.error(t("auth_invalid")); return; }
+        // Errors here are deliberately not surfaced: telling the caller whether a
+        // reset succeeded would confirm which addresses have accounts.
+        await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+          redirectTo: `${window.location.origin}/auth/reset`,
+        });
+        setResetSent(true);
+        toast.success(t("auth_forgot_sent"));
+        return;
+      }
       if (mode === "signup") {
         const parsed = signupSchema.safeParse({ email, password, confirm, fullName, phone });
         if (!parsed.success) {
@@ -83,7 +98,7 @@ export default function AuthPage() {
           },
         });
         if (error) {
-          if ((error as any).code === "weak_password" || /weak|pwned/i.test(error.message)) {
+          if ((error as { code?: string }).code === "weak_password" || /weak|pwned/i.test(error.message)) {
             toast.error(lang === "ar"
               ? "كلمة المرور ضعيفة أو مسرّبة سابقاً. اختر كلمة أقوى تحتوي على أحرف كبيرة وصغيرة وأرقام ورموز."
               : "Password is too weak or has been leaked. Choose a stronger one with upper/lowercase, numbers, and symbols.");
@@ -143,7 +158,11 @@ export default function AuthPage() {
             <span>{t("brand_tagline")}</span>
           </div>
 
-          <h1 className="mb-6 text-2xl font-bold">{t(mode === "login" ? "auth_title_login" : "auth_title_signup")}</h1>
+          <h1 className="mb-2 text-2xl font-bold">{t(titleKey)}</h1>
+          {mode === "forgot" && (
+            <p className="mb-6 text-sm text-muted-foreground">{t("auth_forgot_hint")}</p>
+          )}
+          {mode !== "forgot" && <div className="mb-6" />}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
@@ -162,8 +181,20 @@ export default function AuthPage() {
               <Label htmlFor="email">{t("auth_email")}</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} autoComplete="email" />
             </div>
+            {mode !== "forgot" && (
             <div>
-              <Label htmlFor="password">{t("auth_password")}</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="password">{t("auth_password")}</Label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => { setMode("forgot"); setResetSent(false); setPassword(""); }}
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    {t("auth_forgot_link")}
+                  </button>
+                )}
+              </div>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} maxLength={72} autoComplete={mode === "login" ? "current-password" : "new-password"} />
               {mode === "signup" && password.length > 0 && (() => {
                 const s = getPasswordStrength(password);
@@ -184,6 +215,7 @@ export default function AuthPage() {
                 );
               })()}
             </div>
+            )}
             {mode === "signup" && (
               <div>
                 <Label htmlFor="confirm">{t("auth_confirm")}</Label>
@@ -193,83 +225,37 @@ export default function AuthPage() {
 
             <Button type="submit" disabled={busy} className="w-full bg-gradient-brand">
               {busy && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-              {t(mode === "login" ? "auth_title_login" : "auth_title_signup")}
+              {t(mode === "forgot" ? "auth_forgot_send" : titleKey)}
             </Button>
           </form>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">{lang === "ar" ? "أو" : "or"}</span>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                const result = await lovable.auth.signInWithOAuth("google", {
-                  redirect_uri: window.location.origin,
-                });
-                if (result.error) {
-                  toast.error(lang === "ar" ? "فشل تسجيل الدخول عبر Google" : "Google sign-in failed");
-                  return;
-                }
-                if (result.redirected) return;
-              } catch {
-                toast.error(lang === "ar" ? "فشل تسجيل الدخول عبر Google" : "Google sign-in failed");
-              } finally {
-                setBusy(false);
-              }
-            }}
-            className="w-full gap-2"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.78.43 3.46 1.18 4.93l3.66-2.83z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
-            </svg>
-            {lang === "ar" ? "المتابعة عبر Google" : "Continue with Google"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                const result = await lovable.auth.signInWithOAuth("apple", {
-                  redirect_uri: window.location.origin,
-                });
-                if (result.error) {
-                  toast.error(lang === "ar" ? "فشل تسجيل الدخول عبر Apple" : "Apple sign-in failed");
-                  return;
-                }
-                if (result.redirected) return;
-              } catch {
-                toast.error(lang === "ar" ? "فشل تسجيل الدخول عبر Apple" : "Apple sign-in failed");
-              } finally {
-                setBusy(false);
-              }
-            }}
-            className="mt-3 w-full gap-2"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 384 512" aria-hidden="true" fill="currentColor">
-              <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-            </svg>
-            {lang === "ar" ? "المتابعة عبر Apple" : "Continue with Apple"}
-          </Button>
+          {mode === "forgot" && resetSent && (
+            <p className="mt-4 rounded-md border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
+              {t("auth_forgot_sent")}
+            </p>
+          )}
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "login" ? t("auth_no_account") : t("auth_have_account")}{" "}
-            <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="font-semibold text-primary hover:underline">
-              {t(mode === "login" ? "auth_title_signup" : "auth_title_login")}
-            </button>
+            {mode === "forgot" ? (
+              <button
+                type="button"
+                onClick={() => { setMode("login"); setResetSent(false); }}
+                className="font-semibold text-primary hover:underline"
+              >
+                {t("auth_back_to_login")}
+              </button>
+            ) : (
+              <>
+                {mode === "login" ? t("auth_no_account") : t("auth_have_account")}{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {t(mode === "login" ? "auth_title_signup" : "auth_title_login")}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
