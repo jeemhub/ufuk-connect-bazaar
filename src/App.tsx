@@ -47,6 +47,7 @@ const AdminBrands = lazy(() => import("./pages/admin/Brands"));
 const AdminAbout = lazy(() => import("./pages/admin/About"));
 const AdminProjects = lazy(() => import("./pages/admin/Projects"));
 const AdminBackup = lazy(() => import("./pages/admin/Backup"));
+const CustomerBalances = lazy(() => import("./pages/admin/CustomerBalances"));
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ const App = () => {
                         <Route path="orders" element={<ProtectedRoute requirePerm="can_manage_orders"><Orders /></ProtectedRoute>} />
                         <Route path="users" element={<ProtectedRoute requireAdmin><Users /></ProtectedRoute>} />
                         <Route path="quotes" element={<ProtectedRoute requirePerm="can_manage_quotes"><Quotes /></ProtectedRoute>} />
+                        <Route path="customer-balances" element={<ProtectedRoute requirePerm="can_manage_customer_balances"><CustomerBalances /></ProtectedRoute>} />
                         <Route path="security" element={<ProtectedRoute requireAdmin><Security /></ProtectedRoute>} />
                         <Route path="backup" element={<ProtectedRoute requireAdmin><AdminBackup /></ProtectedRoute>} />
                         <Route path="settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />

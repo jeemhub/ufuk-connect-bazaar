@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote, Newspaper, Award, Home, Info, Hammer, Database, Palette } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote, Newspaper, Award, Home, Info, Hammer, Database, Palette, WalletCards } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -35,6 +35,7 @@ export function AdminSidebar() {
     { to: "/admin/orders", icon: ShoppingCart, label: t("nav_orders"), show: can("can_manage_orders") },
     { to: "/admin/users", icon: Users, label: t("users_title"), show: isAdmin },
     { to: "/admin/quotes", icon: MessageSquareQuote, label: t("nav_quotes"), show: can("can_manage_quotes") },
+    { to: "/admin/customer-balances", icon: WalletCards, label: "أرصدة العملاء", show: can("can_manage_customer_balances") },
     { to: "/admin/security", icon: ShieldCheck, label: t("nav_security"), show: isAdmin },
     { to: "/admin/backup", icon: Database, label: lang === "ar" ? "النسخ الاحتياطية" : "Backups", show: isAdmin },
     { to: "/admin/settings", icon: Settings, label: t("nav_settings"), show: isAdmin },
