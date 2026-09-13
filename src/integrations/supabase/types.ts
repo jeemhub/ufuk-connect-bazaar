@@ -795,12 +795,12 @@ export type Database = {
           credit_iqd: number
           credit_usd: number
           customer_name: string
-          customer_name_search: string
           customer_number: string
-          customer_number_search: string
           debit_iqd: number
           debit_usd: number
-          id: number
+          imported_at: string
+          search_customer_name: string
+          search_customer_number: string
         }
         Insert: {
           credit_iqd?: number
@@ -809,7 +809,7 @@ export type Database = {
           customer_number: string
           debit_iqd?: number
           debit_usd?: number
-          id?: number
+          imported_at?: string
         }
         Update: {
           credit_iqd?: number
@@ -818,7 +818,7 @@ export type Database = {
           customer_number?: string
           debit_iqd?: number
           debit_usd?: number
-          id?: number
+          imported_at?: string
         }
         Relationships: []
       }
