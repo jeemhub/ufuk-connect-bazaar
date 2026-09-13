@@ -766,6 +766,62 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_balance_import_state: {
+        Row: {
+          file_name: string
+          imported_at: string
+          imported_by: string
+          row_count: number
+          singleton: boolean
+        }
+        Insert: {
+          file_name: string
+          imported_at?: string
+          imported_by: string
+          row_count: number
+          singleton?: boolean
+        }
+        Update: {
+          file_name?: string
+          imported_at?: string
+          imported_by?: string
+          row_count?: number
+          singleton?: boolean
+        }
+        Relationships: []
+      }
+      customer_balances: {
+        Row: {
+          credit_iqd: number
+          credit_usd: number
+          customer_name: string
+          customer_name_search: string
+          customer_number: string
+          customer_number_search: string
+          debit_iqd: number
+          debit_usd: number
+          id: number
+        }
+        Insert: {
+          credit_iqd?: number
+          credit_usd?: number
+          customer_name: string
+          customer_number: string
+          debit_iqd?: number
+          debit_usd?: number
+          id?: number
+        }
+        Update: {
+          credit_iqd?: number
+          credit_usd?: number
+          customer_name?: string
+          customer_number?: string
+          debit_iqd?: number
+          debit_usd?: number
+          id?: number
+        }
+        Relationships: []
+      }
       sales_permissions: {
         Row: {
           can_manage_blog: boolean
@@ -1063,6 +1119,10 @@ export type Database = {
         Args: { _user_id: string; _verified: boolean }
         Returns: undefined
       }
+      can_manage_customer_balances: {
+        Args: { _user_id?: string }
+        Returns: boolean
+      }
       bulk_upsert_products_by_name_data: {
         Args: { items: Json }
         Returns: {
@@ -1138,6 +1198,28 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      replace_customer_balances: {
+        Args: { file_name: string; rows: Json }
+        Returns: Json
+      }
+      search_customer_balances: {
+        Args: {
+          _balance_type: string
+          _currency: string
+          _page: number
+          _page_size: number
+          _query: string
+        }
+        Returns: {
+          credit_iqd: string
+          credit_usd: string
+          customer_name: string
+          customer_number: string
+          debit_iqd: string
+          debit_usd: string
+          total_count: number
         }[]
       }
       zero_stock_missing_from_import: {

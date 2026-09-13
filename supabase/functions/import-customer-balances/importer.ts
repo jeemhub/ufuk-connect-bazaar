@@ -135,7 +135,10 @@ function validateFileEnvelope(input: ParseInput): "xls" | "xlsx" {
     throw new CustomerBalanceImportError("file_too_large");
   }
 
-  const extension = input.fileName.toLocaleLowerCase("en").match(/\.(xlsx|xls)$/)?.[1];
+  const extension = input.fileName.toLocaleLowerCase("en").match(/\.(xlsx|xls)$/)?.[1] as
+    | "xls"
+    | "xlsx"
+    | undefined;
   if (!extension) throw new CustomerBalanceImportError("unsupported_file");
 
   const normalizedMime = input.mimeType.toLocaleLowerCase("en").split(";", 1)[0].trim();
