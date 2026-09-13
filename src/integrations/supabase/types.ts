@@ -771,6 +771,7 @@ export type Database = {
           can_manage_blog: boolean
           can_manage_brands: boolean
           can_manage_categories: boolean
+          can_manage_customer_balances: boolean
           can_manage_orders: boolean
           can_manage_products: boolean
           can_manage_projects: boolean
@@ -782,6 +783,7 @@ export type Database = {
           can_manage_blog?: boolean
           can_manage_brands?: boolean
           can_manage_categories?: boolean
+          can_manage_customer_balances?: boolean
           can_manage_orders?: boolean
           can_manage_products?: boolean
           can_manage_projects?: boolean
@@ -793,6 +795,7 @@ export type Database = {
           can_manage_blog?: boolean
           can_manage_brands?: boolean
           can_manage_categories?: boolean
+          can_manage_customer_balances?: boolean
           can_manage_orders?: boolean
           can_manage_products?: boolean
           can_manage_projects?: boolean
@@ -1046,6 +1049,7 @@ export type Database = {
           _can_manage_blog?: boolean
           _can_manage_brands?: boolean
           _can_manage_categories?: boolean
+          _can_manage_customer_balances?: boolean
           _can_manage_orders?: boolean
           _can_manage_products?: boolean
           _can_manage_projects?: boolean
@@ -1082,6 +1086,7 @@ export type Database = {
           can_manage_blog: boolean
           can_manage_brands: boolean
           can_manage_categories: boolean
+          can_manage_customer_balances: boolean
           can_manage_orders: boolean
           can_manage_products: boolean
           can_manage_projects: boolean

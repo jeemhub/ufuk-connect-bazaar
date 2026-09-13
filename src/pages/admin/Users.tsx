@@ -6,7 +6,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +36,7 @@ type SalesPerms = {
   can_manage_projects?: boolean;
   can_manage_orders?: boolean;
   can_manage_quotes?: boolean;
+  can_manage_customer_balances?: boolean;
 };
 
 type Row = {
@@ -225,6 +233,7 @@ export default function Users() {
       _can_manage_projects: !!salesPermsForm.can_manage_projects,
       _can_manage_orders: !!salesPermsForm.can_manage_orders,
       _can_manage_quotes: !!salesPermsForm.can_manage_quotes,
+      _can_manage_customer_balances: !!salesPermsForm.can_manage_customer_balances,
     });
     setSavingSales(false);
     if (error) { toast.error(error.message); return; }
@@ -480,6 +489,9 @@ export default function Users() {
               <Headset className="h-5 w-5" style={{ color: "hsl(265 80% 55%)" }} />
               صلاحيات موظف المبيعات
             </DialogTitle>
+            <DialogDescription>
+              حدد الأقسام التي يمكن لهذا الموظف الوصول إليها داخل لوحة التحكم.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -506,6 +518,7 @@ export default function Users() {
                 ["can_manage_projects", "إدارة المشاريع"],
                 ["can_manage_orders", "إدارة الطلبات"],
                 ["can_manage_quotes", "إدارة طلبات عروض الأسعار"],
+                ["can_manage_customer_balances", "أرصدة العملاء"],
               ] as const).map(([key, label]) => (
                 <label key={key} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-secondary/50">
                   <Checkbox
