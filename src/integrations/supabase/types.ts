@@ -1201,7 +1201,7 @@ export type Database = {
         }[]
       }
       replace_customer_balances: {
-        Args: { file_name: string; rows: Json }
+        Args: { _user_id?: string; file_name: string; rows: Json }
         Returns: Json
       }
       search_customer_balances: {
