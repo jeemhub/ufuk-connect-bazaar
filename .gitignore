@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.worktrees/
 
 # MCP server secrets (service role key - never commit)
 mcp-server/.env
