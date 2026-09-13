@@ -36,6 +36,9 @@ $function$;
 drop function if exists public.admin_set_sales_permissions(
   uuid, boolean, boolean, boolean, boolean, boolean, boolean, boolean, boolean
 );
+drop function if exists public.admin_set_sales_permissions(
+  uuid, boolean, boolean, boolean, boolean, boolean, boolean, boolean, boolean, boolean
+);
 
 create function public.admin_set_sales_permissions(
   _user_id uuid,
@@ -195,7 +198,14 @@ revoke all on table public.customer_balance_import_state from public, anon, auth
 grant select on table public.customer_balances to authenticated;
 grant select on table public.customer_balance_import_state to authenticated;
 
-create or replace function public.replace_customer_balances(file_name text, rows jsonb)
+drop function if exists public.replace_customer_balances(text, jsonb);
+drop function if exists public.replace_customer_balances(text, jsonb, uuid);
+
+create function public.replace_customer_balances(
+  file_name text,
+  rows jsonb,
+  _user_id uuid default auth.uid()
+)
 returns jsonb
 language plpgsql
 security definer
@@ -205,7 +215,7 @@ declare
   staged_count integer;
   imported_time timestamptz := clock_timestamp();
 begin
-  if not public.can_manage_customer_balances(auth.uid()) then
+  if not public.can_manage_customer_balances(_user_id) then
     raise exception using errcode = '42501', message = 'forbidden';
   end if;
   if file_name is null or btrim(file_name) = '' or char_length(file_name) > 255 then
@@ -316,7 +326,7 @@ begin
     true,
     file_name,
     imported_time,
-    auth.uid(),
+    _user_id,
     staged_count
   )
   on conflict (singleton) do update set
@@ -329,8 +339,8 @@ begin
 end;
 $function$;
 
-revoke all on function public.replace_customer_balances(text, jsonb) from public, anon;
-grant execute on function public.replace_customer_balances(text, jsonb) to authenticated;
+revoke all on function public.replace_customer_balances(text, jsonb, uuid) from public, anon;
+grant execute on function public.replace_customer_balances(text, jsonb, uuid) to authenticated;
 
 create or replace function public.search_customer_balances(
   _query text default '',

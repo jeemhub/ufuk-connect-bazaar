@@ -36,9 +36,12 @@ Deno.serve((req: Request) =>
       return data === true;
     },
     async replaceBalances({ fileName, rows, token }) {
+      const { data: userData, error: userError } = await userClient(token).auth.getUser(token);
+      if (userError || !userData.user) throw userError ?? new Error("missing authenticated user");
       const { data, error } = await userClient(token).rpc("replace_customer_balances", {
         file_name: fileName,
         rows,
+        _user_id: userData.user.id,
       });
       if (error) throw error;
       const result = data as { imported?: unknown } | null;
