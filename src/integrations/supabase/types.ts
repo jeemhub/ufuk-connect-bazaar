@@ -766,11 +766,68 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_balance_import_state: {
+        Row: {
+          file_name: string
+          imported_at: string
+          imported_by: string
+          row_count: number
+          singleton: boolean
+        }
+        Insert: {
+          file_name: string
+          imported_at?: string
+          imported_by: string
+          row_count: number
+          singleton?: boolean
+        }
+        Update: {
+          file_name?: string
+          imported_at?: string
+          imported_by?: string
+          row_count?: number
+          singleton?: boolean
+        }
+        Relationships: []
+      }
+      customer_balances: {
+        Row: {
+          credit_iqd: number
+          credit_usd: number
+          customer_name: string
+          customer_number: string
+          debit_iqd: number
+          debit_usd: number
+          imported_at: string
+          search_customer_name: string
+          search_customer_number: string
+        }
+        Insert: {
+          credit_iqd?: number
+          credit_usd?: number
+          customer_name: string
+          customer_number: string
+          debit_iqd?: number
+          debit_usd?: number
+          imported_at?: string
+        }
+        Update: {
+          credit_iqd?: number
+          credit_usd?: number
+          customer_name?: string
+          customer_number?: string
+          debit_iqd?: number
+          debit_usd?: number
+          imported_at?: string
+        }
+        Relationships: []
+      }
       sales_permissions: {
         Row: {
           can_manage_blog: boolean
           can_manage_brands: boolean
           can_manage_categories: boolean
+          can_manage_customer_balances: boolean
           can_manage_orders: boolean
           can_manage_products: boolean
           can_manage_projects: boolean
@@ -782,6 +839,7 @@ export type Database = {
           can_manage_blog?: boolean
           can_manage_brands?: boolean
           can_manage_categories?: boolean
+          can_manage_customer_balances?: boolean
           can_manage_orders?: boolean
           can_manage_products?: boolean
           can_manage_projects?: boolean
@@ -793,6 +851,7 @@ export type Database = {
           can_manage_blog?: boolean
           can_manage_brands?: boolean
           can_manage_categories?: boolean
+          can_manage_customer_balances?: boolean
           can_manage_orders?: boolean
           can_manage_products?: boolean
           can_manage_projects?: boolean
@@ -1046,6 +1105,7 @@ export type Database = {
           _can_manage_blog?: boolean
           _can_manage_brands?: boolean
           _can_manage_categories?: boolean
+          _can_manage_customer_balances?: boolean
           _can_manage_orders?: boolean
           _can_manage_products?: boolean
           _can_manage_projects?: boolean
@@ -1058,6 +1118,10 @@ export type Database = {
       admin_set_verified: {
         Args: { _user_id: string; _verified: boolean }
         Returns: undefined
+      }
+      can_manage_customer_balances: {
+        Args: { _user_id?: string }
+        Returns: boolean
       }
       bulk_upsert_products_by_name_data: {
         Args: { items: Json }
@@ -1082,6 +1146,7 @@ export type Database = {
           can_manage_blog: boolean
           can_manage_brands: boolean
           can_manage_categories: boolean
+          can_manage_customer_balances: boolean
           can_manage_orders: boolean
           can_manage_products: boolean
           can_manage_projects: boolean
@@ -1133,6 +1198,28 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      replace_customer_balances: {
+        Args: { _user_id?: string; file_name: string; rows: Json }
+        Returns: Json
+      }
+      search_customer_balances: {
+        Args: {
+          _balance_type: string
+          _currency: string
+          _page: number
+          _page_size: number
+          _query: string
+        }
+        Returns: {
+          credit_iqd: string
+          credit_usd: string
+          customer_name: string
+          customer_number: string
+          debit_iqd: string
+          debit_usd: string
+          total_count: number
         }[]
       }
       zero_stock_missing_from_import: {
