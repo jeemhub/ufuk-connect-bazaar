@@ -12,6 +12,7 @@ export type SalesPermissions = {
   can_manage_projects: boolean;
   can_manage_orders: boolean;
   can_manage_quotes: boolean;
+  can_manage_customer_balances: boolean;
 };
 
 const EMPTY_PERMS: SalesPermissions = {
@@ -22,6 +23,7 @@ const EMPTY_PERMS: SalesPermissions = {
   can_manage_projects: false,
   can_manage_orders: false,
   can_manage_quotes: false,
+  can_manage_customer_balances: false,
 };
 
 type Ctx = {
