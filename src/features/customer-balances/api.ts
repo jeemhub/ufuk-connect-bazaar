@@ -64,7 +64,27 @@ export async function uploadCustomerBalances(file: File): Promise<{ imported: nu
   body.append("file", file, file.name);
 
   const { data, error } = await supabase.functions.invoke("import-customer-balances", { body });
-  if (error) throw new Error(messageFrom(error, "تعذّر رفع ملف الأرصدة"));
+  if (error) {
+    // FunctionsError.message is often only the generic status text. Supabase
+    // keeps the structured Arabic response on `context`, so surface it when
+    // available instead of hiding the validation/database reason.
+    const context = (error as { context?: unknown }).context;
+    if (context instanceof Response) {
+      try {
+        const payload = (await context.clone().json()) as { message?: unknown; error?: unknown };
+        const detail =
+          typeof payload.message === "string"
+            ? payload.message
+            : typeof payload.error === "string"
+              ? payload.error
+              : "";
+        if (detail) throw new Error(detail);
+      } catch (contextError) {
+        if (contextError instanceof Error && contextError.message) throw contextError;
+      }
+    }
+    throw new Error(messageFrom(error, "تعذّر رفع ملف الأرصدة"));
+  }
 
   if (data?.error) throw new Error(String(data.error));
   if (!data || typeof data.imported !== "number") {
