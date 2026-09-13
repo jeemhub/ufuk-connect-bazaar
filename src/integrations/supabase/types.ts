@@ -235,6 +235,66 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_balance_import_state: {
+        Row: {
+          file_name: string
+          imported_at: string
+          imported_by: string
+          row_count: number
+          singleton: boolean
+        }
+        Insert: {
+          file_name: string
+          imported_at: string
+          imported_by: string
+          row_count: number
+          singleton?: boolean
+        }
+        Update: {
+          file_name?: string
+          imported_at?: string
+          imported_by?: string
+          row_count?: number
+          singleton?: boolean
+        }
+        Relationships: []
+      }
+      customer_balances: {
+        Row: {
+          credit_iqd: number
+          credit_usd: number
+          customer_name: string
+          customer_number: string
+          debit_iqd: number
+          debit_usd: number
+          imported_at: string
+          search_customer_name: string | null
+          search_customer_number: string | null
+        }
+        Insert: {
+          credit_iqd?: number
+          credit_usd?: number
+          customer_name: string
+          customer_number: string
+          debit_iqd?: number
+          debit_usd?: number
+          imported_at?: string
+          search_customer_name?: string | null
+          search_customer_number?: string | null
+        }
+        Update: {
+          credit_iqd?: number
+          credit_usd?: number
+          customer_name?: string
+          customer_number?: string
+          debit_iqd?: number
+          debit_usd?: number
+          imported_at?: string
+          search_customer_name?: string | null
+          search_customer_number?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -766,62 +826,6 @@ export type Database = {
         }
         Relationships: []
       }
-      customer_balance_import_state: {
-        Row: {
-          file_name: string
-          imported_at: string
-          imported_by: string
-          row_count: number
-          singleton: boolean
-        }
-        Insert: {
-          file_name: string
-          imported_at?: string
-          imported_by: string
-          row_count: number
-          singleton?: boolean
-        }
-        Update: {
-          file_name?: string
-          imported_at?: string
-          imported_by?: string
-          row_count?: number
-          singleton?: boolean
-        }
-        Relationships: []
-      }
-      customer_balances: {
-        Row: {
-          credit_iqd: number
-          credit_usd: number
-          customer_name: string
-          customer_number: string
-          debit_iqd: number
-          debit_usd: number
-          imported_at: string
-          search_customer_name: string
-          search_customer_number: string
-        }
-        Insert: {
-          credit_iqd?: number
-          credit_usd?: number
-          customer_name: string
-          customer_number: string
-          debit_iqd?: number
-          debit_usd?: number
-          imported_at?: string
-        }
-        Update: {
-          credit_iqd?: number
-          credit_usd?: number
-          customer_name?: string
-          customer_number?: string
-          debit_iqd?: number
-          debit_usd?: number
-          imported_at?: string
-        }
-        Relationships: []
-      }
       sales_permissions: {
         Row: {
           can_manage_blog: boolean
@@ -1119,16 +1123,16 @@ export type Database = {
         Args: { _user_id: string; _verified: boolean }
         Returns: undefined
       }
-      can_manage_customer_balances: {
-        Args: { _user_id?: string }
-        Returns: boolean
-      }
       bulk_upsert_products_by_name_data: {
         Args: { items: Json }
         Returns: {
           inserted_count: number
           updated_count: number
         }[]
+      }
+      can_manage_customer_balances: {
+        Args: { _user_id?: string }
+        Returns: boolean
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -1192,6 +1196,10 @@ export type Database = {
         }
         Returns: number
       }
+      normalize_customer_balance_search: {
+        Args: { value: string }
+        Returns: string
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -1206,11 +1214,11 @@ export type Database = {
       }
       search_customer_balances: {
         Args: {
-          _balance_type: string
-          _currency: string
-          _page: number
-          _page_size: number
-          _query: string
+          _balance_type?: string
+          _currency?: string
+          _page?: number
+          _page_size?: number
+          _query?: string
         }
         Returns: {
           credit_iqd: string
@@ -1222,10 +1230,7 @@ export type Database = {
           total_count: number
         }[]
       }
-      zero_stock_missing_from_import: {
-        Args: { names: Json }
-        Returns: number
-      }
+      zero_stock_missing_from_import: { Args: { names: Json }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "customer" | "wholesale" | "dealer" | "sales"
@@ -1244,12 +1249,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1273,11 +1278,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1298,11 +1303,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1323,11 +1328,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1340,11 +1345,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
