@@ -48,7 +48,13 @@ function isUploadedFile(value: FormDataEntryValue): value is File {
 
 export function sanitizeCustomerBalanceFileName(value: string): string {
   const baseName = value.split(/[\\/]/).pop() ?? "";
-  const sanitized = baseName.replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  const sanitized = Array.from(baseName)
+    .filter((character) => {
+      const codePoint = character.codePointAt(0) ?? 0;
+      return codePoint > 31 && codePoint !== 127;
+    })
+    .join("")
+    .trim();
   return (sanitized || "balances.xlsx").slice(0, 255);
 }
 
