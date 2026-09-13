@@ -2,7 +2,13 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(20);
+
+select ok(
+  pg_get_functiondef('public.replace_customer_balances(text,jsonb,uuid)'::regprocedure)
+    like '%delete from public.customer_balances where customer_number is not null;%',
+  'replacement DELETE is compatible with the production safe-update guard'
+);
 
 insert into auth.users (id, email)
 values
@@ -28,6 +34,14 @@ set can_manage_customer_balances = excluded.can_manage_customer_balances;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000004', true);
+
+select throws_ok(
+  $$ select public.replace_customer_balances('spoofed.xlsx', '[]'::jsonb,
+    '10000000-0000-0000-0000-000000000001'::uuid) $$,
+  '42501',
+  'forbidden',
+  'ordinary users cannot impersonate an admin through the actor parameter'
+);
 
 select throws_ok(
   $$ select * from public.search_customer_balances('', 'all', 'all', 1, 50) $$,
