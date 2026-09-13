@@ -3,7 +3,7 @@ import {
   MAX_CUSTOMER_BALANCE_FILE_SIZE,
   parseCustomerBalanceWorkbook,
   type CustomerBalanceImportRow,
-} from "./importer";
+} from "./importer.ts";
 
 export const customerBalanceCorsHeaders = {
   "Access-Control-Allow-Origin": "*",
