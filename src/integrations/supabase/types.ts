@@ -1208,10 +1208,12 @@ export type Database = {
           read_ct: number
         }[]
       }
-      replace_customer_balances: {
-        Args: { file_name: string; rows: Json }
-        Returns: Json
-      }
+      replace_customer_balances:
+        | { Args: { file_name: string; rows: Json }; Returns: Json }
+        | {
+            Args: { _user_id?: string; file_name: string; rows: Json }
+            Returns: Json
+          }
       search_customer_balances: {
         Args: {
           _balance_type?: string
