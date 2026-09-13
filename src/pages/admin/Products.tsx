@@ -185,8 +185,9 @@ export default function Products() {
     return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
   }
 
-  const [searchParams] = useSearchParams();
-  const lowStockOnly = searchParams.get("filter") === "low_stock";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const stockParam = searchParams.get("filter");
+  const stockFilter = stockParam === "low_stock" || stockParam === "out_of_stock" ? stockParam : "all";
   const queryParam = searchParams.get("q") ?? "";
   useEffect(() => { setSearch(queryParam); }, [queryParam]);
 
@@ -197,7 +198,7 @@ export default function Products() {
     hidden: false,
     noPrice: false,
   });
-  const [showHidden, setShowHidden] = useState(true);
+  const [showHidden, setShowHidden] = useState(false);
 
 
   const isMissingImage = (url?: string) => !url || url.includes("unsplash.com/photo-1606904825846");
@@ -248,7 +249,8 @@ export default function Products() {
 
     if (brand !== "all" && p.brand !== brand) return false;
     if (cat !== "all" && p.category !== cat) return false;
-    if (lowStockOnly && p.stock >= 5) return false;
+    if (stockFilter === "out_of_stock" && p.stock > 0) return false;
+    if (stockFilter === "low_stock" && (p.stock <= 0 || p.stock >= 5)) return false;
     if (missingFilters.noPrice && p.priceIqd > 0) return false;
     if (missingFilters.noDesc && (p.descAr?.trim() || p.descEn?.trim())) return false;
     if (missingFilters.noName && ((p.nameAr?.trim() && p.nameEn?.trim()) || p.is_active === false)) return false;
@@ -256,7 +258,7 @@ export default function Products() {
     if (missingFilters.hidden && p.is_active) return false;
     if (!showHidden && !missingFilters.hidden && p.is_active === false) return false;
     return true;
-  }), [list, search, brand, cat, catRows, lowStockOnly, missingFilters, showHidden]);
+  }), [list, search, brand, cat, catRows, stockFilter, missingFilters, showHidden]);
 
 
   async function toggleVisibility(p: Product & { is_active?: boolean }) {
@@ -351,7 +353,7 @@ export default function Products() {
       {isAdmin && <ImportProductsFullDialog open={importFullOpen} onOpenChange={setImportFullOpen} onDone={refetch} />}
 
       <div className="surface-card p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Input placeholder={lang === "ar" ? "بحث شامل (الاسم، Data، العلامة، القسم...)" : "Search all fields (name, Data, brand, category...)"} value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={brand} onValueChange={setBrand}>
             <SelectTrigger><SelectValue placeholder={t("all_brands")} /></SelectTrigger>
@@ -367,7 +369,22 @@ export default function Products() {
               {categories.map((c) => <SelectItem key={c.key} value={c.key}>{lang === "ar" ? c.ar : c.en}</SelectItem>)}
             </SelectContent>
           </Select>
-          <div className="flex items-center justify-end text-sm text-muted-foreground">
+          <Select value={stockFilter} onValueChange={(value) => {
+            setSearchParams((previous) => {
+              const next = new URLSearchParams(previous);
+              if (value === "all") next.delete("filter");
+              else next.set("filter", value);
+              return next;
+            }, { replace: true });
+          }}>
+            <SelectTrigger aria-label={lang === "ar" ? "حالة المخزون" : "Stock status"}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{lang === "ar" ? "جميع حالات المخزون" : "All stock levels"}</SelectItem>
+              <SelectItem value="out_of_stock">{lang === "ar" ? "المنتجات النافدة" : "Out of stock"}</SelectItem>
+              <SelectItem value="low_stock">{lang === "ar" ? "مخزون منخفض (أقل من 5)" : "Low stock (under 5)"}</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center justify-end text-sm text-muted-foreground md:col-span-2 xl:col-span-4">
             {filtered.length} / {list.length}
           </div>
         </div>
