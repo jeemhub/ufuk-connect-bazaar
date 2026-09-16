@@ -1,20 +1,33 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import SolarCalculator from "@/components/site/SolarCalculator";
 import SolarSystemDesigner from "@/components/site/SolarSystemDesigner";
 import { cn } from "@/lib/utils";
-import { Calculator, Sun } from "lucide-react";
+import { Calculator, Sun, Zap } from "lucide-react";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
-type Tool = "calculator" | "designer";
+type Tool = "calculator" | "designer" | "power";
+
+// Loaded only when opened: it pulls in the SmartValue cloud client, QR scanner and IndexedDB layer.
+const UfukPower = lazy(() => import("@/features/ufuk-power/UfukPower"));
+
+const isTool = (v: string | null): v is Tool => v === "calculator" || v === "designer" || v === "power";
 
 export default function ToolsPage() {
-  const [tool, setTool] = useState<Tool>("calculator");
+  const [params, setParams] = useSearchParams();
+  const initial = params.get("tool");
+  const [tool, setToolState] = useState<Tool>(isTool(initial) ? initial : "calculator");
+  // Keep the tab in the URL so /tools?tool=power can be linked to directly.
+  const setTool = (t: Tool) => {
+    setToolState(t);
+    setParams(t === "calculator" ? {} : { tool: t }, { replace: true });
+  };
 
   return (
     <div dir="rtl">
       <Seo
         title={`أدوات هندسية — حاسبة ومصمم منظومات الطاقة الشمسية | ${SITE_NAME}`}
-        description="أدوات مجانية من أُفُق البصرة: حاسبة وقت تشغيل الأحمال ومصمم منظومات الطاقة الشمسية مع تقارير PDF هندسية جاهزة للطباعة."
+        description="أدوات مجانية من أُفُق البصرة: حاسبة وقت تشغيل الأحمال، مصمم منظومات الطاقة الشمسية، وUFUK POWER لمراقبة والتحكم بعواكس MUST."
         path="/tools"
         lang="ar"
       />
@@ -25,6 +38,7 @@ export default function ToolsPage() {
             {[
               { v: "calculator" as Tool, icon: Calculator, label: "حاسبة وقت التشغيل" },
               { v: "designer" as Tool, icon: Sun, label: "مصمم منظومات الطاقة الشمسية" },
+              { v: "power" as Tool, icon: Zap, label: "UFUK POWER — مراقبة العاكس" },
             ].map((t) => {
               const I = t.icon;
               return (
@@ -46,7 +60,13 @@ export default function ToolsPage() {
         </div>
       </div>
 
-      {tool === "calculator" ? <SolarCalculator /> : <SolarSystemDesigner />}
+      {tool === "calculator" && <SolarCalculator />}
+      {tool === "designer" && <SolarSystemDesigner />}
+      {tool === "power" && (
+        <Suspense fallback={<div className="grid min-h-[50vh] place-items-center text-slate-400">…</div>}>
+          <UfukPower />
+        </Suspense>
+      )}
     </div>
   );
 }
