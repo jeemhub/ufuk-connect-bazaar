@@ -37,6 +37,7 @@ export function AddToCartButton({ product, size = "default", variant = "default"
       name: ar ? product.nameAr : product.nameEn,
       image: product.image,
       priceIqd: price,
+      stock: product.stock,
     });
     toast.success(ar ? "تمت الإضافة إلى السلة" : "Added to cart", {
       action: {
