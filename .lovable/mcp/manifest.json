@@ -12,7 +12,7 @@
   "mcp": {
     "server": {
       "name": "ufuk-al-basra",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "title": "UFUK AL-Basra"
     },
     "tools": [
@@ -843,7 +843,7 @@
       {
         "name": "set_product_datasheet",
         "title": "Set product datasheet (PDF)",
-        "description": "Admin only. Attach a PDF datasheet to a product (the 'ورقة البيانات (PDF)' field), replacing any existing one, or remove it. Provide exactly one of: pdf_url (an https link to a PDF; it is downloaded and stored on the site), pdf_base64 (the PDF file content), or remove=true. Max 10 MB.",
+        "description": "Admin only. Attach a PDF datasheet to one product (id) or up to 100 products at once (product_ids), replacing any existing one, or remove it. Provide exactly one source: storage_path (a file already uploaded via create_datasheet_upload; preferred for local files), pdf_url (an https link to a PDF; it is downloaded and stored on the site), pdf_base64 (the PDF file content), or remove=true. Max 10 MB. A previously attached file is deleted only once no product uses it any more.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -856,7 +856,22 @@
             "id": {
               "type": "string",
               "format": "uuid",
-              "description": "Product id."
+              "description": "Product id (use this or product_ids)."
+            },
+            "product_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "minItems": 1,
+              "maxItems": 100,
+              "description": "Up to 100 product ids that all get the same datasheet (use this or id)."
+            },
+            "storage_path": {
+              "type": "string",
+              "pattern": "^datasheets\\/(?!.*\\.\\.)[A-Za-z0-9._\\-/]+\\.pdf$",
+              "description": "storage_path returned by create_datasheet_upload. The file must already be uploaded."
             },
             "pdf_url": {
               "type": "string",
@@ -877,11 +892,37 @@
             },
             "remove": {
               "type": "boolean",
-              "description": "true to remove the product's datasheet."
+              "description": "true to remove the datasheet."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_datasheet_upload",
+        "title": "Create datasheet upload URL",
+        "description": "Admin only. Reserve a storage path for a PDF datasheet and return a signed upload URL, so a local file can be sent straight to storage (e.g. with curl) instead of through a tool call. Upload the file with an HTTP PUT to upload_url (valid for 2 hours), then attach it with set_product_datasheet using storage_path (optionally product_ids for many products at once).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "file_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "\\.pdf$",
+              "description": "Name of the PDF being uploaded, e.g. 'Indoor-Fiber-Patch-Cord.pdf'."
             }
           },
           "required": [
-            "id"
+            "file_name"
           ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
