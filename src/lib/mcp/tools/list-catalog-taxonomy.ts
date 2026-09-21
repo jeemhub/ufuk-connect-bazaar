@@ -11,7 +11,7 @@ export default defineTool({
     if (!ctx.isAuthenticated()) throw new ToolError("Not authenticated");
     const supabase = supabaseForUser(ctx);
     const [categories, subcategories, brands] = await Promise.all([
-      supabase.from("categories").select("id, name_ar, name_en, slug"),
+      supabase.from("categories").select("id, key, name_ar, name_en").order("sort", { ascending: true }),
       supabase.from("subcategories").select("id, category_id, name_ar, name_en"),
       supabase.from("brands").select("id, name, logo_url"),
     ]);
@@ -23,7 +23,7 @@ export default defineTool({
         id: c.id,
         nameAr: c.name_ar,
         nameEn: c.name_en,
-        slug: (c as { slug?: string | null }).slug ?? null,
+        key: c.key,
       })),
       subcategories: (subcategories.data ?? []).map((s) => ({
         id: s.id,

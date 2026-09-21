@@ -12,7 +12,7 @@
   "mcp": {
     "server": {
       "name": "ufuk-al-basra",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "UFUK AL-Basra"
     },
     "tools": [
@@ -322,6 +322,1424 @@
           "required": [
             "kind",
             "limit"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_all_products",
+        "title": "List all products (admin)",
+        "description": "Admin only. List products including hidden (inactive) ones, newest first. Filter by text, brand, category or active state.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free text to match against names, SKU or brand, or null."
+            },
+            "brand": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact brand name filter, or null."
+            },
+            "category_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category id filter, or null."
+            },
+            "is_active": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "true = only visible, false = only hidden, null = both."
+            },
+            "limit": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum rows to return (default 50)."
+            }
+          },
+          "required": [
+            "query",
+            "brand",
+            "category_id",
+            "is_active",
+            "limit"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_product",
+        "title": "Create product",
+        "description": "Admin only. Create a new product. New products are hidden (is_active=false) unless is_active is set, so they can be reviewed first.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic name (required)."
+            },
+            "name_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English name. Defaults to name_ar on create."
+            },
+            "name_data": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Internal/data name used by stock imports, or null."
+            },
+            "desc_ar": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic description, or null."
+            },
+            "desc_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English description, or null."
+            },
+            "sku": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "SKU, or null."
+            },
+            "brand": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Brand name (as in list_catalog_taxonomy), or null."
+            },
+            "category_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category id, or null."
+            },
+            "subcategory": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Subcategory name(s), comma-separated, or null."
+            },
+            "price_iqd": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Retail price in IQD (>= 0)."
+            },
+            "price_wholesale_iqd": {
+              "$ref": "#/properties/price_iqd",
+              "description": "Wholesale price in IQD (>= 0)."
+            },
+            "price_dealer_iqd": {
+              "$ref": "#/properties/price_iqd",
+              "description": "Dealer price in IQD (>= 0)."
+            },
+            "stock": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Units in stock (>= 0)."
+            },
+            "image_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Image URL, or null."
+            },
+            "datasheet_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Datasheet URL, or null."
+            },
+            "datasheet_name": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Datasheet display name, or null."
+            },
+            "is_active": {
+              "type": "boolean",
+              "description": "Show on the store. Defaults to false."
+            }
+          },
+          "required": [
+            "name_ar"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_product",
+        "title": "Update product",
+        "description": "Admin only. Update a product. Only the fields provided are changed; pass null to clear an optional field.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Product id."
+            },
+            "name_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic name."
+            },
+            "name_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English name. Defaults to name_ar on create."
+            },
+            "name_data": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Internal/data name used by stock imports, or null."
+            },
+            "desc_ar": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic description, or null."
+            },
+            "desc_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English description, or null."
+            },
+            "sku": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "SKU, or null."
+            },
+            "brand": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Brand name (as in list_catalog_taxonomy), or null."
+            },
+            "category_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category id, or null."
+            },
+            "subcategory": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Subcategory name(s), comma-separated, or null."
+            },
+            "price_iqd": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Retail price in IQD (>= 0)."
+            },
+            "price_wholesale_iqd": {
+              "$ref": "#/properties/price_iqd",
+              "description": "Wholesale price in IQD (>= 0)."
+            },
+            "price_dealer_iqd": {
+              "$ref": "#/properties/price_iqd",
+              "description": "Dealer price in IQD (>= 0)."
+            },
+            "stock": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Units in stock (>= 0)."
+            },
+            "image_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Image URL, or null."
+            },
+            "datasheet_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Datasheet URL, or null."
+            },
+            "datasheet_name": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/name_data/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Datasheet display name, or null."
+            },
+            "is_active": {
+              "type": "boolean",
+              "description": "Show (true) or hide (false) on the store."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "set_product_active",
+        "title": "Show or hide product",
+        "description": "Admin only. Show (is_active=true) or hide (is_active=false) a product on the store.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Product id."
+            },
+            "is_active": {
+              "type": "boolean",
+              "description": "true to show on the store, false to hide."
+            }
+          },
+          "required": [
+            "id",
+            "is_active"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_product_stock",
+        "title": "Update product stock",
+        "description": "Admin only. Set a product's stock to an absolute value (stock) or adjust it by a signed amount (delta). Provide exactly one. Stock can never go below 0.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Product id."
+            },
+            "stock": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "New absolute stock (>= 0)."
+            },
+            "delta": {
+              "type": "integer",
+              "description": "Amount to add (positive) or remove (negative)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_product",
+        "title": "Delete product",
+        "description": "Admin only. Permanently delete a product. Refused if the product appears in any order; use set_product_active with is_active=false to hide it instead.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Product id."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_category",
+        "title": "Create category",
+        "description": "Admin only. Create a product category.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic name."
+            },
+            "name_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English name."
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Unique key (a-z, 0-9, dashes). Defaults to a slug of name_en."
+            },
+            "sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Display order. Defaults to last."
+            }
+          },
+          "required": [
+            "name_ar",
+            "name_en"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_category",
+        "title": "Update category",
+        "description": "Admin only. Update a product category. Only the fields provided are changed.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Category id."
+            },
+            "name_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic name."
+            },
+            "name_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English name."
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Unique key (a-z, 0-9, dashes)."
+            },
+            "sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Display order."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_subcategory",
+        "title": "Create subcategory",
+        "description": "Admin only. Create a subcategory under an existing category.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Parent category id."
+            },
+            "name_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic name."
+            },
+            "name_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English name."
+            }
+          },
+          "required": [
+            "category_id",
+            "name_ar",
+            "name_en"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_subcategory",
+        "title": "Update subcategory",
+        "description": "Admin only. Rename a subcategory or move it to another category. Only the fields provided are changed.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Subcategory id."
+            },
+            "category_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "New parent category id."
+            },
+            "name_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic name."
+            },
+            "name_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English name."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_brand",
+        "title": "Create brand",
+        "description": "Admin only. Create a brand.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Brand name."
+            },
+            "slug": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Unique URL slug. Defaults to a slug of name."
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Description, or null."
+            },
+            "logo_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Logo image URL, or null."
+            },
+            "is_active": {
+              "type": "boolean",
+              "description": "Show on the store. Defaults to true."
+            },
+            "sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Display order. Defaults to 0."
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_brand",
+        "title": "Update brand",
+        "description": "Admin only. Update a brand. Only the fields provided are changed. Renaming does not update products.brand on existing products.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Brand id."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Brand name."
+            },
+            "slug": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Unique URL slug."
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Description, or null to clear."
+            },
+            "logo_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Logo image URL, or null to clear."
+            },
+            "is_active": {
+              "type": "boolean",
+              "description": "Show (true) or hide (false) on the store."
+            },
+            "sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Display order."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_order_status",
+        "title": "Update order status",
+        "description": "Admin only. Change an order's status.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Order id."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "shipped",
+                "delivered",
+                "canceled"
+              ],
+              "description": "New status."
+            }
+          },
+          "required": [
+            "id",
+            "status"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_quote_request_status",
+        "title": "Update quote request status",
+        "description": "Admin only. Change a quote request's status.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Quote request id."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "new",
+                "contacted",
+                "closed"
+              ],
+              "description": "New status."
+            }
+          },
+          "required": [
+            "id",
+            "status"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_blog_post",
+        "title": "Create blog post",
+        "description": "Admin only. Create a blog post. Saved as a draft unless status is 'published' (publishing notifies subscribed users).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "slug": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Unique URL slug (lowercase letters, digits, dashes)."
+            },
+            "title_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic title."
+            },
+            "title_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English title."
+            },
+            "excerpt_ar": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic excerpt, or null."
+            },
+            "excerpt_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/excerpt_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English excerpt, or null."
+            },
+            "body_ar": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/excerpt_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic body (HTML/Markdown as used on the site), or null."
+            },
+            "body_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/excerpt_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English body (HTML/Markdown as used on the site), or null."
+            },
+            "cover_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cover image URL, or null."
+            },
+            "is_featured": {
+              "type": "boolean",
+              "description": "Feature on the home page."
+            },
+            "featured_sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Order among featured posts."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published"
+              ],
+              "description": "Defaults to draft."
+            }
+          },
+          "required": [
+            "slug",
+            "title_ar",
+            "title_en"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_blog_post",
+        "title": "Update blog post",
+        "description": "Admin only. Update a blog post. Only the fields provided are changed. Setting status to 'published' publishes it (and notifies subscribed users); 'draft' unpublishes it.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Blog post id."
+            },
+            "slug": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Unique URL slug (lowercase letters, digits, dashes)."
+            },
+            "title_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic title."
+            },
+            "title_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English title."
+            },
+            "excerpt_ar": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic excerpt, or null."
+            },
+            "excerpt_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/excerpt_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English excerpt, or null."
+            },
+            "body_ar": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/excerpt_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic body (HTML/Markdown as used on the site), or null."
+            },
+            "body_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/excerpt_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English body (HTML/Markdown as used on the site), or null."
+            },
+            "cover_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cover image URL, or null."
+            },
+            "is_featured": {
+              "type": "boolean",
+              "description": "Feature on the home page."
+            },
+            "featured_sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Order among featured posts."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published"
+              ],
+              "description": "draft or published."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_project",
+        "title": "Create project",
+        "description": "Admin only. Create a portfolio project. Unpublished unless is_published is true.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "slug": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Unique URL slug (lowercase letters, digits, dashes)."
+            },
+            "title_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic title."
+            },
+            "title_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English title."
+            },
+            "summary_ar": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic summary, or null."
+            },
+            "summary_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English summary, or null."
+            },
+            "body_ar": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic body, or null."
+            },
+            "body_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English body, or null."
+            },
+            "cover_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cover image URL, or null."
+            },
+            "gallery": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "description": "Gallery image URLs."
+            },
+            "client": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Client name, or null."
+            },
+            "location": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Location, or null."
+            },
+            "completed_at": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Completion date (YYYY-MM-DD), or null."
+            },
+            "sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Display order."
+            },
+            "is_published": {
+              "type": "boolean",
+              "description": "Show on the website. Defaults to false."
+            }
+          },
+          "required": [
+            "slug",
+            "title_ar",
+            "title_en"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_project",
+        "title": "Update project",
+        "description": "Admin only. Update a portfolio project. Only the fields provided are changed.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Project id."
+            },
+            "slug": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Unique URL slug (lowercase letters, digits, dashes)."
+            },
+            "title_ar": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Arabic title."
+            },
+            "title_en": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English title."
+            },
+            "summary_ar": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic summary, or null."
+            },
+            "summary_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English summary, or null."
+            },
+            "body_ar": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Arabic body, or null."
+            },
+            "body_en": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "English body, or null."
+            },
+            "cover_url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cover image URL, or null."
+            },
+            "gallery": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "description": "Gallery image URLs."
+            },
+            "client": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Client name, or null."
+            },
+            "location": {
+              "anyOf": [
+                {
+                  "$ref": "#/properties/summary_ar/anyOf/0"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Location, or null."
+            },
+            "completed_at": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Completion date (YYYY-MM-DD), or null."
+            },
+            "sort": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Display order."
+            },
+            "is_published": {
+              "type": "boolean",
+              "description": "Show (true) or hide (false) on the website."
+            }
+          },
+          "required": [
+            "id"
           ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"

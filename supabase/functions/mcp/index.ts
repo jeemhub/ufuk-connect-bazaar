@@ -153,7 +153,7 @@ var list_catalog_taxonomy_default = defineTool3({
     if (!ctx.isAuthenticated()) throw new ToolError3("Not authenticated");
     const supabase = supabaseForUser(ctx);
     const [categories, subcategories, brands] = await Promise.all([
-      supabase.from("categories").select("id, name_ar, name_en, slug"),
+      supabase.from("categories").select("id, key, name_ar, name_en").order("sort", { ascending: true }),
       supabase.from("subcategories").select("id, category_id, name_ar, name_en"),
       supabase.from("brands").select("id, name, logo_url")
     ]);
@@ -164,7 +164,7 @@ var list_catalog_taxonomy_default = defineTool3({
         id: c.id,
         nameAr: c.name_ar,
         nameEn: c.name_en,
-        slug: c.slug ?? null
+        key: c.key
       })),
       subcategories: (subcategories.data ?? []).map((s) => ({
         id: s.id,
@@ -367,13 +367,689 @@ var list_content_default = defineTool7({
   }
 });
 
+// src/lib/mcp/tools/list-all-products.ts
+import { defineTool as defineTool8, ToolError as ToolError9 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z8 } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/admin.ts
+import { ToolError as ToolError8 } from "npm:@lovable.dev/mcp-js@3.0.1";
+async function requireAdmin(ctx) {
+  if (!ctx.isAuthenticated()) throw new ToolError8("Not authenticated");
+  const userId = ctx.getUserId();
+  if (!userId) throw new ToolError8("Admin role required");
+  const supabase = supabaseForUser(ctx);
+  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+  if (error) throw new ToolError8(`Could not verify admin role: ${error.message}`);
+  if (data !== true) throw new ToolError8("Admin role required");
+  return { supabase, userId };
+}
+function compact(input) {
+  return Object.fromEntries(Object.entries(input).filter(([, v]) => v !== void 0));
+}
+function assertHasChanges(patch) {
+  if (Object.keys(patch).length === 0) throw new ToolError8("Provide at least one field to update");
+}
+function slugify(input) {
+  return input.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+function jsonResult(summary, structured) {
+  return {
+    content: [{ type: "text", text: `${summary}
+${JSON.stringify(structured, null, 2)}` }],
+    structuredContent: structured
+  };
+}
+function notFound(kind, id) {
+  throw new ToolError8(`No ${kind} found with id ${id}`);
+}
+
+// src/lib/mcp/products.ts
+import { z as z7 } from "npm:zod@^3.25.76";
+var iqd = z7.number().int().min(0);
+var text = z7.string().trim();
+var productFields = {
+  name_en: text.min(1).optional().describe("English name. Defaults to name_ar on create."),
+  name_data: text.nullable().optional().describe("Internal/data name used by stock imports, or null."),
+  desc_ar: text.nullable().optional().describe("Arabic description, or null."),
+  desc_en: text.nullable().optional().describe("English description, or null."),
+  sku: text.nullable().optional().describe("SKU, or null."),
+  brand: text.nullable().optional().describe("Brand name (as in list_catalog_taxonomy), or null."),
+  category_id: z7.string().uuid().nullable().optional().describe("Category id, or null."),
+  subcategory: text.nullable().optional().describe("Subcategory name(s), comma-separated, or null."),
+  price_iqd: iqd.optional().describe("Retail price in IQD (>= 0)."),
+  price_wholesale_iqd: iqd.optional().describe("Wholesale price in IQD (>= 0)."),
+  price_dealer_iqd: iqd.optional().describe("Dealer price in IQD (>= 0)."),
+  stock: z7.number().int().min(0).optional().describe("Units in stock (>= 0)."),
+  image_url: z7.string().url().nullable().optional().describe("Image URL, or null."),
+  datasheet_url: z7.string().url().nullable().optional().describe("Datasheet URL, or null."),
+  datasheet_name: text.nullable().optional().describe("Datasheet display name, or null.")
+};
+var PRODUCT_COLUMNS = "id, sku, name_ar, name_en, name_data, desc_ar, desc_en, brand, category_id, subcategory, price_iqd, price_wholesale_iqd, price_dealer_iqd, stock, is_active, image_url, datasheet_url, datasheet_name, created_at, updated_at";
+function toProduct(p) {
+  return {
+    id: p.id,
+    sku: p.sku ?? null,
+    nameAr: p.name_ar,
+    nameEn: p.name_en,
+    nameData: p.name_data ?? null,
+    descAr: p.desc_ar ?? null,
+    descEn: p.desc_en ?? null,
+    brand: p.brand ?? null,
+    categoryId: p.category_id ?? null,
+    subcategory: p.subcategory ?? null,
+    priceIqd: p.price_iqd,
+    priceWholesaleIqd: p.price_wholesale_iqd,
+    priceDealerIqd: p.price_dealer_iqd,
+    stock: p.stock,
+    isActive: p.is_active,
+    imageUrl: p.image_url ?? null,
+    datasheetUrl: p.datasheet_url ?? null,
+    datasheetName: p.datasheet_name ?? null,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at
+  };
+}
+
+// src/lib/mcp/tools/list-all-products.ts
+var list_all_products_default = defineTool8({
+  name: "list_all_products",
+  title: "List all products (admin)",
+  description: "Admin only. List products including hidden (inactive) ones, newest first. Filter by text, brand, category or active state.",
+  inputSchema: {
+    query: z8.string().trim().nullable().describe("Free text to match against names, SKU or brand, or null."),
+    brand: z8.string().trim().nullable().describe("Exact brand name filter, or null."),
+    category_id: z8.string().uuid().nullable().describe("Category id filter, or null."),
+    is_active: z8.boolean().nullable().describe("true = only visible, false = only hidden, null = both."),
+    limit: z8.number().int().min(1).max(200).nullable().describe("Maximum rows to return (default 50).")
+  },
+  annotations: { readOnlyHint: true, openWorldHint: false },
+  handler: async ({ query, brand, category_id, is_active, limit }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    let q = supabase.from("products").select(PRODUCT_COLUMNS).order("created_at", { ascending: false }).limit(limit ?? 50);
+    if (query) {
+      const like = `%${query}%`;
+      q = q.or(`name_ar.ilike.${like},name_en.ilike.${like},name_data.ilike.${like},sku.ilike.${like},brand.ilike.${like}`);
+    }
+    if (brand) q = q.eq("brand", brand);
+    if (category_id) q = q.eq("category_id", category_id);
+    if (is_active !== null) q = q.eq("is_active", is_active);
+    const { data, error } = await q;
+    if (error) throw new ToolError9(error.message);
+    const products = (data ?? []).map(toProduct);
+    return jsonResult(`${products.length} product(s).`, { products });
+  }
+});
+
+// src/lib/mcp/tools/create-product.ts
+import { defineTool as defineTool9, ToolError as ToolError10 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z9 } from "npm:zod@^3.25.76";
+var create_product_default = defineTool9({
+  name: "create_product",
+  title: "Create product",
+  description: "Admin only. Create a new product. New products are hidden (is_active=false) unless is_active is set, so they can be reviewed first.",
+  inputSchema: {
+    name_ar: z9.string().trim().min(1).describe("Arabic name (required)."),
+    ...productFields,
+    is_active: z9.boolean().optional().describe("Show on the store. Defaults to false.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async (input, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const { data, error } = await supabase.from("products").insert({
+      ...compact(input),
+      name_en: input.name_en ?? input.name_ar,
+      is_active: input.is_active ?? false
+    }).select(PRODUCT_COLUMNS).single();
+    if (error) throw new ToolError10(error.message);
+    const product = toProduct(data);
+    return jsonResult(`Product created (${product.id}).`, { product });
+  }
+});
+
+// src/lib/mcp/tools/update-product.ts
+import { defineTool as defineTool10, ToolError as ToolError11 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z10 } from "npm:zod@^3.25.76";
+var update_product_default = defineTool10({
+  name: "update_product",
+  title: "Update product",
+  description: "Admin only. Update a product. Only the fields provided are changed; pass null to clear an optional field.",
+  inputSchema: {
+    id: z10.string().uuid().describe("Product id."),
+    name_ar: z10.string().trim().min(1).optional().describe("Arabic name."),
+    ...productFields,
+    is_active: z10.boolean().optional().describe("Show (true) or hide (false) on the store.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, ...fields }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const patch = compact(fields);
+    assertHasChanges(patch);
+    const { data, error } = await supabase.from("products").update(patch).eq("id", id).select(PRODUCT_COLUMNS).maybeSingle();
+    if (error) throw new ToolError11(error.message);
+    if (!data) notFound("product", id);
+    const product = toProduct(data);
+    return jsonResult(`Product updated (${product.id}).`, { product });
+  }
+});
+
+// src/lib/mcp/tools/set-product-active.ts
+import { defineTool as defineTool11, ToolError as ToolError12 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z11 } from "npm:zod@^3.25.76";
+var set_product_active_default = defineTool11({
+  name: "set_product_active",
+  title: "Show or hide product",
+  description: "Admin only. Show (is_active=true) or hide (is_active=false) a product on the store.",
+  inputSchema: {
+    id: z11.string().uuid().describe("Product id."),
+    is_active: z11.boolean().describe("true to show on the store, false to hide.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, is_active }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const { data, error } = await supabase.from("products").update({ is_active }).eq("id", id).select(PRODUCT_COLUMNS).maybeSingle();
+    if (error) throw new ToolError12(error.message);
+    if (!data) notFound("product", id);
+    const product = toProduct(data);
+    return jsonResult(`Product ${is_active ? "shown" : "hidden"} (${product.id}).`, { product });
+  }
+});
+
+// src/lib/mcp/tools/update-product-stock.ts
+import { defineTool as defineTool12, ToolError as ToolError13 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z12 } from "npm:zod@^3.25.76";
+var MAX_ATTEMPTS = 3;
+var update_product_stock_default = defineTool12({
+  name: "update_product_stock",
+  title: "Update product stock",
+  description: "Admin only. Set a product's stock to an absolute value (stock) or adjust it by a signed amount (delta). Provide exactly one. Stock can never go below 0.",
+  inputSchema: {
+    id: z12.string().uuid().describe("Product id."),
+    stock: z12.number().int().min(0).optional().describe("New absolute stock (>= 0)."),
+    delta: z12.number().int().optional().describe("Amount to add (positive) or remove (negative).")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async ({ id, stock, delta }, ctx) => {
+    if (stock === void 0 === (delta === void 0)) throw new ToolError13("Provide exactly one of stock or delta");
+    const { supabase } = await requireAdmin(ctx);
+    if (stock !== void 0) {
+      const { data, error } = await supabase.from("products").update({ stock }).eq("id", id).select(PRODUCT_COLUMNS).maybeSingle();
+      if (error) throw new ToolError13(error.message);
+      if (!data) notFound("product", id);
+      const product = toProduct(data);
+      return jsonResult(`Stock set to ${product.stock}.`, { product });
+    }
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const { data: current, error: readError } = await supabase.from("products").select("stock").eq("id", id).maybeSingle();
+      if (readError) throw new ToolError13(readError.message);
+      if (!current) notFound("product", id);
+      const next = current.stock + delta;
+      if (next < 0) throw new ToolError13(`Stock cannot go below 0 (current ${current.stock}, delta ${delta})`);
+      const { data, error } = await supabase.from("products").update({ stock: next }).eq("id", id).eq("stock", current.stock).select(PRODUCT_COLUMNS).maybeSingle();
+      if (error) throw new ToolError13(error.message);
+      if (data) {
+        const product = toProduct(data);
+        return jsonResult(`Stock changed from ${current.stock} to ${product.stock}.`, { product });
+      }
+    }
+    throw new ToolError13("Stock changed concurrently; please retry");
+  }
+});
+
+// src/lib/mcp/tools/delete-product.ts
+import { defineTool as defineTool13, ToolError as ToolError14 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z13 } from "npm:zod@^3.25.76";
+var delete_product_default = defineTool13({
+  name: "delete_product",
+  title: "Delete product",
+  description: "Admin only. Permanently delete a product. Refused if the product appears in any order; use set_product_active with is_active=false to hide it instead.",
+  inputSchema: { id: z13.string().uuid().describe("Product id.") },
+  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const { count, error: countError } = await supabase.from("order_items").select("id", { count: "exact", head: true }).eq("product_id", id);
+    if (countError) throw new ToolError14(countError.message);
+    if ((count ?? 0) > 0) {
+      throw new ToolError14(
+        `Product appears in ${count} order item(s) and cannot be deleted. Use set_product_active with is_active=false to hide it instead.`
+      );
+    }
+    const { data, error } = await supabase.from("products").delete().eq("id", id).select("id, name_ar, name_en").maybeSingle();
+    if (error) throw new ToolError14(error.message);
+    if (!data) notFound("product", id);
+    const deleted = { id: data.id, nameAr: data.name_ar, nameEn: data.name_en };
+    return jsonResult(`Product deleted (${deleted.id}).`, { deleted });
+  }
+});
+
+// src/lib/mcp/tools/create-category.ts
+import { defineTool as defineTool14, ToolError as ToolError15 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z14 } from "npm:zod@^3.25.76";
+var create_category_default = defineTool14({
+  name: "create_category",
+  title: "Create category",
+  description: "Admin only. Create a product category.",
+  inputSchema: {
+    name_ar: z14.string().trim().min(1).describe("Arabic name."),
+    name_en: z14.string().trim().min(1).describe("English name."),
+    key: z14.string().trim().min(1).optional().describe("Unique key (a-z, 0-9, dashes). Defaults to a slug of name_en."),
+    sort: z14.number().int().min(0).optional().describe("Display order. Defaults to last.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async ({ name_ar, name_en, key, sort }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const finalKey = slugify(key ?? name_en);
+    if (!finalKey) throw new ToolError15("Could not derive a key from name_en; provide key explicitly");
+    let finalSort = sort;
+    if (finalSort === void 0) {
+      const { count, error: error2 } = await supabase.from("categories").select("id", { count: "exact", head: true });
+      if (error2) throw new ToolError15(error2.message);
+      finalSort = count ?? 0;
+    }
+    const { data, error } = await supabase.from("categories").insert({ name_ar, name_en, key: finalKey, sort: finalSort }).select("id, key, name_ar, name_en, sort").single();
+    if (error) throw new ToolError15(error.message);
+    const category = { id: data.id, key: data.key, nameAr: data.name_ar, nameEn: data.name_en, sort: data.sort };
+    return jsonResult(`Category created (${category.id}).`, { category });
+  }
+});
+
+// src/lib/mcp/tools/update-category.ts
+import { defineTool as defineTool15, ToolError as ToolError16 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z15 } from "npm:zod@^3.25.76";
+var update_category_default = defineTool15({
+  name: "update_category",
+  title: "Update category",
+  description: "Admin only. Update a product category. Only the fields provided are changed.",
+  inputSchema: {
+    id: z15.string().uuid().describe("Category id."),
+    name_ar: z15.string().trim().min(1).optional().describe("Arabic name."),
+    name_en: z15.string().trim().min(1).optional().describe("English name."),
+    key: z15.string().trim().min(1).optional().describe("Unique key (a-z, 0-9, dashes)."),
+    sort: z15.number().int().min(0).optional().describe("Display order.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, key, ...fields }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const patch = compact({ ...fields, key: key === void 0 ? void 0 : slugify(key) });
+    if (patch.key === "") throw new ToolError16("key must contain letters or digits");
+    assertHasChanges(patch);
+    const { data, error } = await supabase.from("categories").update(patch).eq("id", id).select("id, key, name_ar, name_en, sort").maybeSingle();
+    if (error) throw new ToolError16(error.message);
+    if (!data) notFound("category", id);
+    const category = { id: data.id, key: data.key, nameAr: data.name_ar, nameEn: data.name_en, sort: data.sort };
+    return jsonResult(`Category updated (${category.id}).`, { category });
+  }
+});
+
+// src/lib/mcp/tools/create-subcategory.ts
+import { defineTool as defineTool16, ToolError as ToolError17 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z16 } from "npm:zod@^3.25.76";
+var create_subcategory_default = defineTool16({
+  name: "create_subcategory",
+  title: "Create subcategory",
+  description: "Admin only. Create a subcategory under an existing category.",
+  inputSchema: {
+    category_id: z16.string().uuid().describe("Parent category id."),
+    name_ar: z16.string().trim().min(1).describe("Arabic name."),
+    name_en: z16.string().trim().min(1).describe("English name.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async (input, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const { data, error } = await supabase.from("subcategories").insert(input).select("id, category_id, name_ar, name_en").single();
+    if (error) throw new ToolError17(error.message);
+    const subcategory = { id: data.id, categoryId: data.category_id, nameAr: data.name_ar, nameEn: data.name_en };
+    return jsonResult(`Subcategory created (${subcategory.id}).`, { subcategory });
+  }
+});
+
+// src/lib/mcp/tools/update-subcategory.ts
+import { defineTool as defineTool17, ToolError as ToolError18 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z17 } from "npm:zod@^3.25.76";
+var update_subcategory_default = defineTool17({
+  name: "update_subcategory",
+  title: "Update subcategory",
+  description: "Admin only. Rename a subcategory or move it to another category. Only the fields provided are changed.",
+  inputSchema: {
+    id: z17.string().uuid().describe("Subcategory id."),
+    category_id: z17.string().uuid().optional().describe("New parent category id."),
+    name_ar: z17.string().trim().min(1).optional().describe("Arabic name."),
+    name_en: z17.string().trim().min(1).optional().describe("English name.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, ...fields }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const patch = compact(fields);
+    assertHasChanges(patch);
+    const { data, error } = await supabase.from("subcategories").update(patch).eq("id", id).select("id, category_id, name_ar, name_en").maybeSingle();
+    if (error) throw new ToolError18(error.message);
+    if (!data) notFound("subcategory", id);
+    const subcategory = { id: data.id, categoryId: data.category_id, nameAr: data.name_ar, nameEn: data.name_en };
+    return jsonResult(`Subcategory updated (${subcategory.id}).`, { subcategory });
+  }
+});
+
+// src/lib/mcp/tools/create-brand.ts
+import { defineTool as defineTool18, ToolError as ToolError19 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z18 } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/brands.ts
+var BRAND_COLUMNS = "id, name, slug, description, logo_url, is_active, sort";
+function toBrand(b) {
+  return {
+    id: b.id,
+    name: b.name,
+    slug: b.slug,
+    description: b.description ?? null,
+    logoUrl: b.logo_url ?? null,
+    isActive: b.is_active,
+    sort: b.sort
+  };
+}
+
+// src/lib/mcp/tools/create-brand.ts
+var create_brand_default = defineTool18({
+  name: "create_brand",
+  title: "Create brand",
+  description: "Admin only. Create a brand.",
+  inputSchema: {
+    name: z18.string().trim().min(1).describe("Brand name."),
+    slug: z18.string().trim().min(1).optional().describe("Unique URL slug. Defaults to a slug of name."),
+    description: z18.string().trim().nullable().optional().describe("Description, or null."),
+    logo_url: z18.string().url().nullable().optional().describe("Logo image URL, or null."),
+    is_active: z18.boolean().optional().describe("Show on the store. Defaults to true."),
+    sort: z18.number().int().min(0).optional().describe("Display order. Defaults to 0.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async ({ name, slug, description, logo_url, is_active, sort }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const finalSlug = slugify(slug ?? name);
+    if (!finalSlug) throw new ToolError19("Could not derive a slug from name; provide slug explicitly");
+    const { data, error } = await supabase.from("brands").insert({
+      name,
+      slug: finalSlug,
+      description: description ?? null,
+      logo_url: logo_url ?? null,
+      is_active: is_active ?? true,
+      sort: sort ?? 0
+    }).select(BRAND_COLUMNS).single();
+    if (error) throw new ToolError19(error.message);
+    const brand = toBrand(data);
+    return jsonResult(`Brand created (${brand.id}).`, { brand });
+  }
+});
+
+// src/lib/mcp/tools/update-brand.ts
+import { defineTool as defineTool19, ToolError as ToolError20 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z19 } from "npm:zod@^3.25.76";
+var update_brand_default = defineTool19({
+  name: "update_brand",
+  title: "Update brand",
+  description: "Admin only. Update a brand. Only the fields provided are changed. Renaming does not update products.brand on existing products.",
+  inputSchema: {
+    id: z19.string().uuid().describe("Brand id."),
+    name: z19.string().trim().min(1).optional().describe("Brand name."),
+    slug: z19.string().trim().min(1).optional().describe("Unique URL slug."),
+    description: z19.string().trim().nullable().optional().describe("Description, or null to clear."),
+    logo_url: z19.string().url().nullable().optional().describe("Logo image URL, or null to clear."),
+    is_active: z19.boolean().optional().describe("Show (true) or hide (false) on the store."),
+    sort: z19.number().int().min(0).optional().describe("Display order.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, slug, ...fields }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const patch = compact({ ...fields, slug: slug === void 0 ? void 0 : slugify(slug) });
+    if (patch.slug === "") throw new ToolError20("slug must contain letters or digits");
+    assertHasChanges(patch);
+    const { data, error } = await supabase.from("brands").update(patch).eq("id", id).select(BRAND_COLUMNS).maybeSingle();
+    if (error) throw new ToolError20(error.message);
+    if (!data) notFound("brand", id);
+    const brand = toBrand(data);
+    return jsonResult(`Brand updated (${brand.id}).`, { brand });
+  }
+});
+
+// src/lib/mcp/tools/update-order-status.ts
+import { defineTool as defineTool20, ToolError as ToolError21 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z20 } from "npm:zod@^3.25.76";
+var ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "canceled"];
+var update_order_status_default = defineTool20({
+  name: "update_order_status",
+  title: "Update order status",
+  description: "Admin only. Change an order's status.",
+  inputSchema: {
+    id: z20.string().uuid().describe("Order id."),
+    status: z20.enum(ORDER_STATUSES).describe("New status.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, status }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const { data, error } = await supabase.from("orders").update({ status }).eq("id", id).select("id, order_no, status, updated_at").maybeSingle();
+    if (error) throw new ToolError21(error.message);
+    if (!data) notFound("order", id);
+    const order = { id: data.id, orderNo: data.order_no, status: data.status, updatedAt: data.updated_at };
+    return jsonResult(`Order ${order.orderNo} is now ${order.status}.`, { order });
+  }
+});
+
+// src/lib/mcp/tools/update-quote-request-status.ts
+import { defineTool as defineTool21, ToolError as ToolError22 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z21 } from "npm:zod@^3.25.76";
+var QUOTE_STATUSES = ["new", "contacted", "closed"];
+var update_quote_request_status_default = defineTool21({
+  name: "update_quote_request_status",
+  title: "Update quote request status",
+  description: "Admin only. Change a quote request's status.",
+  inputSchema: {
+    id: z21.string().uuid().describe("Quote request id."),
+    status: z21.enum(QUOTE_STATUSES).describe("New status.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, status }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const { data, error } = await supabase.from("quote_requests").update({ status }).eq("id", id).select("id, full_name, status").maybeSingle();
+    if (error) throw new ToolError22(error.message);
+    if (!data) notFound("quote request", id);
+    const quote = { id: data.id, fullName: data.full_name, status: data.status };
+    return jsonResult(`Quote request ${quote.id} is now ${quote.status}.`, { quote });
+  }
+});
+
+// src/lib/mcp/tools/create-blog-post.ts
+import { defineTool as defineTool22, ToolError as ToolError23 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z23 } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/content.ts
+import { z as z22 } from "npm:zod@^3.25.76";
+var text2 = z22.string().trim();
+var slugField = text2.min(1).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, digits and dashes only").describe("Unique URL slug (lowercase letters, digits, dashes).");
+var blogFields = {
+  title_ar: text2.min(1).describe("Arabic title."),
+  title_en: text2.min(1).describe("English title."),
+  excerpt_ar: text2.nullable().optional().describe("Arabic excerpt, or null."),
+  excerpt_en: text2.nullable().optional().describe("English excerpt, or null."),
+  body_ar: text2.nullable().optional().describe("Arabic body (HTML/Markdown as used on the site), or null."),
+  body_en: text2.nullable().optional().describe("English body (HTML/Markdown as used on the site), or null."),
+  cover_url: z22.string().url().nullable().optional().describe("Cover image URL, or null."),
+  is_featured: z22.boolean().optional().describe("Feature on the home page."),
+  featured_sort: z22.number().int().min(0).optional().describe("Order among featured posts.")
+};
+var BLOG_COLUMNS = "id, slug, title_ar, title_en, excerpt_ar, excerpt_en, cover_url, status, is_featured, featured_sort, published_at, created_at, updated_at";
+function toBlogPost(p) {
+  return {
+    id: p.id,
+    slug: p.slug,
+    titleAr: p.title_ar,
+    titleEn: p.title_en,
+    excerptAr: p.excerpt_ar ?? null,
+    excerptEn: p.excerpt_en ?? null,
+    coverUrl: p.cover_url ?? null,
+    status: p.status,
+    isFeatured: p.is_featured,
+    featuredSort: p.featured_sort,
+    publishedAt: p.published_at ?? null,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at
+  };
+}
+var projectFields = {
+  title_ar: text2.min(1).describe("Arabic title."),
+  title_en: text2.min(1).describe("English title."),
+  summary_ar: text2.nullable().optional().describe("Arabic summary, or null."),
+  summary_en: text2.nullable().optional().describe("English summary, or null."),
+  body_ar: text2.nullable().optional().describe("Arabic body, or null."),
+  body_en: text2.nullable().optional().describe("English body, or null."),
+  cover_url: z22.string().url().nullable().optional().describe("Cover image URL, or null."),
+  gallery: z22.array(z22.string().url()).optional().describe("Gallery image URLs."),
+  client: text2.nullable().optional().describe("Client name, or null."),
+  location: text2.nullable().optional().describe("Location, or null."),
+  completed_at: z22.string().date().nullable().optional().describe("Completion date (YYYY-MM-DD), or null."),
+  sort: z22.number().int().min(0).optional().describe("Display order.")
+};
+var PROJECT_COLUMNS = "id, slug, title_ar, title_en, summary_ar, summary_en, cover_url, gallery, client, location, completed_at, is_published, sort, created_at, updated_at";
+function toProject(p) {
+  return {
+    id: p.id,
+    slug: p.slug,
+    titleAr: p.title_ar,
+    titleEn: p.title_en,
+    summaryAr: p.summary_ar ?? null,
+    summaryEn: p.summary_en ?? null,
+    coverUrl: p.cover_url ?? null,
+    gallery: p.gallery ?? [],
+    client: p.client ?? null,
+    location: p.location ?? null,
+    completedAt: p.completed_at ?? null,
+    isPublished: p.is_published,
+    sort: p.sort,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at
+  };
+}
+
+// src/lib/mcp/tools/create-blog-post.ts
+var create_blog_post_default = defineTool22({
+  name: "create_blog_post",
+  title: "Create blog post",
+  description: "Admin only. Create a blog post. Saved as a draft unless status is 'published' (publishing notifies subscribed users).",
+  inputSchema: {
+    slug: slugField,
+    ...blogFields,
+    status: z23.enum(["draft", "published"]).optional().describe("Defaults to draft.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async ({ status, ...fields }, ctx) => {
+    const { supabase, userId } = await requireAdmin(ctx);
+    const finalStatus = status ?? "draft";
+    const { data, error } = await supabase.from("blog_posts").insert({
+      ...compact(fields),
+      status: finalStatus,
+      author_id: userId,
+      published_at: finalStatus === "published" ? (/* @__PURE__ */ new Date()).toISOString() : null
+    }).select(BLOG_COLUMNS).single();
+    if (error) throw new ToolError23(error.message);
+    const post = toBlogPost(data);
+    return jsonResult(`Blog post created as ${post.status} (${post.id}).`, { post });
+  }
+});
+
+// src/lib/mcp/tools/update-blog-post.ts
+import { defineTool as defineTool23, ToolError as ToolError24 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z24 } from "npm:zod@^3.25.76";
+var update_blog_post_default = defineTool23({
+  name: "update_blog_post",
+  title: "Update blog post",
+  description: "Admin only. Update a blog post. Only the fields provided are changed. Setting status to 'published' publishes it (and notifies subscribed users); 'draft' unpublishes it.",
+  inputSchema: {
+    id: z24.string().uuid().describe("Blog post id."),
+    slug: slugField.optional(),
+    title_ar: blogFields.title_ar.optional(),
+    title_en: blogFields.title_en.optional(),
+    excerpt_ar: blogFields.excerpt_ar,
+    excerpt_en: blogFields.excerpt_en,
+    body_ar: blogFields.body_ar,
+    body_en: blogFields.body_en,
+    cover_url: blogFields.cover_url,
+    is_featured: blogFields.is_featured,
+    featured_sort: blogFields.featured_sort,
+    status: z24.enum(["draft", "published"]).optional().describe("draft or published.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, status, ...fields }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const patch = compact(fields);
+    if (status !== void 0) {
+      const { data: current, error: error2 } = await supabase.from("blog_posts").select("published_at").eq("id", id).maybeSingle();
+      if (error2) throw new ToolError24(error2.message);
+      if (!current) notFound("blog post", id);
+      patch.status = status;
+      patch.published_at = status === "published" ? current.published_at ?? (/* @__PURE__ */ new Date()).toISOString() : null;
+    }
+    assertHasChanges(patch);
+    const { data, error } = await supabase.from("blog_posts").update(patch).eq("id", id).select(BLOG_COLUMNS).maybeSingle();
+    if (error) throw new ToolError24(error.message);
+    if (!data) notFound("blog post", id);
+    const post = toBlogPost(data);
+    return jsonResult(`Blog post updated (${post.id}, ${post.status}).`, { post });
+  }
+});
+
+// src/lib/mcp/tools/create-project.ts
+import { defineTool as defineTool24, ToolError as ToolError25 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z25 } from "npm:zod@^3.25.76";
+var create_project_default = defineTool24({
+  name: "create_project",
+  title: "Create project",
+  description: "Admin only. Create a portfolio project. Unpublished unless is_published is true.",
+  inputSchema: {
+    slug: slugField,
+    ...projectFields,
+    is_published: z25.boolean().optional().describe("Show on the website. Defaults to false.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  handler: async (input, ctx) => {
+    const { supabase, userId } = await requireAdmin(ctx);
+    const { data, error } = await supabase.from("projects").insert({ ...compact(input), is_published: input.is_published ?? false, author_id: userId }).select(PROJECT_COLUMNS).single();
+    if (error) throw new ToolError25(error.message);
+    const project = toProject(data);
+    return jsonResult(`Project created (${project.id}).`, { project });
+  }
+});
+
+// src/lib/mcp/tools/update-project.ts
+import { defineTool as defineTool25, ToolError as ToolError26 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z26 } from "npm:zod@^3.25.76";
+var update_project_default = defineTool25({
+  name: "update_project",
+  title: "Update project",
+  description: "Admin only. Update a portfolio project. Only the fields provided are changed.",
+  inputSchema: {
+    id: z26.string().uuid().describe("Project id."),
+    slug: slugField.optional(),
+    ...projectFields,
+    title_ar: projectFields.title_ar.optional(),
+    title_en: projectFields.title_en.optional(),
+    is_published: z26.boolean().optional().describe("Show (true) or hide (false) on the website.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  handler: async ({ id, ...fields }, ctx) => {
+    const { supabase } = await requireAdmin(ctx);
+    const patch = compact(fields);
+    assertHasChanges(patch);
+    const { data, error } = await supabase.from("projects").update(patch).eq("id", id).select(PROJECT_COLUMNS).maybeSingle();
+    if (error) throw new ToolError26(error.message);
+    if (!data) notFound("project", id);
+    const project = toProject(data);
+    return jsonResult(`Project updated (${project.id}).`, { project });
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "ecbbhathvpxrgvfztzeu";
 var mcp_default = defineMcp({
   name: "ufuk-al-basra",
   title: "UFUK AL-Basra",
-  version: "0.1.0",
-  instructions: "Tools for the UFUK AL-Basra store. Use `search_products` and `get_product` for the catalog, `list_catalog_taxonomy` for categories and brands, `list_my_orders` and `get_order` for the signed-in user's orders, `create_quote_request` to ask sales for a price, and `list_content` for blog posts and projects. All data access runs as the signed-in user.",
+  version: "0.2.0",
+  instructions: 'Tools for the UFUK AL-Basra store. Use `search_products` and `get_product` for the catalog, `list_catalog_taxonomy` for categories and brands, `list_my_orders` and `get_order` for the signed-in user\'s orders, `create_quote_request` to ask sales for a price, and `list_content` for blog posts and projects. All data access runs as the signed-in user. Admin-only tools (they fail with "Admin role required" otherwise): `list_all_products` (includes hidden products); product writes `create_product`, `update_product`, `set_product_active`, `update_product_stock`, `delete_product`; catalog writes `create_category`, `update_category`, `create_subcategory`, `update_subcategory`, `create_brand`, `update_brand`; `update_order_status`, `update_quote_request_status`; content writes `create_blog_post`, `update_blog_post`, `create_project`, `update_project`. Prefer hiding a product with `set_product_active` over deleting it.',
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
@@ -385,7 +1061,25 @@ var mcp_default = defineMcp({
     list_my_orders_default,
     get_order_default,
     create_quote_request_default,
-    list_content_default
+    list_content_default,
+    list_all_products_default,
+    create_product_default,
+    update_product_default,
+    set_product_active_default,
+    update_product_stock_default,
+    delete_product_default,
+    create_category_default,
+    update_category_default,
+    create_subcategory_default,
+    update_subcategory_default,
+    create_brand_default,
+    update_brand_default,
+    update_order_status_default,
+    update_quote_request_status_default,
+    create_blog_post_default,
+    update_blog_post_default,
+    create_project_default,
+    update_project_default
   ]
 });
 
