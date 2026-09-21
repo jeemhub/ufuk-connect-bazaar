@@ -58,11 +58,16 @@ export default function AuthPage() {
     document.title = `${t(titleKey)} · ${t("brand")}`;
   }, [titleKey, t]);
 
+  // Preserve an intended destination (e.g. the OAuth consent page) across sign-in.
+  const nextParam = new URLSearchParams(location.search).get("next");
+  const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
+
   if (loading) return null;
   if (session) {
-    const from = (location.state as { from?: string } | null)?.from || "/";
+    const from = safeNext || (location.state as { from?: string } | null)?.from || "/";
     return <Navigate to={from} replace />;
   }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,7 +98,7 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}${safeNext ?? "/"}`,
             data: { full_name: fullName, phone },
           },
         });
