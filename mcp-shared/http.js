@@ -86,12 +86,21 @@ export async function handleMcpRequest(req, res, { pathSecret } = {}) {
     return;
   }
 
-  // The site already has its public project URL configured for the build.
+  // The site's own VITE_SUPABASE_URL lives in the committed .env, which Vite
+  // reads at build time but a serverless function never sees — so SUPABASE_URL
+  // must be set in Vercel. The fallback only helps if VITE_ is set there too.
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const { SUPABASE_SERVICE_ROLE_KEY, MCP_SECRET, MCP_CLAUDE_ONLY } = process.env;
 
-  if (!supabaseUrl || !SUPABASE_SERVICE_ROLE_KEY || !MCP_SECRET) {
-    res.status(500).json({ error: "Server is missing SUPABASE_SERVICE_ROLE_KEY or MCP_SECRET." });
+  // Name exactly what is missing: a generic message sent the setup down the
+  // wrong path once already.
+  const missing = [
+    !supabaseUrl && "SUPABASE_URL",
+    !SUPABASE_SERVICE_ROLE_KEY && "SUPABASE_SERVICE_ROLE_KEY",
+    !MCP_SECRET && "MCP_SECRET",
+  ].filter(Boolean);
+  if (missing.length) {
+    res.status(500).json({ error: `Server is missing environment variables: ${missing.join(", ")}.` });
     return;
   }
   if (MCP_SECRET.length < MIN_SECRET_LENGTH) {

@@ -27,7 +27,7 @@ are bundled into the browser.
    |---|---|
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard → Project Settings → API → **service_role** key |
    | `MCP_SECRET` | A long random string, at least 32 characters (`openssl rand -hex 32`) |
-   | `SUPABASE_URL` | Optional — falls back to the site's `VITE_SUPABASE_URL` |
+   | `SUPABASE_URL` | `https://ecbbhathvpxrgvfztzeu.supabase.co` — required: the site's `VITE_SUPABASE_URL` comes from the committed `.env`, which functions never see |
    | `MCP_CLAUDE_ONLY` | Optional — set to `1` to accept connections from Claude only |
 
 2. Redeploy so the function picks them up.
