@@ -12,7 +12,7 @@
   "mcp": {
     "server": {
       "name": "ufuk-al-basra",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "title": "UFUK AL-Basra"
     },
     "tools": [
@@ -830,6 +830,54 @@
               "type": "string",
               "format": "uuid",
               "description": "Product id."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "set_product_datasheet",
+        "title": "Set product datasheet (PDF)",
+        "description": "Admin only. Attach a PDF datasheet to a product (the 'ورقة البيانات (PDF)' field), replacing any existing one, or remove it. Provide exactly one of: pdf_url (an https link to a PDF; it is downloaded and stored on the site), pdf_base64 (the PDF file content), or remove=true. Max 10 MB.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Product id."
+            },
+            "pdf_url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https\\:\\/\\/",
+              "description": "https URL of the PDF to download and attach."
+            },
+            "pdf_base64": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Base64-encoded PDF file content."
+            },
+            "file_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Name shown to customers, e.g. 'TL-SG1008D.pdf'."
+            },
+            "remove": {
+              "type": "boolean",
+              "description": "true to remove the product's datasheet."
             }
           },
           "required": [

@@ -12,6 +12,7 @@ import updateProduct from "./tools/update-product";
 import setProductActive from "./tools/set-product-active";
 import updateProductStock from "./tools/update-product-stock";
 import deleteProduct from "./tools/delete-product";
+import setProductDatasheet from "./tools/set-product-datasheet";
 import createCategory from "./tools/create-category";
 import updateCategory from "./tools/update-category";
 import createSubcategory from "./tools/create-subcategory";
@@ -30,10 +31,10 @@ const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unse
 export default defineMcp({
   name: "ufuk-al-basra",
   title: "UFUK AL-Basra",
-  version: "0.2.0",
+  version: "0.3.0",
   instructions:
     "Tools for the UFUK AL-Basra store. Use `search_products` and `get_product` for the catalog, `list_catalog_taxonomy` for categories and brands, `list_my_orders` and `get_order` for the signed-in user's orders, `create_quote_request` to ask sales for a price, and `list_content` for blog posts and projects. All data access runs as the signed-in user. " +
-    "Admin-only tools (they fail with \"Admin role required\" otherwise): `list_all_products` (includes hidden products); product writes `create_product`, `update_product`, `set_product_active`, `update_product_stock`, `delete_product`; catalog writes `create_category`, `update_category`, `create_subcategory`, `update_subcategory`, `create_brand`, `update_brand`; `update_order_status`, `update_quote_request_status`; content writes `create_blog_post`, `update_blog_post`, `create_project`, `update_project`. Prefer hiding a product with `set_product_active` over deleting it.",
+    "Admin-only tools (they fail with \"Admin role required\" otherwise): `list_all_products` (includes hidden products); product writes `create_product`, `update_product`, `set_product_active`, `update_product_stock`, `set_product_datasheet` (attach/remove the PDF datasheet), `delete_product`; catalog writes `create_category`, `update_category`, `create_subcategory`, `update_subcategory`, `create_brand`, `update_brand`; `update_order_status`, `update_quote_request_status`; content writes `create_blog_post`, `update_blog_post`, `create_project`, `update_project`. Prefer hiding a product with `set_product_active` over deleting it.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
@@ -52,6 +53,7 @@ export default defineMcp({
     setProductActive,
     updateProductStock,
     deleteProduct,
+    setProductDatasheet,
     createCategory,
     updateCategory,
     createSubcategory,
