@@ -254,7 +254,7 @@ export default function ProductDetail() {
                       <Button asChild size="lg" variant="outline" className="flex-1">
                         <a href={product.datasheetUrl} target="_blank" rel="noopener noreferrer" download={product.datasheetName}>
                           <Download className="me-2 h-4 w-4" />
-                          {t("download_datasheet")}
+                          <span translate="no" dir="ltr" className="notranslate">{t("download_datasheet")}</span>
                         </a>
                       </Button>
                     )}

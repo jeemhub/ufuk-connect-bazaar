@@ -34,7 +34,7 @@ export const translations = {
     out_of_stock: "نافد",
     in_stock: "متوفر",
     low_stock: "مخزون منخفض",
-    download_datasheet: "تحميل ورقة البيانات",
+    download_datasheet: "Download datasheet",
     product_details: "تفاصيل المنتج",
     related_products: "منتجات ذات صلة",
     no_products: "لا توجد منتجات مطابقة",
