@@ -85,6 +85,11 @@ export default function Users() {
   const [savingSales, setSavingSales] = useState(false);
   const [custNumUser, setCustNumUser] = useState<Row | null>(null);
   const [custNumInput, setCustNumInput] = useState("");
+  const [custNameSearch, setCustNameSearch] = useState("");
+  const [suggestions, setSuggestions] = useState<Array<{ customer_number: string; customer_name: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchingCust, setSearchingCust] = useState(false);
+  const [matchedCustomerName, setMatchedCustomerName] = useState<string | null>(null);
   const [savingCustNum, setSavingCustNum] = useState(false);
   const [search, setSearch] = useState("");
   type FilterKey = "customer" | "wholesale" | "dealer" | "sales" | "verified" | "blocked";
@@ -186,6 +191,99 @@ export default function Users() {
     toast.success("تم تحديث رقم العميل بنجاح");
     setCustNumUser(null);
     load();
+  }
+
+  async function openCustNumDialog(u: Row) {
+    setCustNumUser(u);
+    const initialNum = u.customer_number || "";
+    setCustNumInput(initialNum);
+    setCustNameSearch("");
+    setMatchedCustomerName(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+
+    if (initialNum) {
+      const { data } = await supabase
+        .from("customer_balances")
+        .select("customer_name")
+        .eq("customer_number", initialNum.trim())
+        .limit(1);
+
+      if (data && data.length > 0) {
+        setCustNameSearch(data[0].customer_name);
+        setMatchedCustomerName(data[0].customer_name);
+      }
+    }
+  }
+
+  async function handleNameSearchChange(val: string) {
+    setCustNameSearch(val);
+    const q = val.trim();
+    if (!q) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    setSearchingCust(true);
+    setShowSuggestions(true);
+
+    const { data } = await supabase
+      .from("customer_balances")
+      .select("customer_number, customer_name")
+      .or(`customer_name.ilike.%${q}%,customer_number.ilike.%${q}%`)
+      .limit(8);
+
+    setSearchingCust(false);
+    if (data) {
+      const unique = Array.from(
+        new Map(data.map((item) => [item.customer_number, item])).values()
+      );
+      setSuggestions(unique);
+    } else {
+      setSuggestions([]);
+    }
+  }
+
+  function selectSuggestion(item: { customer_number: string; customer_name: string }) {
+    setCustNumInput(item.customer_number);
+    setCustNameSearch(item.customer_name);
+    setMatchedCustomerName(item.customer_name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+  }
+
+  async function handleCustNumInputChange(val: string) {
+    setCustNumInput(val);
+    const clean = val.trim();
+    if (!clean) {
+      setCustNameSearch("");
+      setMatchedCustomerName(null);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("customer_balances")
+      .select("customer_name")
+      .eq("customer_number", clean)
+      .limit(1);
+
+    if (data && data.length > 0) {
+      setCustNameSearch(data[0].customer_name);
+      setMatchedCustomerName(data[0].customer_name);
+    } else {
+      const { data: prefixData } = await supabase
+        .from("customer_balances")
+        .select("customer_name")
+        .ilike("customer_number", `${clean}%`)
+        .limit(1);
+
+      if (prefixData && prefixData.length > 0) {
+        setCustNameSearch(prefixData[0].customer_name);
+        setMatchedCustomerName(prefixData[0].customer_name);
+      } else {
+        setMatchedCustomerName(null);
+      }
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -387,10 +485,7 @@ export default function Users() {
                           size="sm"
                           className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
                           title="تعديل رقم العميل"
-                          onClick={() => {
-                            setCustNumUser(u);
-                            setCustNumInput(u.customer_number || "");
-                          }}
+                          onClick={() => openCustNumDialog(u)}
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
@@ -606,7 +701,12 @@ export default function Users() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!custNumUser} onOpenChange={(open) => !open && setCustNumUser(null)}>
+      <Dialog open={!!custNumUser} onOpenChange={(open) => {
+        if (!open) {
+          setCustNumUser(null);
+          setShowSuggestions(false);
+        }
+      }}>
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-sky-800 dark:text-sky-300">
@@ -614,26 +714,83 @@ export default function Users() {
               تعيين رقم العميل
             </DialogTitle>
             <DialogDescription>
-              أدخل رقم العميل المخصص للمستخدم ({custNumUser?.full_name || custNumUser?.email}) لربط حسابه الشخصي بأرصدة العملاء المالية.
+              ابحث عن العميل أو أدخل رقم العميل المخصص للمستخدم ({custNumUser?.full_name || custNumUser?.email}) لربط حسابه الشخصي بأرصدة العملاء المالية.
             </DialogDescription>
           </DialogHeader>
+
           <div className="space-y-4 py-2">
+            {/* Customer Name Search Bar with Live Suggestions */}
+            <div className="relative space-y-1.5">
+              <Label htmlFor="custNameSearch">البحث عن اسم العميل في السجلات</Label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="custNameSearch"
+                  value={custNameSearch}
+                  onChange={(e) => handleNameSearchChange(e.target.value)}
+                  onFocus={() => custNameSearch.trim() && setShowSuggestions(true)}
+                  placeholder="اكتب اسم العميل هنا (مثال: عمر)..."
+                  className="ps-10"
+                />
+                {searchingCust && (
+                  <Loader2 className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                )}
+              </div>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && (
+                <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
+                  {suggestions.length === 0 ? (
+                    <div className="p-3 text-center text-xs text-muted-foreground">
+                      {searchingCust ? "جاري البحث..." : "لا توجد نتائج مطابقة في أرصدة العملاء"}
+                    </div>
+                  ) : (
+                    suggestions.map((item) => (
+                      <button
+                        key={item.customer_number}
+                        type="button"
+                        className="flex w-full items-center justify-between rounded-sm px-3 py-2 text-end text-sm hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => selectSuggestion(item)}
+                      >
+                        <span className="font-medium">{item.customer_name}</span>
+                        <span className="font-mono text-xs text-sky-600 dark:text-sky-400">
+                          رقم: {item.customer_number}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Customer Number Input */}
             <div className="space-y-1.5">
               <Label htmlFor="custNumInput">رقم العميل (Customer Number)</Label>
               <Input
                 id="custNumInput"
                 value={custNumInput}
-                onChange={(e) => setCustNumInput(e.target.value)}
+                onChange={(e) => handleCustNumInputChange(e.target.value)}
                 placeholder="مثال: 1001 أو CST-505"
                 dir="ltr"
-                autoFocus
                 className="font-mono text-base"
               />
-              <p className="text-xs text-muted-foreground">
-                عند إدخال رقم العميل، سيتمكن هذا المستخدم من مشاهدة رصيده المالي الحالي من ملفه الشخصي.
-              </p>
+              {matchedCustomerName ? (
+                <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <BadgeCheck className="h-4 w-4" />
+                  الاسم المطابق في سجلات الأرصدة: {matchedCustomerName}
+                </div>
+              ) : custNumInput.trim() ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  ملاحظة: هذا الرقم غير مضاف حالياً في جدول أرصدة العملاء المالية.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  عند إدخال رقم العميل، سيتمكن هذا المستخدم من مشاهدة رصيده المالي الحالي من ملفه الشخصي.
+                </p>
+              )}
             </div>
           </div>
+
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => setCustNumUser(null)} disabled={savingCustNum}>
               إلغاء
