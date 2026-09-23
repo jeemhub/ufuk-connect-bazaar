@@ -162,10 +162,22 @@ export default function Users() {
     if (!custNumUser) return;
     setSavingCustNum(true);
     const clean = custNumInput.trim();
-    const { error } = await supabase
-      .from("profiles")
-      .update({ customer_number: clean || null })
-      .eq("id", custNumUser.id);
+    
+    // Try RPC first (SECURITY DEFINER admin update)
+    let { error } = await (supabase.rpc as any)("admin_set_customer_number", {
+      _user_id: custNumUser.id,
+      _customer_number: clean,
+    });
+
+    if (error) {
+      // Fallback to direct profiles table update
+      const res = await supabase
+        .from("profiles")
+        .update({ customer_number: clean || null })
+        .eq("id", custNumUser.id);
+      error = res.error;
+    }
+
     setSavingCustNum(false);
     if (error) {
       toast.error(error.message);

@@ -6,6 +6,11 @@ alter table public.profiles
 create index if not exists profiles_customer_number_idx
   on public.profiles(customer_number);
 
+-- Allow admins to update any profile (e.g. setting customer_number)
+drop policy if exists "Profiles: admin update all" on public.profiles;
+create policy "Profiles: admin update all" on public.profiles
+  for update to authenticated using (public.has_role(auth.uid(), 'admin'));
+
 -- Update admin_list_users to return customer_number
 drop function if exists public.admin_list_users();
 
