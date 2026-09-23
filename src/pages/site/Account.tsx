@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle, BadgeCheck, Package } from "lucide-react";
+import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle, BadgeCheck, Package, CreditCard, DollarSign, Wallet } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,13 @@ interface LoginRow {
   user_agent: string | null;
   ip_address: string | null;
   created_at: string;
+}
+
+interface UserBalance {
+  debit_usd: number;
+  credit_usd: number;
+  debit_iqd: number;
+  credit_iqd: number;
 }
 
 const profileSchema = z.object({
@@ -61,6 +68,11 @@ function parseUA(ua: string | null): { browser: string; os: string } {
   return { browser, os };
 }
 
+function fmtMoney(val: number): string {
+  if (!Number.isFinite(val)) return "0";
+  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(val);
+}
+
 export default function AccountPage() {
   const { t, lang } = useLanguage();
   const { user, loading, signOut, isVerified, isAdmin, isSales, pricingTier } = useAuth();
@@ -69,6 +81,9 @@ export default function AccountPage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [customerNumber, setCustomerNumber] = useState<string | null>(null);
+  const [userBalance, setUserBalance] = useState<UserBalance | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
@@ -90,13 +105,33 @@ export default function AccountPage() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, phone, avatar_url")
+        .select("full_name, phone, avatar_url, customer_number" as "*")
         .eq("id", user.id)
         .maybeSingle();
       if (data) {
         setFullName(data.full_name ?? "");
         setPhone(data.phone ?? "");
         setAvatarUrl(data.avatar_url ?? null);
+        const custNo = (data as any).customer_number ?? null;
+        setCustomerNumber(custNo);
+
+        if (custNo) {
+          setBalanceLoading(true);
+          const { data: bal } = await supabase
+            .from("customer_balances")
+            .select("debit_usd, credit_usd, debit_iqd, credit_iqd")
+            .eq("customer_number", custNo)
+            .maybeSingle();
+          if (bal) {
+            setUserBalance({
+              debit_usd: Number(bal.debit_usd || 0),
+              credit_usd: Number(bal.credit_usd || 0),
+              debit_iqd: Number(bal.debit_iqd || 0),
+              credit_iqd: Number(bal.credit_iqd || 0),
+            });
+          }
+          setBalanceLoading(false);
+        }
       }
       const { data: act } = await supabase
         .from("login_activity")
@@ -323,6 +358,87 @@ export default function AccountPage() {
           </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
+          {/* Customer Balance Card */}
+          <Card className="border-sky-200/80 bg-gradient-to-br from-white via-sky-50/40 to-slate-50 dark:from-slate-900 dark:to-slate-800 shadow-sm overflow-hidden">
+            <CardHeader className="pb-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-sky-700 text-white shadow-sm">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold">الرصيد المالي الحالي</CardTitle>
+                    <CardDescription className="text-xs">معلومات رصيدك المالي المسجل لدى شركة أُفق البصرة</CardDescription>
+                  </div>
+                </div>
+                {customerNumber && (
+                  <Badge variant="outline" className="w-fit gap-1 border-sky-300 bg-sky-100/60 px-3 py-1 text-xs font-mono font-bold text-sky-900 dark:bg-sky-950 dark:text-sky-200">
+                    <CreditCard className="h-3.5 w-3.5" />
+                    رقم العميل: {customerNumber}
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {balanceLoading ? (
+                <div className="flex items-center justify-center py-6 text-muted-foreground text-sm gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> جارٍ تحميل بيانات الرصيد...
+                </div>
+              ) : !customerNumber ? (
+                <div className="rounded-xl border border-dashed border-sky-200 bg-white/60 p-4 text-center text-xs leading-relaxed text-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
+                  <p className="font-semibold text-slate-800 dark:text-slate-100">لم يتم تعيين رقم عميل لحسابك بعد</p>
+                  <p className="mt-1">يرجى مراجعة إدارة شركة أُفق البصرة لإضافة رقم العميل الخاص بك ومتابعة رصيدك المالي أولاً بأول.</p>
+                </div>
+              ) : !userBalance ? (
+                <div className="rounded-xl bg-amber-50/80 p-4 text-center text-xs text-amber-900 border border-amber-200">
+                  حسابك مرتبط برقم العميل (<span className="font-mono font-bold">{customerNumber}</span>)، لكن لم تتوفر أرصدة مسجلة بهذا الرقم حالياً.
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {/* USD Balance */}
+                  <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-2.5 dark:border-slate-800">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                        <DollarSign className="h-4 w-4 text-emerald-600" /> الرصيد بالدولار ($)
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500">USD</span>
+                    </div>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">مدين:</span>
+                        <span className="font-mono font-bold text-amber-700 dark:text-amber-400">${fmtMoney(userBalance.debit_usd)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">دائن:</span>
+                        <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">${fmtMoney(userBalance.credit_usd)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* IQD Balance */}
+                  <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-2.5 dark:border-slate-800">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                        <Wallet className="h-4 w-4 text-sky-600" /> الرصيد بالدينار (IQD)
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500">د.ع</span>
+                    </div>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">مدين:</span>
+                        <span className="font-mono font-bold text-amber-700 dark:text-amber-400">{fmtMoney(userBalance.debit_iqd)} د.ع</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">دائن:</span>
+                        <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{fmtMoney(userBalance.credit_iqd)} د.ع</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Avatar Card */}
           <Card>
             <CardHeader>

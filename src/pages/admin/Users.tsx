@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff, Headset, Search, X } from "lucide-react";
+import { Loader2, ShieldCheck, Store, Briefcase, User as UserIcon, History, BadgeCheck, Ban, Trash2, ShieldOff, Headset, Search, X, Pencil, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,6 +49,7 @@ type Row = {
   quote_count: number;
   is_verified: boolean;
   is_blocked?: boolean;
+  customer_number?: string | null;
   sales_perms?: SalesPerms;
 };
 
@@ -82,6 +83,9 @@ export default function Users() {
   const [salesEnabled, setSalesEnabled] = useState(false);
   const [salesPermsForm, setSalesPermsForm] = useState<SalesPerms>({});
   const [savingSales, setSavingSales] = useState(false);
+  const [custNumUser, setCustNumUser] = useState<Row | null>(null);
+  const [custNumInput, setCustNumInput] = useState("");
+  const [savingCustNum, setSavingCustNum] = useState(false);
   const [search, setSearch] = useState("");
   type FilterKey = "customer" | "wholesale" | "dealer" | "sales" | "verified" | "blocked";
   const [filters, setFilters] = useState<Record<FilterKey, boolean>>({
@@ -99,7 +103,7 @@ export default function Users() {
     const anyTier = filters.customer || filters.wholesale || filters.dealer;
     return rows.filter((u) => {
       if (q) {
-        const hay = `${u.full_name ?? ""} ${u.email ?? ""} ${u.phone ?? ""}`.toLowerCase();
+        const hay = `${u.full_name ?? ""} ${u.email ?? ""} ${u.phone ?? ""} ${u.customer_number ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       const tier = pricingRole(u.roles);
@@ -129,20 +133,47 @@ export default function Users() {
 
   async function load() {
     setLoading(true);
-    const [{ data, error }, { data: blocks }] = await Promise.all([
+    const [{ data, error }, { data: profiles }] = await Promise.all([
       supabase.rpc("admin_list_users"),
-      supabase.from("profiles").select("id, is_blocked" as "*"),
+      supabase.from("profiles").select("id, is_blocked, customer_number" as "*"),
     ]);
     if (error) {
       toast.error(error.message);
       setLoading(false);
       return;
     }
-    const blockMap = new Map<string, boolean>(
-      ((blocks as unknown as Array<{ id: string; is_blocked: boolean }>) ?? []).map((b) => [b.id, !!b.is_blocked]),
+    const profileMap = new Map<string, { is_blocked: boolean; customer_number?: string | null }>(
+      ((profiles as unknown as Array<{ id: string; is_blocked: boolean; customer_number?: string | null }>) ?? []).map((p) => [
+        p.id,
+        { is_blocked: !!p.is_blocked, customer_number: p.customer_number ?? null },
+      ]),
     );
-    setRows(((data as Row[]) ?? []).map((r) => ({ ...r, is_blocked: blockMap.get(r.id) ?? false })));
+    setRows(
+      ((data as Row[]) ?? []).map((r) => ({
+        ...r,
+        is_blocked: profileMap.get(r.id)?.is_blocked ?? false,
+        customer_number: profileMap.get(r.id)?.customer_number ?? (r as any).customer_number ?? null,
+      })),
+    );
     setLoading(false);
+  }
+
+  async function saveCustomerNumber() {
+    if (!custNumUser) return;
+    setSavingCustNum(true);
+    const clean = custNumInput.trim();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ customer_number: clean || null })
+      .eq("id", custNumUser.id);
+    setSavingCustNum(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("تم تحديث رقم العميل بنجاح");
+    setCustNumUser(null);
+    load();
   }
 
   useEffect(() => { load(); }, []);
@@ -300,6 +331,7 @@ export default function Users() {
             <thead className="bg-secondary/50">
               <tr className="text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3 text-start font-medium">{t("customer_name")}</th>
+                <th className="px-4 py-3 text-start font-medium">رقم العميل</th>
                 <th className="px-4 py-3 text-start font-medium">{t("email")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("phone")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("users_role")}</th>
@@ -310,10 +342,10 @@ export default function Users() {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></td></tr>
               )}
               {!loading && filteredRows.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{rows.length === 0 ? t("users_empty") : "لا توجد نتائج مطابقة"}</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">{rows.length === 0 ? t("users_empty") : "لا توجد نتائج مطابقة"}</td></tr>
               )}
               {!loading && filteredRows.map((u) => {
                 const tier = pricingRole(u.roles);
@@ -331,6 +363,25 @@ export default function Users() {
                             <BadgeCheck className="h-4 w-4" style={{ color: "hsl(210 100% 50%)", fill: "hsl(210 100% 50%)", stroke: "hsl(0 0% 100%)" }} />
                           )}
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-mono text-xs ${u.customer_number ? "font-bold text-sky-700 dark:text-sky-300" : "text-muted-foreground"}`}>
+                          {u.customer_number || "غير محدد"}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                          title="تعديل رقم العميل"
+                          onClick={() => {
+                            setCustNumUser(u);
+                            setCustNumInput(u.customer_number || "");
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
@@ -538,6 +589,46 @@ export default function Users() {
             <Button onClick={saveSales} disabled={savingSales} className="bg-gradient-brand">
               {savingSales && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
               حفظ الصلاحيات
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!custNumUser} onOpenChange={(open) => !open && setCustNumUser(null)}>
+        <DialogContent dir="rtl" className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sky-800 dark:text-sky-300">
+              <CreditCard className="h-5 w-5" />
+              تعيين رقم العميل
+            </DialogTitle>
+            <DialogDescription>
+              أدخل رقم العميل المخصص للمستخدم ({custNumUser?.full_name || custNumUser?.email}) لربط حسابه الشخصي بأرصدة العملاء المالية.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="custNumInput">رقم العميل (Customer Number)</Label>
+              <Input
+                id="custNumInput"
+                value={custNumInput}
+                onChange={(e) => setCustNumInput(e.target.value)}
+                placeholder="مثال: 1001 أو CST-505"
+                dir="ltr"
+                autoFocus
+                className="font-mono text-base"
+              />
+              <p className="text-xs text-muted-foreground">
+                عند إدخال رقم العميل، سيتمكن هذا المستخدم من مشاهدة رصيده المالي الحالي من ملفه الشخصي.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setCustNumUser(null)} disabled={savingCustNum}>
+              إلغاء
+            </Button>
+            <Button type="button" onClick={saveCustomerNumber} disabled={savingCustNum} className="bg-sky-700 hover:bg-sky-800 text-white">
+              {savingCustNum && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              حفظ رقم العميل
             </Button>
           </DialogFooter>
         </DialogContent>

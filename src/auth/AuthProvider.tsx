@@ -37,6 +37,7 @@ type Ctx = {
   pricingTier: PricingTier;
   avatarUrl: string | null;
   fullName: string | null;
+  phone: string | null;
   isVerified: boolean;
   loading: boolean;
   refreshProfile: () => Promise<void>;
@@ -54,26 +55,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pricingTier, setPricingTier] = useState<PricingTier>("retail");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndRoles = useCallback(async (userId: string) => {
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("profiles").select("avatar_url, full_name, is_verified, is_blocked" as "*").eq("id", userId).maybeSingle(),
+      supabase.from("profiles").select("avatar_url, full_name, phone, is_verified, is_blocked" as "*").eq("id", userId).maybeSingle(),
     ]);
     const roleNames = (roles ?? []).map((r) => String(r.role));
     const admin = roleNames.includes("admin");
     const sales = roleNames.includes("sales");
     setIsAdmin(admin);
     setIsSales(sales);
-    // Sales staff are treated as dealers for pricing visibility
     if (admin || sales || roleNames.includes("dealer")) setPricingTier("dealer");
     else if (roleNames.includes("wholesale")) setPricingTier("wholesale");
     else setPricingTier("retail");
-    const p = profile as unknown as { avatar_url?: string | null; full_name?: string | null; is_verified?: boolean; is_blocked?: boolean } | null;
+    const p = profile as unknown as { avatar_url?: string | null; full_name?: string | null; phone?: string | null; is_verified?: boolean; is_blocked?: boolean } | null;
     setAvatarUrl(p?.avatar_url ?? null);
     setFullName(p?.full_name ?? null);
+    setPhone(p?.phone ?? null);
     setIsVerified(Boolean(p?.is_verified));
     setIsBlocked(Boolean(p?.is_blocked));
 
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPricingTier("retail");
         setAvatarUrl(null);
         setFullName(null);
+        setPhone(null);
         setIsVerified(false);
       }
     });
@@ -143,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         pricingTier,
         avatarUrl,
         fullName,
+        phone,
         isVerified,
         loading,
         refreshProfile,

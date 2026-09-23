@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ufuk-bazaar",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "./node_modules/.bin/vite --port 8090"
+      ],
+      "port": 8090
+    },
+    {
+      "name": "ufuk-power-tool",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd .worktrees/ufuk-power-tool && ./node_modules/.bin/vite --port 8091 --strictPort"
+      ],
+      "port": 8091
+    }
+  ]
+}

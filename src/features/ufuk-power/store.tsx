@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { detectAlerts, showSystemNotification, type AlertEvent } from './lib/alerts';
-import { CloudClient, login } from './lib/cloud';
+import { CloudClient, login, registerAccount, smartLoginOrRegister } from './lib/cloud';
 import { store } from './lib/db';
 import { summarize, type Summary } from './lib/metrics';
 import { DEFAULT_PREFS, type AlertPrefs, type CloudDevice, type LiveData, type Sample, type Session } from './types';
@@ -30,6 +30,9 @@ interface AppState {
   toasts: Toast[];
   nameOf(d: CloudDevice): string;
   signIn(usr: string, password: string): Promise<void>;
+  signUp(usr: string, password: string): Promise<void>;
+  smartLogin(usr: string, password: string): Promise<void>;
+  addDevice(pn: string, alias?: string): Promise<void>;
   signOut(): Promise<void>;
   refreshDevices(): Promise<void>;
   refreshLive(id?: string): Promise<void>;
@@ -209,6 +212,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const s = await login(usr, password);
       await store.setSession(s);
       setSession(s);
+    },
+    async signUp(usr, password) {
+      await registerAccount(usr, password);
+      const s = await login(usr, password);
+      await store.setSession(s);
+      setSession(s);
+    },
+    async smartLogin(usr, password) {
+      const s = await smartLoginOrRegister(usr, password);
+      await store.setSession(s);
+      setSession(s);
+    },
+    async addDevice(pn, alias) {
+      if (!client) throw new Error('يرجى تسجيل الدخول أولاً');
+      await client.addDevice(pn, alias);
+      await refreshDevices();
     },
     async signOut() {
       await store.clearAll();

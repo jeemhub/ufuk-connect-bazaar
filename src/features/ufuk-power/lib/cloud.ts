@@ -57,15 +57,25 @@ async function http(method: 'GET' | 'POST', path: string, opts: { query?: Record
   };
 
   let res: Response;
+  const targetUrl = BASE + path + (qs ? `?${qs}` : '');
   try {
-    res = await fetch(BASE + path + (qs ? `?${qs}` : ''), {
+    res = await fetch(targetUrl, {
       method,
       headers,
       body: method === 'POST' ? JSON.stringify(opts.body ?? {}) : undefined,
       signal: AbortSignal.timeout(20_000),
     });
   } catch {
-    throw new CloudError('تعذّر الوصول إلى سحابة SmartValue — تحقق من الإنترنت');
+    try {
+      res = await fetch(`/api/proxy?url=${encodeURIComponent(targetUrl)}`, {
+        method,
+        headers,
+        body: method === 'POST' ? JSON.stringify(opts.body ?? {}) : undefined,
+        signal: AbortSignal.timeout(20_000),
+      });
+    } catch {
+      throw new CloudError('تعذّر الوصول إلى سحابة SmartValue — تحقق من الاتصال بالإنترنت');
+    }
   }
   const env: Envelope | null = await res.json().catch(() => null);
   if (path !== LOGIN) diagnostics.set(path.split('/').pop()!, { at: Date.now(), body: env });
@@ -82,7 +92,9 @@ async function authenticate(account: string, pwdSha1: string): Promise<Session> 
   try {
     data = await http('POST', LOGIN, { body: { account, password: pwdSha1, project: PROJECT } });
   } catch (e) {
-    if (e instanceof CloudError && e.code === 115140) throw new CloudError('اسم المستخدم أو كلمة المرور غير صحيحة', e.code);
+    if (e instanceof CloudError && (e.code === 115140 || /login failed/i.test(e.message))) {
+      throw new CloudError('لم يُعثر على هذا الحساب في سحابة Smart Value. يرجى التأكد من اسم المستخدم/رقم الهاتف وكلمة المرور المسجلة في تطبيق Smart Value', e.code);
+    }
     throw e;
   }
   if (!data?.token || !data?.secret) throw new CloudError('رد تسجيل الدخول غير مكتمل');
@@ -98,6 +110,51 @@ async function authenticate(account: string, pwdSha1: string): Promise<Session> 
 
 export async function login(account: string, password: string) {
   return authenticate(account.trim(), await sha1(password));
+}
+
+export async function registerAccount(account: string, password: string) {
+  const acc = account.trim();
+  const pwdSha1 = await sha1(password);
+
+  const endpoints = [
+    'ppr/app/login/pub/userRegister',
+    'ppr/app/login/pub/register',
+    'ppr/app/login/pub/registerAccount',
+    'ppr/app/user/pub/register',
+  ];
+
+  let lastErr: any;
+  for (const endpoint of endpoints) {
+    try {
+      const data = await http('POST', endpoint, {
+        body: {
+          account: acc,
+          password: pwdSha1,
+          project: PROJECT,
+          userType: 1,
+          userName: acc,
+          email: acc.includes('@') ? acc : undefined,
+          mobile: acc.replace(/[^\d]/g, ''),
+        },
+      });
+      return data;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
+}
+
+export async function smartLoginOrRegister(account: string, password: string): Promise<Session> {
+  const acc = account.trim();
+  const pwdSha1 = await sha1(password);
+
+  try {
+    return await authenticate(acc, pwdSha1);
+  } catch {
+    await registerAccount(acc, password);
+    return await authenticate(acc, pwdSha1);
+  }
 }
 
 const str = (v: unknown) => (v == null ? '' : String(v).trim());
@@ -119,6 +176,32 @@ function optionsOf(raw: any): CtrlField['options'] {
     return o.length ? o : undefined;
   }
   return undefined;
+}
+
+function translateDeviceError(err: unknown, pn: string): CloudError {
+  if (!(err instanceof CloudError)) {
+    return new CloudError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع أثناء إضافة الجهاز');
+  }
+  const msg = (err.message || '').toLowerCase();
+  const code = err.code;
+
+  if (code === 115001 || msg.includes('exist') || msg.includes('not found') || msg.includes('不存在')) {
+    return new CloudError(
+      `تعذّر إيجاد العاكس برقم PN (${pn}) في سحابة Smart Value. تأكد من كتابة الرقم الصحيح ومن توصيل الـ Datalogger بالـ WiFi بالإنترنت لتسجيله أولاً في السحابة.`,
+      code,
+    );
+  }
+  if (code === 115002 || msg.includes('bound') || msg.includes('already') || msg.includes('绑定')) {
+    return new CloudError(
+      `العاكس (${pn}) مرتبط بحساب آخر مسبقاً في Smart Value. يرجى إلغاء ربطه من الحساب السابق أو التواصل مع الدعم الفني.`,
+      code,
+    );
+  }
+  if (code === 401 || code === 403 || msg.includes('token') || msg.includes('login') || msg.includes('expire')) {
+    return new CloudError('انتهت جلسة تسجيل الدخول. يرجى إعادة تسجيل الدخول إلى حسابك.', code);
+  }
+
+  return err;
 }
 
 export class CloudClient {
@@ -167,6 +250,40 @@ export class CloudClient {
       if (items.length < 50 || out.length >= total) break;
     }
     return out;
+  }
+
+  async addDevice(pn: string, alias?: string): Promise<void> {
+    const cleanPn = pn.trim().toUpperCase();
+    const cleanAlias = alias?.trim() || cleanPn;
+
+    const endpoints = [
+      'dev/api/auth/app/dev/addTDeviceInfo',
+      'dev/api/auth/app/plant/addTDeviceInfo',
+      'dev/api/auth/app/dev/bindDevice',
+      'dev/api/auth/app/dev/addDevice',
+    ];
+
+    let lastErr: unknown;
+    for (const path of endpoints) {
+      try {
+        await this.call('POST', path, {
+          body: {
+            pn: cleanPn,
+            sn: cleanPn,
+            devalias: cleanAlias,
+            alias: cleanAlias,
+            deviceName: cleanAlias,
+          },
+        });
+        return;
+      } catch (e) {
+        lastErr = e;
+        if (e instanceof CloudError && e.code && e.code !== 404 && e.code !== 500) {
+          throw translateDeviceError(e, cleanPn);
+        }
+      }
+    }
+    throw translateDeviceError(lastErr, cleanPn);
   }
 
   private ident(d: CloudDevice) {

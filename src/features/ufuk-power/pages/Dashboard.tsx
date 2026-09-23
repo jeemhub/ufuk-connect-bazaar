@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { BatteryRuntimeCard } from '../components/BatteryRuntimeCard';
 import { HistoryChart } from '../components/HistoryChart';
 import { IconBattery, IconDevices, IconHome, IconPlug, IconSun } from '../components/Icons';
 import { btn, Card, EmptyState, Num, Pill, Row, SectionTitle } from '../components/ui';
@@ -96,6 +97,8 @@ export function Dashboard({ onDevices }: { onDevices(): void }) {
             </Card>
           )}
 
+          <BatteryRuntimeCard summary={s} />
+
           <div className={`grid grid-cols-2 gap-3 ${stale ? 'opacity-60' : ''}`}>
             <Tile icon={<IconSun className="size-[18px]" />} tint="bg-amber-50 text-amber-600" label="الشمسي" value={s.pvPower != null ? <Num>{fmtW(s.pvPower)}</Num> : dash}>
               {s.pvVoltage != null && <Num>{s.pvVoltage} V</Num>}
@@ -121,7 +124,17 @@ export function Dashboard({ onDevices }: { onDevices(): void }) {
               )}
             </Tile>
 
-            <Tile icon={<IconHome className="size-[18px]" />} tint="bg-violet-50 text-violet-600" label="الحمل" value={s.loadPower != null ? <Num>{fmtW(s.loadPower)}</Num> : dash}>
+            <Tile
+              icon={<IconHome className="size-[18px]" />}
+              tint="bg-violet-50 text-violet-600"
+              label="الحمل"
+              value={s.loadCurrent != null ? <Num>{s.loadCurrent.toFixed(1)} A</Num> : (s.loadPower != null ? <Num>{fmtW(s.loadPower)}</Num> : dash)}
+            >
+              {s.loadPower != null && (
+                <div>
+                  <Num>{fmtW(s.loadPower)}</Num>
+                </div>
+              )}
               {s.loadPercent != null && (
                 <div className="flex items-center gap-2">
                   <Bar pct={s.loadPercent} color={s.loadPercent > 85 ? 'bg-red-500' : 'bg-violet-500'} />

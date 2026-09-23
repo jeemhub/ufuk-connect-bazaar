@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, RotateCcw, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Loader2, RotateCcw, Search } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerBalanceUpload } from "@/features/customer-balances/CustomerBalanceUpload";
 import { CustomerBalancesTable } from "@/features/customer-balances/CustomerBalancesTable";
+import { exportCustomerBalancesPdf } from "@/features/customer-balances/balancePdf";
 import { getPageCount, type BalanceCurrency, type BalanceType } from "@/features/customer-balances/model";
 import { useCustomerBalances } from "@/features/customer-balances/useCustomerBalances";
 
@@ -18,6 +20,7 @@ export default function CustomerBalances() {
   const [balanceType, setBalanceType] = useState<BalanceType>("all");
   const [currency, setCurrency] = useState<BalanceCurrency>("all");
   const [page, setPage] = useState(1);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   useEffect(() => {
     document.title = "أرصدة العملاء · لوحة التحكم";
@@ -49,11 +52,43 @@ export default function CustomerBalances() {
     setPage(1);
   };
 
+  const handleExportPdf = async () => {
+    const rows = balances.data?.rows ?? [];
+    if (!rows.length) {
+      toast.error("لا توجد أرصدة للتصدير");
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      await exportCustomerBalancesPdf({ rows, balanceType, currency });
+      toast.success("تم استخراج تقرير PDF بنجاح");
+    } catch (err) {
+      toast.error((err as Error).message || "تعذّر استخراج تقرير PDF");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">أرصدة العملاء</h1>
-        <p className="mt-1 text-sm text-muted-foreground">البحث واستعراض أرصدة العملاء بالدولار والدينار</p>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">أرصدة العملاء</h1>
+          <p className="mt-1 text-sm text-muted-foreground">البحث واستعراض وتصدير تقارير أرصدة العملاء بالدولار والدينار</p>
+        </div>
+        <Button
+          type="button"
+          onClick={handleExportPdf}
+          disabled={exportingPdf || balances.isLoading || !balances.data?.rows.length}
+          className="gap-2 bg-sky-700 hover:bg-sky-800 text-white font-bold shadow-sm"
+        >
+          {exportingPdf ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileText className="h-4 w-4" />
+          )}
+          {exportingPdf ? "جارٍ إعداد PDF..." : "طباعة / تصدير تقرير PDF"}
+        </Button>
       </header>
 
       <CustomerBalanceUpload />

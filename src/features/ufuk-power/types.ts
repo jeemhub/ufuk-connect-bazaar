@@ -76,6 +76,7 @@ export interface AlertPrefs {
   notifyGridLoss: boolean;
   notifyErrors: boolean;
   systemNotifications: boolean;
+  batteryAh: number;
 }
 
 export const DEFAULT_PREFS: AlertPrefs = {
@@ -83,4 +84,5 @@ export const DEFAULT_PREFS: AlertPrefs = {
   notifyGridLoss: true,
   notifyErrors: true,
   systemNotifications: false,
+  batteryAh: 200,
 };

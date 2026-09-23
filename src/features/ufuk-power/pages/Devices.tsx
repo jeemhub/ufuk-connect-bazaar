@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { IconBattery, IconDevices, IconPencil, IconQr, IconRefresh, IconSearch, IconSun, IconWifi } from '../components/Icons';
+import { IconBattery, IconDevices, IconPencil, IconPlus, IconQr, IconRefresh, IconSearch, IconSun, IconWifi } from '../components/Icons';
 import { QrScanner } from '../components/QrScanner';
 import { Sheet } from '../components/Sheet';
 import { WifiGuide } from '../components/WifiGuide';
@@ -8,26 +8,64 @@ import { ago, fmtW } from '../lib/format';
 import { STALE_AFTER_MS, useApp, useNow } from '../store';
 import type { CloudDevice } from '../types';
 
-/** QR on Eybond dataloggers is the bare PN or a URL carrying it. */
+/** QR on Eybond dataloggers is the bare PN, a URL carrying it, or a JSON payload. */
 function pnFromQr(text: string): string {
+  if (!text) return '';
   const t = text.trim();
+
+  // 1. Check if JSON payload (e.g. {"pn":"123456789012"} or {"deviceSn":"..."})
+  if (t.startsWith('{') && t.endsWith('}')) {
+    try {
+      const obj = JSON.parse(t);
+      if (obj && typeof obj === 'object') {
+        for (const k of ['pn', 'PN', 'sn', 'SN', 'deviceSn', 'deviceSN', 'code', 'devcode', 'mac']) {
+          if (obj[k] && typeof obj[k] === 'string' && obj[k].trim()) {
+            return obj[k].trim().toUpperCase();
+          }
+        }
+      }
+    } catch {
+      /* ignore JSON parse error */
+    }
+  }
+
+  // 2. Check if URL carrying parameter (e.g. http://eybond.com/qr?pn=123456789012 or ...?deviceSn=...)
   try {
-    const u = new URL(t);
-    for (const k of ['pn', 'PN', 'sn', 'SN']) {
+    const u = new URL(t.startsWith('http://') || t.startsWith('https://') ? t : `http://${t}`);
+    for (const k of ['pn', 'PN', 'sn', 'SN', 'deviceSn', 'deviceSN', 'code', 'devcode', 'mac', 'id', 's', 'd']) {
       const v = u.searchParams.get(k);
-      if (v) return v.toUpperCase();
+      if (v && v.trim()) return v.trim().toUpperCase();
     }
   } catch {
-    /* not a URL */
+    /* not a valid URL */
   }
-  return (t.match(/[A-Za-z0-9]{8,24}/g)?.[0] ?? t).toUpperCase();
+
+  // 3. Check prefixed string formats like "PN: 123456789012", "PN=123456789012", "SN: 123456789012"
+  const prefixedMatch = t.match(/(?:PN|SN|S\/N|MAC|CODE|ID|DEVSN|DEV_SN)\s*[:=]\s*([A-Za-z0-9\-]{6,32})/i);
+  if (prefixedMatch?.[1]) {
+    return prefixedMatch[1].replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  }
+
+  // 4. Clean leading prefixes if string starts with PN/SN
+  const cleaned = t.replace(/^(?:PN|SN|S\/N|MAC|CODE)\s*[:=]?\s*/i, '');
+  const matches = cleaned.match(/[A-Za-z0-9]{8,24}/g);
+  if (matches && matches.length > 0) {
+    const best = matches.find((m) => m.length >= 10 && m.length <= 20) || matches[0];
+    return best.toUpperCase();
+  }
+
+  return cleaned.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 }
 
 export function Devices({ onOpen }: { onOpen(id: string): void }) {
-  const { devices, live, summaries, deviceErrors, selectedId, refreshDevices, rename, nameOf, pushToast } = useApp();
+  const { devices, live, summaries, deviceErrors, selectedId, refreshDevices, rename, nameOf, addDevice, pushToast } = useApp();
   const now = useNow();
   const [query, setQuery] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [addingDevice, setAddingDevice] = useState(false);
+  const [newPn, setNewPn] = useState('');
+  const [newAlias, setNewAlias] = useState('');
+  const [addingBusy, setAddingBusy] = useState(false);
   const [editing, setEditing] = useState<CloudDevice | null>(null);
   const [name, setName] = useState('');
   const [wifiFor, setWifiFor] = useState<string | null>(null);
@@ -45,24 +83,60 @@ export function Devices({ onOpen }: { onOpen(id: string): void }) {
     }
   };
 
+  const handleAddDeviceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newPn.trim().toUpperCase();
+    if (!clean) return;
+    setAddingBusy(true);
+    try {
+      await addDevice(clean, newAlias.trim());
+      pushToast({
+        key: 'add_dev',
+        level: 'info',
+        title: 'تمت إضافة العاكس بنجاح',
+        body: `تم ربط العاكس (${clean}) بحسابك`,
+      });
+      setAddingDevice(false);
+      setNewPn('');
+      setNewAlias('');
+    } catch (err) {
+      pushToast({
+        key: 'add_dev_err',
+        level: 'error',
+        title: 'تعذّرت إضافة العاكس',
+        body: (err as Error).message,
+      });
+    } finally {
+      setAddingBusy(false);
+    }
+  };
+
   const onQr = useCallback(
     (text: string) => {
       setScanning(false);
       const pn = pnFromQr(text);
-      const match = devices.find((d) => d.pn.toUpperCase() === pn);
-      if (match) {
-        onOpen(match.id);
-      } else {
-        setQuery(pn);
+      if (!pn) {
         pushToast({
-          key: 'qr',
-          level: 'warning',
-          title: `الجهاز ${pn} غير موجود في حسابك`,
-          body: 'أضفه أولاً في تطبيق Smart Value بنفس الحساب، ثم اضغط تحديث هنا',
+          key: 'qr_err',
+          level: 'error',
+          title: 'تعذّرت قراءة الرمز',
+          body: 'لم يُعثر على رقم تسلسلي (PN/SN) صالِح في رمز QR الممسوح. يرجى محاولة إدخاله يدوياً.',
         });
+        return;
+      }
+      if (addingDevice) {
+        setNewPn(pn);
+      } else {
+        const match = devices.find((d) => d.pn.toUpperCase() === pn || d.sn.toUpperCase() === pn);
+        if (match) {
+          onOpen(match.id);
+        } else {
+          setNewPn(pn);
+          setAddingDevice(true);
+        }
       }
     },
-    [devices, onOpen, pushToast],
+    [addingDevice, devices, onOpen, pushToast],
   );
 
   const q = query.trim().toLowerCase();
@@ -75,16 +149,23 @@ export function Devices({ onOpen }: { onOpen(id: string): void }) {
           <IconSearch className="pointer-events-none absolute right-3.5 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
           <input className={`${input} !bg-white pr-11`} type="search" placeholder="بحث بالاسم أو رقم PN" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <button onClick={() => setScanning(true)} aria-label="مسح رمز QR" className="grid size-12 shrink-0 place-items-center rounded-xl bg-teal-600 text-white active:bg-teal-700">
+        <button onClick={() => setScanning(true)} aria-label="مسح رمز QR" className="grid size-12 shrink-0 place-items-center rounded-xl bg-teal-600 text-white active:bg-teal-700" title="مسح QR">
           <IconQr className="size-6" />
         </button>
       </div>
+
+      <button
+        onClick={() => setAddingDevice(true)}
+        className={`${btn.primary} w-full flex items-center justify-center gap-2`}
+      >
+        <IconPlus className="size-5" /> إضافة عاكس جديد إلى الحساب
+      </button>
 
       {!devices.length && (
         <EmptyState
           icon={<IconDevices className="size-8" />}
           title="لا توجد عواكس في الحساب"
-          body="العواكس تُجلب تلقائياً من حساب Smart Value. أضف العاكس هناك أولاً ثم اضغط تحديث."
+          body="اضغط على زر 'إضافة عاكس جديد' أعلاه لإضافة عاكسك بالرقم التسلسلي أو عبر مسح رمز QR."
         />
       )}
 
@@ -137,11 +218,51 @@ export function Devices({ onOpen }: { onOpen(id: string): void }) {
       })}
 
       <button className={`${btn.soft} w-full`} disabled={busy} onClick={reload}>
-        <IconRefresh className={`size-5 ${busy ? 'animate-spin' : ''}`} /> تحديث القائمة من حساب Smart Value
+        <IconRefresh className={`size-5 ${busy ? 'animate-spin' : ''}`} /> تحديث القائمة
       </button>
 
       <Sheet open={scanning} title="مسح رمز QR للجهاز" onClose={() => setScanning(false)}>
         {scanning && <QrScanner onResult={onQr} />}
+      </Sheet>
+
+      <Sheet open={addingDevice} title="إضافة عاكس جديد" onClose={() => setAddingDevice(false)}>
+        <form onSubmit={handleAddDeviceSubmit} className="space-y-4">
+          <div>
+            <label className={label}>رقم التسلسلي للجهاز (PN)</label>
+            <div className="flex gap-2">
+              <input
+                className={`${input} flex-1`}
+                dir="ltr"
+                placeholder="مثال: 123456789012"
+                value={newPn}
+                onChange={(e) => setNewPn(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setScanning(true)}
+                className="grid size-12 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 active:bg-slate-200"
+                title="مسح QR"
+              >
+                <IconQr className="size-5" />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className={label}>اسم العاكس (اختياري)</label>
+            <input
+              className={input}
+              placeholder="مثال: عاكس المنزل"
+              value={newAlias}
+              onChange={(e) => setNewAlias(e.target.value)}
+            />
+          </div>
+
+          <button className={`${btn.primary} w-full`} disabled={addingBusy || !newPn.trim()}>
+            {addingBusy ? 'جارٍ إضافة العاكس…' : 'إضافة العاكس بحسابي'}
+          </button>
+        </form>
       </Sheet>
 
       <WifiGuide open={!!wifiFor} deviceId={wifiFor ?? ''} onClose={() => setWifiFor(null)} />
@@ -153,7 +274,7 @@ export function Devices({ onOpen }: { onOpen(id: string): void }) {
               <label className={label}>الاسم على هذا الهاتف</label>
               <input className={input} value={name} onChange={(e) => setName(e.target.value)} />
             </div>
-            <p className="text-xs text-slate-400">الاسم في حساب Smart Value: {editing.alias}</p>
+            <p className="text-xs text-slate-400">الاسم في الحساب: {editing.alias}</p>
             <button
               className={`${btn.primary} w-full`}
               onClick={async () => {

@@ -16,6 +16,7 @@ const M = {
   battPower: [/^batt(ery)?\s*power/i],
   soc: [/battery\s*capacity/i, /\bsoc\b/i, /battery\s*percent/i],
   loadPower: [/output\s*active\s*power/i, /^p\s*load/i, /load\s*(active\s*)?power/i, /^ac\s*output\s*power/i],
+  loadCurrent: [/^output\s*current/i, /^load\s*current/i, /^ac\s*output\s*current/i, /^i\s*load/i, /output.*current/i, /load.*current/i, /bc.*current/i],
   loadPercent: [/^(ac\s*)?output\s*load$/i, /load\s*(percent|percentage|rate|ratio|%)/i],
   gridVoltage: [/^grid\s*voltage/i, /^ac\s*input\s*voltage/i],
   gridFrequency: [/^grid\s*freq/i, /^ac\s*input\s*freq/i],
@@ -56,6 +57,7 @@ export interface Summary {
   battCurrent: number | null;
   soc: number | null;
   loadPower: number | null;
+  loadCurrent: number | null;
   loadPercent: number | null;
   gridVoltage: number | null;
   gridFrequency: number | null;
@@ -88,6 +90,30 @@ export function summarize(points: Point[]): Summary {
   const relay = find(points, 'gridRelay')?.val;
   const gridConnected = relay ? /connect/i.test(relay) && !/dis/i.test(relay) : gridVoltage == null ? null : gridVoltage > 90;
 
+  let loadPower = g('loadPower');
+  let loadCurrent = g('loadCurrent');
+  const gridPower = g('gridPower');
+  const outputVoltage = g('outputVoltage') ?? gridVoltage ?? 230;
+
+  // If connected to national grid and loadPower reports 0/null (common in MUST line-bypass mode),
+  // estimate load from grid power minus battery charging power
+  if (gridConnected) {
+    if ((loadPower == null || loadPower === 0) && gridPower != null && gridPower > 0) {
+      const charPower = (battPower && battPower > 0) ? battPower : 0;
+      const estimatedLoad = Math.max(0, gridPower - charPower);
+      if (estimatedLoad > 0) {
+        loadPower = estimatedLoad;
+      }
+    }
+  }
+
+  // Deduce loadCurrent in Amperes (A) if missing from inverter telemetry
+  if (loadCurrent == null && loadPower != null && outputVoltage > 0) {
+    loadCurrent = Number((loadPower / outputVoltage).toFixed(1));
+  } else if (loadPower == null && loadCurrent != null && outputVoltage > 0) {
+    loadPower = Math.round(loadCurrent * outputVoltage);
+  }
+
   const faults = points.filter((p) => /(fault|error|warning|alarm)/i.test(p.title) && !BAD_FAULT_VALUES.test(p.val.trim()));
 
   return {
@@ -97,11 +123,12 @@ export function summarize(points: Point[]): Summary {
     battPower,
     battCurrent,
     soc: g('soc'),
-    loadPower: g('loadPower'),
+    loadPower,
+    loadCurrent,
     loadPercent: g('loadPercent') ?? num(points.find((p) => p.unit === '%' && /load/i.test(labelOf(p)))),
     gridVoltage,
     gridFrequency: g('gridFrequency'),
-    gridPower: g('gridPower'),
+    gridPower,
     gridConnected,
     outputVoltage: g('outputVoltage'),
     workState: find(points, 'workState')?.val ?? null,
@@ -109,4 +136,40 @@ export function summarize(points: Point[]): Summary {
     temperature: g('temperature'),
     faults,
   };
+}
+
+/**
+ * Engineering calculation for remaining battery runtime down to 15% SoC.
+ */
+export function calculateRemainingTimeMinutes({
+  soc,
+  battVoltage,
+  loadPower,
+  battPower,
+  batteryAh = 200,
+}: {
+  soc: number | null;
+  battVoltage: number | null;
+  loadPower: number | null;
+  battPower: number | null;
+  batteryAh?: number;
+}): number | null {
+  if (soc == null || soc <= 15) return 0;
+
+  const usableSocPct = (soc - 15) / 100;
+  const vSys = battVoltage ?? (batteryAh >= 100 ? 48 : 24);
+  const totalWh = batteryAh * vSys;
+  const usableWh = totalWh * usableSocPct;
+
+  let dischargeWatts = 0;
+  if (battPower != null && battPower < -5) {
+    dischargeWatts = Math.abs(battPower);
+  } else if (loadPower != null && loadPower > 5) {
+    dischargeWatts = loadPower / 0.92;
+  }
+
+  if (dischargeWatts <= 0) return null;
+
+  const hours = usableWh / dischargeWatts;
+  return Math.max(0, Math.round(hours * 60));
 }
