@@ -63,7 +63,7 @@ export async function exportCustomerBalancesPdf({
   container.innerHTML = `
     <div style="border-bottom: 2px solid #0284c7; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <h1 style="font-size: 24px; font-weight: 800; color: #0369a1; margin: 0 0 4px 0;">شركة أُفق البصرة التجاريّة</h1>
+        <h1 style="font-size: 24px; font-weight: 800; color: #0369a1; margin: 0 0 4px 0;">شركة أُفق البصرة</h1>
         <h2 style="font-size: 16px; font-weight: 700; color: #334155; margin: 0;">تقرير أرصدة العملاء (مدين ودائن)</h2>
       </div>
       <div style="text-align: left; font-size: 12px; color: #64748b;">

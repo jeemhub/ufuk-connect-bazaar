@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerBalanceUpload } from "@/features/customer-balances/CustomerBalanceUpload";
 import { CustomerBalancesTable } from "@/features/customer-balances/CustomerBalancesTable";
+import { fetchAllCustomerBalances } from "@/features/customer-balances/api";
 import { exportCustomerBalancesPdf } from "@/features/customer-balances/balancePdf";
 import { getPageCount, type BalanceCurrency, type BalanceType } from "@/features/customer-balances/model";
 import { useCustomerBalances } from "@/features/customer-balances/useCustomerBalances";
@@ -53,15 +54,15 @@ export default function CustomerBalances() {
   };
 
   const handleExportPdf = async () => {
-    const rows = balances.data?.rows ?? [];
-    if (!rows.length) {
-      toast.error("لا توجد أرصدة للتصدير");
-      return;
-    }
     setExportingPdf(true);
     try {
-      await exportCustomerBalancesPdf({ rows, balanceType, currency });
-      toast.success("تم استخراج تقرير PDF بنجاح");
+      const allRows = await fetchAllCustomerBalances({ query: debouncedSearch, balanceType, currency });
+      if (!allRows.length) {
+        toast.error("لا توجد أرصدة للتصدير");
+        return;
+      }
+      await exportCustomerBalancesPdf({ rows: allRows, balanceType, currency });
+      toast.success(`تم استخراج تقرير PDF بنجاح لـ ${allRows.length} عميل`);
     } catch (err) {
       toast.error((err as Error).message || "تعذّر استخراج تقرير PDF");
     } finally {

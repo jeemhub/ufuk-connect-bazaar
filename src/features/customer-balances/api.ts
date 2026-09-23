@@ -48,6 +48,26 @@ export async function fetchCustomerBalances(
   };
 }
 
+export async function fetchAllCustomerBalances(
+  params: Omit<CustomerBalanceSearchParams, "page" | "pageSize">,
+): Promise<CustomerBalanceRow[]> {
+  const allRows: CustomerBalanceRow[] = [];
+  let page = 1;
+  const pageSize = 100;
+
+  while (true) {
+    const res = await fetchCustomerBalances({ ...params, page, pageSize });
+    allRows.push(...res.rows);
+    if (res.rows.length < pageSize || allRows.length >= res.total) {
+      break;
+    }
+    page++;
+    if (page > 1000) break;
+  }
+
+  return allRows;
+}
+
 export async function fetchCustomerBalanceImportState(): Promise<CustomerBalanceImportState | null> {
   const { data, error } = await supabase
     .from("customer_balance_import_state")
