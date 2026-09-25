@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingBag, CheckCircle2, FileDown } from "lucide-react";
+import { Trash2, ShoppingBag, CheckCircle2, FileDown } from "lucide-react";
 import { useCart } from "@/cart/CartContext";
+import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/auth/AuthProvider";
 import { formatIqd } from "@/data/mockData";
@@ -162,25 +163,11 @@ export function CartDrawer() {
                         <div className="line-clamp-2 text-sm font-semibold">{it.name}</div>
                         <div className="text-xs text-muted-foreground">{formatIqd(it.priceIqd)} {ar ? "د.ع" : "IQD"}</div>
                         <div className="mt-auto flex items-center justify-between">
-                          <div className="flex items-center gap-1 rounded-full border border-border">
-                            <button
-                              type="button"
-                              onClick={() => setQty(it.id, it.quantity - 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted"
-                              aria-label="decrease"
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="min-w-[1.5rem] text-center text-sm font-bold">{it.quantity}</span>
-                            <button
-                              type="button"
-                              onClick={() => setQty(it.id, it.quantity + 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted"
-                              aria-label="increase"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                          <QuantityStepper
+                            quantity={it.quantity}
+                            max={it.stock}
+                            onChange={(qty) => setQty(it.id, qty)}
+                          />
                           <button
                             type="button"
                             onClick={() => remove(it.id)}
