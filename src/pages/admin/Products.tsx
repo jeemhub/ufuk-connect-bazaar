@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { ImportProductsFullDialog } from "@/components/admin/ImportProductsFullDialog";
 import { exportProductsToExcel } from "@/lib/exportProductsExcel";
+import { exportProductsToPdf } from "@/lib/exportProductsPdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -77,6 +78,25 @@ export default function Products() {
   const [importOpen, setImportOpen] = useState(false);
   const [importFullOpen, setImportFullOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  async function handlePdfExport() {
+    setExportingPdf(true);
+    toast.info(lang === "ar" ? "جاري إعداد وتوليد تقرير PDF للمنتجات..." : "Generating Products PDF Report...");
+    try {
+      const count = await exportProductsToPdf({
+        products: filtered,
+        filterBrand: brand,
+        filterCategory: cat,
+        searchQuery: search,
+      });
+      toast.success(lang === "ar" ? `تم طباعة وتصدير تقرير PDF لـ ${count} منتج بنجاح` : `Exported PDF report for ${count} products`);
+    } catch (e: any) {
+      toast.error(e?.message || (lang === "ar" ? "فشل تصدير تقرير PDF" : "PDF Export failed"));
+    } finally {
+      setExportingPdf(false);
+    }
+  }
   const imgInputRef = useRef<HTMLInputElement>(null);
   const [autoFetching, setAutoFetching] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
@@ -327,6 +347,15 @@ export default function Products() {
           <p className="mt-1 text-sm text-muted-foreground">{t("products_subtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={handlePdfExport}
+            disabled={exportingPdf}
+            className="gap-2 text-sky-700 border-sky-300 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/50"
+          >
+            {exportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+            {lang === "ar" ? "طباعة / تصدير تقرير PDF" : "Print / Export PDF"}
+          </Button>
           {isAdmin && (
             <>
               <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
