@@ -42,7 +42,7 @@ type EditState = (Product & {
 
 export default function Products() {
   const { t, lang } = useLanguage();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSales } = useAuth();
   const { rows, loading, refetch } = useAdminProducts();
   const { brands: brandRows } = useBrands({ activeOnly: false });
   const brands = useMemo(() => (brandRows ?? []).map((b) => b.name), [brandRows]);
@@ -356,16 +356,16 @@ export default function Products() {
             {exportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
             {lang === "ar" ? "طباعة / تصدير تقرير PDF" : "Print / Export PDF"}
           </Button>
+          {(isAdmin || isSales) && (
+            <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {lang === "ar" ? "تصدير Excel" : "Export to Excel"}
+            </Button>
+          )}
           {isAdmin && (
-            <>
-              <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
-                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                {lang === "ar" ? "تصدير Excel" : "Export to Excel"}
-              </Button>
-              <Button variant="outline" onClick={() => setImportFullOpen(true)} className="gap-2">
-                <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد تحديث كامل" : "Import full update"}
-              </Button>
-            </>
+            <Button variant="outline" onClick={() => setImportFullOpen(true)} className="gap-2">
+              <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد تحديث كامل" : "Import full update"}
+            </Button>
           )}
           <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
             <Upload className="h-4 w-4" /> {lang === "ar" ? "استيراد الرصيد فقط" : "Import stock only"}
