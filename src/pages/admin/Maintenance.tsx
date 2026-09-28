@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dateLabel, eventLabels, locationLabel, locationLabels, statusLabels, type DeviceLocation, type DeviceStatus, type EventType, type MaintenanceDevice, type MaintenanceEvent } from "@/features/maintenance/model";
@@ -47,6 +48,8 @@ export default function Maintenance() {
   const [eventForm, setEventForm] = useState<EventForm>({ event_type: "transfer", location: "office", custom_location: "", status: "faulty", note: "", occurred_at: localDateTime() });
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [reportDialog, setReportDialog] = useState(false);
+  const [includeTimeline, setIncludeTimeline] = useState(false);
 
   const loadDevices = useCallback(async () => {
     setLoading(true);
@@ -135,7 +138,25 @@ export default function Maintenance() {
   const toggleSelected = (id: string) => setSelectedIds((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const exportSelected = async () => {
     setExporting(true);
-    try { await exportMaintenanceReport(selected); toast.success("تم إنشاء تقرير PDF"); }
+    try {
+      const reportDevices = [...selected];
+      const reportEvents: MaintenanceEvent[] = [];
+      if (includeTimeline) {
+        for (let offset = 0; offset < reportDevices.length; offset += 50) {
+          const ids = reportDevices.slice(offset, offset + 50).map((device) => device.id);
+          for (let start = 0; ; start += 500) {
+            const { data, error } = await supabase.from("maintenance_events").select("*").in("device_id", ids).order("occurred_at", { ascending: true }).order("created_at", { ascending: true }).range(start, start + 499);
+            if (error) throw new Error(errorText(error));
+            const batch = (data ?? []) as MaintenanceEvent[];
+            reportEvents.push(...batch);
+            if (batch.length < 500) break;
+          }
+        }
+      }
+      await exportMaintenanceReport(reportDevices, { includeTimeline, events: reportEvents });
+      setReportDialog(false);
+      toast.success("تم إنشاء تقرير PDF");
+    }
     catch (error) { toast.error((error as Error).message || "تعذر إنشاء التقرير"); }
     finally { setExporting(false); }
   };
@@ -143,7 +164,7 @@ export default function Maintenance() {
   return <div dir="rtl" className="mx-auto max-w-[1500px] space-y-6">
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><Wrench className="h-4 w-4" /> إدارة الأجهزة وحركتها</div><h1 className="text-3xl font-extrabold tracking-tight">قسم الصيانة</h1><p className="mt-2 text-sm text-muted-foreground">تابع الجهاز من لحظة استلامه حتى إتمام الصيانة وتسليمه للزبون.</p></div>
-      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportSelected} disabled={!selected.length || exporting} className="gap-2"><FileDown className="h-4 w-4" /> {exporting ? "جارٍ إعداد التقرير..." : `تقرير PDF (${selected.length})`}</Button><Button onClick={openCreate} className="gap-2 bg-gradient-brand"><Plus className="h-4 w-4" /> إضافة جهاز</Button></div>
+      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setReportDialog(true)} disabled={!selected.length || exporting} className="gap-2"><FileDown className="h-4 w-4" /> {exporting ? "جارٍ إعداد التقرير..." : `تقرير PDF (${selected.length})`}</Button><Button onClick={openCreate} className="gap-2 bg-gradient-brand"><Plus className="h-4 w-4" /> إضافة جهاز</Button></div>
     </header>
 
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -172,6 +193,11 @@ export default function Maintenance() {
         </div></div>
       </article>)}
     </div>}
+
+    <Dialog open={reportDialog} onOpenChange={(open) => { if (!exporting) setReportDialog(open); }}><DialogContent dir="rtl" className="sm:max-w-md"><DialogHeader><DialogTitle>إعداد تقرير الصيانة</DialogTitle><DialogDescription>سيشمل التقرير {selected.length} جهاز من الأجهزة المحددة.</DialogDescription></DialogHeader>
+      <div className="flex items-center justify-between gap-4 rounded-xl border bg-secondary/30 p-4"><div className="space-y-1"><Label htmlFor="report-timeline" className="cursor-pointer font-semibold">تضمين الخط الزمني</Label><p className="text-xs leading-relaxed text-muted-foreground">إضافة تواريخ الاستلام وحركات النقل والصيانة والتسليم لكل جهاز.</p></div><Switch id="report-timeline" checked={includeTimeline} onCheckedChange={setIncludeTimeline} disabled={exporting} aria-label="تضمين الخط الزمني في تقرير PDF" /></div>
+      <DialogFooter className="gap-2"><Button variant="outline" onClick={() => setReportDialog(false)} disabled={exporting}>إلغاء</Button><Button onClick={exportSelected} disabled={exporting || !selected.length} className="gap-2"><FileDown className="h-4 w-4" />{exporting ? "جارٍ إعداد التقرير..." : "تنزيل التقرير PDF"}</Button></DialogFooter>
+    </DialogContent></Dialog>
 
     <Dialog open={deviceDialog} onOpenChange={setDeviceDialog}><DialogContent dir="rtl" className="max-h-[90vh] overflow-y-auto sm:max-w-xl"><DialogHeader><DialogTitle>{editingId ? "تعديل بيانات الجهاز" : "إضافة جهاز جديد"}</DialogTitle><DialogDescription>{editingId ? "تعديل بيانات التعريف والاتصال. غيّر الموقع والحالة عبر تسجيل حركة ليبقى الخط الزمني صحيحاً." : "يُسجل الاستلام تلقائياً كنقطة أولى في الخط الزمني."}</DialogDescription></DialogHeader>
       <div className="grid gap-4 py-2 sm:grid-cols-2"><Field label="اسم الجهاز" value={deviceForm.device_name} onChange={(value) => setDeviceForm((f) => ({ ...f, device_name: value }))} /><Field label="الرقم التسلسلي" value={deviceForm.serial_number} onChange={(value) => setDeviceForm((f) => ({ ...f, serial_number: value }))} /><Field label="صاحب الجهاز" value={deviceForm.owner_name} onChange={(value) => setDeviceForm((f) => ({ ...f, owner_name: value }))} /><Field label="رقم الهاتف" value={deviceForm.owner_phone} onChange={(value) => setDeviceForm((f) => ({ ...f, owner_phone: value }))} />
