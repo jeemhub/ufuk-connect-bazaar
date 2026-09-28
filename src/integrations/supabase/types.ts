@@ -658,9 +658,102 @@ export type Database = {
           },
         ]
       }
+      maintenance_devices: {
+        Row: {
+          id: string
+          device_name: string
+          serial_number: string
+          owner_name: string
+          owner_phone: string
+          location: string
+          custom_location: string | null
+          status: string
+          notes: string
+          received_at: string
+          created_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          device_name: string
+          serial_number: string
+          owner_name: string
+          owner_phone: string
+          location?: string
+          custom_location?: string | null
+          status?: string
+          notes?: string
+          received_at?: string
+          created_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          device_name?: string
+          serial_number?: string
+          owner_name?: string
+          owner_phone?: string
+          location?: string
+          custom_location?: string | null
+          status?: string
+          notes?: string
+          received_at?: string
+          created_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      maintenance_events: {
+        Row: {
+          id: string
+          device_id: string
+          event_type: string
+          location: string
+          custom_location: string | null
+          status: string
+          note: string
+          occurred_at: string
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          device_id: string
+          event_type: string
+          location: string
+          custom_location?: string | null
+          status: string
+          note?: string
+          occurred_at?: string
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          device_id?: string
+          event_type?: string
+          location?: string
+          custom_location?: string | null
+          status?: string
+          note?: string
+          occurred_at?: string
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          customer_number: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -671,6 +764,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          customer_number?: string | null
           created_at?: string
           full_name?: string | null
           id: string
@@ -681,6 +775,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          customer_number?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -832,6 +927,7 @@ export type Database = {
           can_manage_brands: boolean
           can_manage_categories: boolean
           can_manage_customer_balances: boolean
+          can_manage_maintenance: boolean
           can_manage_orders: boolean
           can_manage_products: boolean
           can_manage_projects: boolean
@@ -844,6 +940,7 @@ export type Database = {
           can_manage_brands?: boolean
           can_manage_categories?: boolean
           can_manage_customer_balances?: boolean
+          can_manage_maintenance?: boolean
           can_manage_orders?: boolean
           can_manage_products?: boolean
           can_manage_projects?: boolean
@@ -856,6 +953,7 @@ export type Database = {
           can_manage_brands?: boolean
           can_manage_categories?: boolean
           can_manage_customer_balances?: boolean
+          can_manage_maintenance?: boolean
           can_manage_orders?: boolean
           can_manage_products?: boolean
           can_manage_projects?: boolean
@@ -1077,6 +1175,29 @@ export type Database = {
       }
     }
     Functions: {
+      maintenance_record_event: {
+        Args: {
+          _device_id: string
+          _event_type: string
+          _location: string
+          _custom_location: string | null
+          _status: string
+          _note: string
+          _occurred_at: string
+        }
+        Returns: string
+      }
+      maintenance_update_device: {
+        Args: {
+          _device_id: string
+          _device_name: string
+          _serial_number: string
+          _owner_name: string
+          _owner_phone: string
+          _notes: string
+        }
+        Returns: undefined
+      }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_list_users: {
         Args: never

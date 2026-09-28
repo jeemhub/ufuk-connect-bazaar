@@ -37,6 +37,7 @@ type SalesPerms = {
   can_manage_orders?: boolean;
   can_manage_quotes?: boolean;
   can_manage_customer_balances?: boolean;
+  can_manage_maintenance?: boolean;
 };
 
 type Row = {
@@ -138,9 +139,10 @@ export default function Users() {
 
   async function load() {
     setLoading(true);
-    const [{ data, error }, { data: profiles }] = await Promise.all([
+    const [{ data, error }, { data: profiles }, { data: permissionRows }] = await Promise.all([
       supabase.rpc("admin_list_users"),
       supabase.from("profiles").select("id, is_blocked, customer_number" as "*"),
+      supabase.from("sales_permissions").select("*"),
     ]);
     if (error) {
       toast.error(error.message);
@@ -153,11 +155,13 @@ export default function Users() {
         { is_blocked: !!p.is_blocked, customer_number: p.customer_number ?? null },
       ]),
     );
+    const permissionMap = new Map(((permissionRows ?? []) as Array<SalesPerms & { user_id: string }>).map((row) => [row.user_id, row]));
     setRows(
       ((data as Row[]) ?? []).map((r) => ({
         ...r,
+        sales_perms: permissionMap.get(r.id) ?? {},
         is_blocked: profileMap.get(r.id)?.is_blocked ?? false,
-        customer_number: profileMap.get(r.id)?.customer_number ?? (r as any).customer_number ?? null,
+        customer_number: profileMap.get(r.id)?.customer_number ?? r.customer_number ?? null,
       })),
     );
     setLoading(false);
@@ -169,7 +173,9 @@ export default function Users() {
     const clean = custNumInput.trim();
     
     // Try RPC first (SECURITY DEFINER admin update)
-    let { error } = await (supabase.rpc as any)("admin_set_customer_number", {
+    let { error } = await (supabase.rpc as unknown as (
+      fn: string, args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_set_customer_number", {
       _user_id: custNumUser.id,
       _customer_number: clean,
     });
@@ -375,6 +381,7 @@ export default function Users() {
       _can_manage_orders: !!salesPermsForm.can_manage_orders,
       _can_manage_quotes: !!salesPermsForm.can_manage_quotes,
       _can_manage_customer_balances: !!salesPermsForm.can_manage_customer_balances,
+      _can_manage_maintenance: !!salesPermsForm.can_manage_maintenance,
     });
     setSavingSales(false);
     if (error) { toast.error(error.message); return; }
@@ -677,6 +684,7 @@ export default function Users() {
                 ["can_manage_orders", "إدارة الطلبات"],
                 ["can_manage_quotes", "إدارة طلبات عروض الأسعار"],
                 ["can_manage_customer_balances", "أرصدة العملاء"],
+                ["can_manage_maintenance", "قسم الصيانة"],
               ] as const).map(([key, label]) => (
                 <label key={key} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-secondary/50">
                   <Checkbox
