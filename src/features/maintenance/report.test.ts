@@ -42,13 +42,19 @@ describe("maintenance report timeline", () => {
     expect(renderedPages[0]).not.toContain("الخط الزمني للجهاز");
   });
 
-  it("adds a right-to-left horizontal timeline in event order", async () => {
+  it("keeps one selected device and its horizontal timeline on one page", async () => {
     await exportMaintenanceReport([device], { includeTimeline: true, events });
-    expect(renderedPages).toHaveLength(2);
-    const timeline = renderedPages[1];
+    expect(renderedPages).toHaveLength(1);
+    const timeline = renderedPages[0];
+    expect(timeline).toContain("كشف بالأجهزة المحددة");
     expect(timeline).toContain("display:flex;direction:rtl");
     expect(timeline.indexOf("استلام الجهاز")).toBeLessThan(timeline.indexOf("نقل الجهاز"));
     expect(timeline).toContain("أُرسل إلى بغداد");
     expect(timeline).toContain("م.جاسم العتيبي");
+  });
+
+  it("prints a custom status in the report", async () => {
+    await exportMaintenanceReport([{ ...device, status: "بانتظار قطعة غيار" }], { includeTimeline: true, events: [{ ...events[0], status: "بانتظار قطعة غيار" }] });
+    expect(renderedPages[0]).toContain("بانتظار قطعة غيار");
   });
 });

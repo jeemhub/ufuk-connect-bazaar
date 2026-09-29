@@ -1,5 +1,6 @@
 export type DeviceLocation = "office" | "warehouse" | "baghdad" | "custom" | "customer";
-export type DeviceStatus = "faulty" | "in_repair" | "repaired" | "delivered";
+export type KnownDeviceStatus = "faulty" | "in_repair" | "repaired" | "delivered";
+export type DeviceStatus = KnownDeviceStatus | (string & {});
 export type EventType = "received" | "transfer" | "returned" | "repair" | "delivered" | "note";
 
 export interface MaintenanceDevice {
@@ -31,9 +32,15 @@ export interface MaintenanceEvent {
 export const locationLabels: Record<DeviceLocation, string> = {
   office: "المكتب", warehouse: "المخزن", baghdad: "بغداد", custom: "موقع مخصص", customer: "الزبون",
 };
-export const statusLabels: Record<DeviceStatus, string> = {
+export const statusLabels: Record<KnownDeviceStatus, string> = {
   faulty: "عاطل", in_repair: "قيد الصيانة", repaired: "تم إصلاحه", delivered: "تم التسليم",
 };
+export function isKnownStatus(status: string): status is KnownDeviceStatus {
+  return Object.prototype.hasOwnProperty.call(statusLabels, status);
+}
+export function statusLabel(status: DeviceStatus): string {
+  return isKnownStatus(status) ? statusLabels[status] : status;
+}
 export const eventLabels: Record<EventType, string> = {
   received: "استلام الجهاز", transfer: "نقل الجهاز", returned: "عودة الجهاز", repair: "تحديث الصيانة", delivered: "تسليم للزبون", note: "ملاحظة",
 };
