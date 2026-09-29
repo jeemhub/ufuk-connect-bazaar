@@ -45,12 +45,20 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
     const rim = new THREE.DirectionalLight(0x7eafff, 3);
     rim.position.set(5, 3, -4);
     scene.add(rim);
+    const plugLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    plugLight.position.set(8, 2, 2);
+    scene.add(plugLight);
 
     const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
     const look = new THREE.Vector3();
     const desiredLook = new THREE.Vector3();
     const desiredPosition = new THREE.Vector3();
     const connectorPosition = new THREE.Vector3();
+    const plugFace = new THREE.Vector3();
+    const plugForward = new THREE.Vector3();
+    const plugRotation = new THREE.Quaternion();
+    const sidePosition = new THREE.Vector3();
+    const frontPosition = new THREE.Vector3();
     let model: THREE.Group | null = null;
     let connector: THREE.Object3D | null = null;
     let mixer: THREE.AnimationMixer | null = null;
@@ -105,7 +113,8 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
       mixer?.setTime(animationFrame / 30);
       model.updateMatrixWorld(true);
 
-      const detail = smooth((value - 0.65) / 0.35);
+      const detail = smooth((value - 0.60) / 0.28);
+      const frontView = smooth((value - 0.78) / 0.22);
       const isMobile = width < 768;
       const showCable = smooth((value - 0.2) / 0.45);
       const baseLook = new THREE.Vector3(showCable * (isMobile ? 0.55 : 0.9), 0, 0);
@@ -117,13 +126,26 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
       basePosition.x += showCable * 0.5;
       basePosition.z += showCable * (isMobile ? 2.6 : 3.0);
 
-      if (connector) connector.getWorldPosition(connectorPosition);
-      else connectorPosition.set(4.5, -1, 0.5);
+      if (connector) {
+        connector.getWorldPosition(connectorPosition);
+        connector.getWorldQuaternion(plugRotation);
+        plugForward.set(1, 0, 0).applyQuaternion(plugRotation).normalize();
+        plugFace.set(0.62, 0, 0).applyMatrix4(connector.matrixWorld);
+      } else {
+        connectorPosition.set(4.5, -1, 0.5);
+        plugForward.set(1, 0, 0);
+        plugFace.copy(connectorPosition).addScaledVector(plugForward, 0.62);
+      }
       desiredLook.copy(baseLook).lerp(connectorPosition, detail);
-      desiredPosition.copy(basePosition).lerp(
-        connectorPosition.clone().add(new THREE.Vector3(isMobile ? 1.0 : 0.8, 0.65, isMobile ? 4.4 : 3.0)),
-        detail,
-      );
+      sidePosition.copy(connectorPosition).add(new THREE.Vector3(isMobile ? 1.0 : 0.8, 0.65, isMobile ? 4.4 : 3.0));
+      desiredPosition.copy(basePosition).lerp(sidePosition, detail);
+
+      // Orbit around the tip so the last scroll beat shows the eight-contact face head-on.
+      frontPosition.copy(plugFace).addScaledVector(plugForward, isMobile ? 1.7 : 1.45);
+      frontPosition.y += 0.14;
+      frontPosition.z += 0.10;
+      desiredLook.lerp(plugFace, frontView);
+      desiredPosition.lerp(frontPosition, frontView);
 
       if (camera.position.lengthSq() === 0) {
         camera.position.copy(desiredPosition);
