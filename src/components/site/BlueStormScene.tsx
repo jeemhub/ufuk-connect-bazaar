@@ -59,7 +59,11 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
     const plugRotation = new THREE.Quaternion();
     const sidePosition = new THREE.Vector3();
     const frontPosition = new THREE.Vector3();
+    const cableEnd = new THREE.Vector3();
+    const ringVertex = new THREE.Vector3();
+    const bootInset = new THREE.Vector3();
     let model: THREE.Group | null = null;
+    let cable: THREE.Mesh | null = null;
     let connector: THREE.Object3D | null = null;
     let mixer: THREE.AnimationMixer | null = null;
     let frame = 0;
@@ -87,6 +91,8 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
       (gltf) => {
         if (disposed) return;
         model = gltf.scene;
+        const cableObject = model.getObjectByName("PullableOuterCable");
+        cable = cableObject instanceof THREE.Mesh ? cableObject : null;
         connector = model.getObjectByName("RJ45Connector") ?? null;
         scene.add(model);
         if (gltf.animations[0]) {
@@ -113,11 +119,28 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
       mixer?.setTime(animationFrame / 30);
       model.updateMatrixWorld(true);
 
+      if (cable && connector?.parent) {
+        // The cable uses morph targets, while the plug has a separate position track.
+        // Follow the actual last ring of the morphed cable so interpolation cannot open a gap.
+        const lastVertex = cable.geometry.attributes.position.count - 1;
+        cableEnd.set(0, 0, 0);
+        for (let index = lastVertex - 8; index <= lastVertex; index++) {
+          cable.getVertexPosition(index, ringVertex);
+          cableEnd.add(ringVertex);
+        }
+        cableEnd.multiplyScalar(1 / 9);
+        cable.localToWorld(cableEnd);
+        connector.parent.worldToLocal(cableEnd);
+        bootInset.set(0.17, 0, 0).applyQuaternion(connector.quaternion);
+        connector.position.copy(cableEnd).add(bootInset);
+        connector.updateMatrixWorld(true);
+      }
+
       const detail = smooth((value - 0.60) / 0.28);
       const frontView = smooth((value - 0.78) / 0.22);
       const isMobile = width < 768;
       const showCable = smooth((value - 0.2) / 0.45);
-      const baseLook = new THREE.Vector3(showCable * (isMobile ? 0.55 : 0.9), 0, 0);
+      const baseLook = new THREE.Vector3(showCable * (isMobile ? 1.2 : 1.6), 0, 0);
       const basePosition = new THREE.Vector3(
         isMobile ? 4.1 : 4.5,
         isMobile ? 1.8 : 1.9,
