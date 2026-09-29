@@ -25,6 +25,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/about", changefreq: "yearly", priority: "0.5" },
   { path: "/blog", changefreq: "weekly", priority: "0.6" },
   { path: "/tools", changefreq: "monthly", priority: "0.6" },
+  { path: "/experience/bluestorm-lan", changefreq: "monthly", priority: "0.6" },
   { path: "/quote", changefreq: "yearly", priority: "0.4" },
 ];
 
