@@ -9,12 +9,12 @@ const copy = {
   ar: [
     { title: "بكرة BlueStorm", body: "خشب طبيعي، لفّات كيبل متراصة، وتفاصيل يمكن استكشافها عن قرب." },
     { title: "اسحب الكيبل", body: "مع التمرير، ينفك الكيبل من البكرة ويتمايل أثناء سحبه." },
-    { title: "اقترب من الاتصال", body: "شاهد الأطراف الثمانية والأسلاك الملونة داخل موصل RJ45 الشفاف." },
+    { title: "داخل الكيبل", body: "اقترب من نهاية الكيبل المكشوفة وشاهد الأزواج الأربعة الملتفة وطبقات التدريع." },
   ],
   en: [
     { title: "The BlueStorm reel", body: "Natural wood, tightly wound cable, and details worth a closer look." },
     { title: "Pull the cable", body: "Scroll to unwind the cable and follow its movement." },
-    { title: "See the connection", body: "See eight contacts and colored wires inside the clear RJ45 connector." },
+    { title: "Inside the cable", body: "Explore the four twisted pairs and shielding layers at the exposed cable end." },
   ],
 };
 
@@ -79,7 +79,7 @@ export function BlueStormScrollSection() {
     return (
       <section ref={sectionRef} aria-label="BlueStorm LAN" className="bg-[#081d3b] px-5 py-16 text-white md:py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2">
-          <img src="/models/bluestorm-lan-reel.png" alt={lang === "ar" ? "بكرة كيبل BlueStorm مع موصل RJ45" : "BlueStorm cable reel with RJ45 connector"} className="mx-auto w-full max-w-xl" loading="lazy" />
+          <img src="/models/bluestorm-lan-reel.png" alt={lang === "ar" ? "بكرة كيبل BlueStorm مع نهاية كيبل مكشوفة" : "BlueStorm cable reel with exposed cable end"} className="mx-auto w-full max-w-xl" loading="lazy" />
           <div>
             <p className="mb-4 text-sm font-semibold text-[#9cc7f6]">BlueStorm LAN</p>
             <h2 id="bluestorm-title" className="text-4xl font-bold leading-tight md:text-5xl">{stages[0].title}</h2>

@@ -18,7 +18,7 @@ BLEND_PATH = os.path.join(ROOT, "assets/bluestorm-lan-reel-detailed.blend")
 POSTER_PATH = os.path.join(ROOT, "public/models/bluestorm-lan-reel.png")
 PULL_PREVIEW_PATH = os.path.join(ROOT, "assets/bluestorm-cable-pulled.png")
 SWAY_PREVIEW_PATH = os.path.join(ROOT, "assets/bluestorm-cable-sway.png")
-CONNECTOR_PREVIEW_PATH = os.path.join(ROOT, "assets/bluestorm-rj45-detail.png")
+PAIR_PREVIEW_PATH = os.path.join(ROOT, "assets/bluestorm-twisted-pairs-detail.png")
 WOOD_TEX_PATH = os.path.join(ROOT, "assets/bluestorm-wood-grain.png")
 
 os.makedirs(os.path.dirname(GLB_PATH), exist_ok=True)
@@ -61,22 +61,20 @@ navy = material("BlueStorm deep navy print", (0.012, 0.035, 0.11), roughness=0.9
 black = material("Outdoor LAN cable / textured black jacket", (0.008, 0.014, 0.023), roughness=0.61)
 black_highlight = material("Cable seam", (0.06, 0.08, 0.11), roughness=0.51)
 metal = material("Brushed steel axle fittings", (0.43, 0.49, 0.53), metallic=0.82, roughness=0.31)
-gold = material("RJ45 plated copper contacts", (0.82, 0.55, 0.16), metallic=0.88, roughness=0.19)
-plug = material("Clear RJ45 polycarbonate shell", (0.91, 0.97, 1.0), metallic=0.0, roughness=0.035,
-                transmission=0.96)
-plug_solid = material("RJ45 clear edge refraction", (0.75, 0.88, 0.94), metallic=0.0, roughness=0.09,
-                      transmission=0.74)
 label_mat = material("Product sticker", (0.89, 0.9, 0.88), roughness=0.78)
-boot_material = material("Molded black RJ45 strain relief", (0.022, 0.029, 0.039), roughness=0.48)
-wire_order_t568b = [
-    material("Pin 1 white orange", (0.95, 0.73, 0.52)),
-    material("Pin 2 orange", (0.94, 0.31, 0.035)),
-    material("Pin 3 white green", (0.76, 0.91, 0.74)),
-    material("Pin 4 blue", (0.025, 0.24, 0.72)),
-    material("Pin 5 white blue", (0.74, 0.85, 0.97)),
-    material("Pin 6 green", (0.055, 0.48, 0.14)),
-    material("Pin 7 white brown", (0.88, 0.76, 0.62)),
-    material("Pin 8 brown", (0.45, 0.20, 0.075)),
+silver_foil = material("Aluminum foil shielding", (0.52, 0.58, 0.61), metallic=0.86, roughness=0.38)
+silver_braid = material("Woven tinned copper shield", (0.65, 0.69, 0.70), metallic=0.84, roughness=0.36)
+inner_sleeve = material("Pale inner cable separator", (0.74, 0.77, 0.73), roughness=0.76)
+copper = material("Exposed copper conductor", (0.77, 0.37, 0.12), metallic=0.74, roughness=0.32)
+pair_materials = [
+    ("Blue", material("Blue pair insulation", (0.025, 0.16, 0.66), roughness=0.48),
+     material("White blue pair insulation", (0.84, 0.87, 0.82), roughness=0.53)),
+    ("Orange", material("Orange pair insulation", (0.94, 0.34, 0.025), roughness=0.48),
+     material("White orange pair insulation", (0.89, 0.87, 0.80), roughness=0.53)),
+    ("Green", material("Green pair insulation", (0.025, 0.44, 0.11), roughness=0.48),
+     material("White green pair insulation", (0.85, 0.89, 0.82), roughness=0.53)),
+    ("Brown", material("Brown pair insulation", (0.38, 0.17, 0.065), roughness=0.48),
+     material("White brown pair insulation", (0.86, 0.83, 0.77), roughness=0.53)),
 ]
 
 
@@ -131,7 +129,7 @@ reel_root = empty("ReelRoot")
 spool_body_root = empty("SpoolAssembly", reel_root)
 front_root = empty("FrontFlange", spool_body_root)
 back_root = empty("BackFlange", spool_body_root)
-connector_root = empty("RJ45Connector", reel_root, (2.37, -0.54, -0.91))
+cutaway_root = empty("CableCutaway", reel_root, (2.24, -0.54, -0.91))
 
 
 def mesh_object(name, verts, faces, mat, parent=None):
@@ -401,10 +399,10 @@ for frame, (pull, sway, active_shape) in timeline.items():
             continue
         key.value = 1.0 if key.name == active_shape else 0.0
         key.keyframe_insert(data_path="value", frame=frame, group="Pull and sway")
-    connector_root.location = cable_end(pull, sway) + Vector((0.23, 0, 0))
-    connector_root.rotation_euler = (0.035 * sway, 0.0, 0.14 * sway)
-    connector_root.keyframe_insert(data_path="location", frame=frame, group="Pull and sway")
-    connector_root.keyframe_insert(data_path="rotation_euler", frame=frame, group="Pull and sway")
+    cutaway_root.location = cable_end(pull, sway) + Vector((0.10, 0, 0))
+    cutaway_root.rotation_euler = (0.025 * sway, 0.0, 0.10 * sway)
+    cutaway_root.keyframe_insert(data_path="location", frame=frame, group="Pull and sway")
+    cutaway_root.keyframe_insert(data_path="rotation_euler", frame=frame, group="Pull and sway")
     spool_body_root.rotation_euler[1] = -0.85 * pull
     spool_body_root.keyframe_insert(data_path="rotation_euler", frame=frame, group="Unwinding reel")
 
@@ -413,74 +411,59 @@ scene.frame_end = 180
 scene.render.fps = 30
 scene.frame_set(1)
 
-def prism_xz(name, outline, y_half_width, mat, parent):
-    count = len(outline)
-    verts = [(x, -y_half_width, z) for x, z in outline]
-    verts.extend((x, y_half_width, z) for x, z in outline)
-    faces = [tuple(reversed(range(count))), tuple(range(count, 2 * count))]
-    for i in range(count):
-        j = (i + 1) % count
-        faces.append((i, j, count + j, count + i))
-    return mesh_object(name, verts, faces, mat, parent)
+# The cable ends in a physical cutaway: jacket, foil, braided shield, pale
+# separator and four twisted pairs. The whole assembly follows the cable tip.
+tube("CutawayBlackJacket", [(-0.10, 0, 0), (0.16, 0, 0)], 0.061,
+     black, cutaway_root, 20)
+tube("ShieldFoil", [(0.145, 0, 0), (0.40, 0, 0)], 0.056,
+     silver_foil, cutaway_root, 20)
+for direction in (-1, 1):
+    for strand in range(12):
+        braid = []
+        for step in range(29):
+            t = step / 28
+            angle = 2 * math.pi * (strand / 12 + direction * 2.25 * t)
+            braid.append((0.165 + 0.22 * t,
+                          0.059 * math.cos(angle), 0.059 * math.sin(angle)))
+        tube("ShieldBraid_%s_%02d" % ("L" if direction < 0 else "R", strand),
+             braid, 0.0021, silver_braid, cutaway_root, 5)
+tube("InnerPairSeparator", [(0.38, 0, 0), (0.54, 0, 0)], 0.046,
+     inner_sleeve, cutaway_root, 18)
 
+pair_layout = [
+    (pair_materials[0], (-0.016, 0.015), (-0.225, 0.025)),
+    (pair_materials[3], (-0.016, -0.015), (-0.075, 0.190)),
+    (pair_materials[1], (0.016, 0.015), (0.095, 0.200)),
+    (pair_materials[2], (0.016, -0.015), (0.235, 0.035)),
+]
 
-# 8P8C RJ45 with a hollow clear polycarbonate shell, visible T568B conductors,
-# individual plated contacts, eight channels, locking tab and molded strain boot.
-prism_xz("TaperedStrainBoot", [(-0.23, -0.092), (-0.16, -0.125), (0.12, -0.125),
-                               (0.14, 0.125), (-0.16, 0.125), (-0.23, 0.092)],
-         0.142, boot_material, connector_root)
-tube("FlexibleCableGrommet", [(-0.31, 0, 0), (-0.25, 0, 0), (-0.20, 0, 0)],
-     0.075, boot_material, connector_root, 12)
-for i in range(6):
-    x = -0.205 + i * 0.046
-    box("MoldedFlexRib_%02d" % i, (x, 0, 0), (0.015, 0.302, 0.267),
-        black_highlight, connector_root, 0.005)
-box("BootToPlugCollar", (0.13, 0, 0), (0.075, 0.31, 0.252), boot_material, connector_root, 0.014)
+def pair_point(pair_index, strand, t):
+    _, start, finish = pair_layout[pair_index]
+    fan = t * t * (3 - 2 * t)
+    center_y = start[0] * (1 - fan) + finish[0] * fan
+    center_z = start[1] * (1 - fan) + finish[1] * fan
+    phase = 2 * math.pi * (2.85 * t + pair_index * 0.18) + strand * math.pi
+    return (0.43 + 1.03 * t,
+            center_y + 0.018 * math.cos(phase),
+            center_z + 0.018 * math.sin(phase))
 
-# A solid cube looked frosted in the previous render. Thin glass walls leave the
-# channels, wires, and metal visibly inside the connector.
-box("ClearShellFloor", (0.415, 0, -0.128), (0.55, 0.334, 0.020), plug, connector_root, 0.007)
-box("ClearShellTop", (0.415, 0, 0.128), (0.55, 0.334, 0.018), plug, connector_root, 0.006)
-for side, sign in (("L", -1), ("R", 1)):
-    box("ClearShellSide_" + side, (0.415, sign * 0.159, 0),
-        (0.55, 0.018, 0.25), plug, connector_root, 0.006)
-    box("ClearNoseRail_" + side, (0.716, sign * 0.148, 0),
-        (0.098, 0.023, 0.196), plug_solid, connector_root, 0.005)
-box("ClearNoseFloor", (0.715, 0, -0.089), (0.105, 0.303, 0.025), plug_solid, connector_root, 0.005)
-box("ClearNoseUpperLip", (0.720, 0, 0.098), (0.100, 0.303, 0.024), plug_solid, connector_root, 0.004)
-box("CableJacketInPlug", (0.232, 0, -0.025), (0.27, 0.18, 0.105), black, connector_root, 0.026)
-box("ClearCrimpBlock", (0.370, 0, -0.008), (0.095, 0.277, 0.136), plug_solid,
-    connector_root, 0.008)
-box("CrimpPressurePlate", (0.350, 0, 0.065), (0.095, 0.225, 0.017),
-    plug_solid, connector_root, 0.004)
-
-for i in range(8):
-    y = -0.133 + i * 0.038
-    z = -0.038 + (i % 2) * 0.014
-    tube("Wire_%02d_T568B" % (i + 1),
-         [(0.24, y * 0.57, -0.03), (0.32, y * 0.82, z),
-          (0.47, y, z + 0.006), (0.67, y, z + 0.020)],
-         0.009, wire_order_t568b[i], connector_root, 6)
-    box("GoldBladeTop_%02d" % (i + 1), (0.643, y, 0.145),
-        (0.190, 0.022, 0.013), gold, connector_root, 0.002)
-    box("GoldBladeNose_%02d" % (i + 1), (0.760, y, 0.078),
-        (0.018, 0.023, 0.088), gold, connector_root, 0.002)
-    tube("GoldContactBend_%02d" % (i + 1),
-         [(0.710, y, 0.152), (0.744, y, 0.138), (0.760, y, 0.120)],
-         0.008, gold, connector_root, 8)
-    if i < 7:
-        y_gap = y + 0.019
-        box("ClearPinSeparator_%02d" % (i + 1), (0.660, y_gap, 0.035),
-            (0.212, 0.006, 0.169), plug_solid, connector_root, 0.002)
-
-prism_xz("SpringLockTongue", [(0.18, 0.144), (0.48, 0.148), (0.60, 0.236),
-                                (0.55, 0.252), (0.40, 0.197), (0.18, 0.183)],
-         0.068, plug_solid, connector_root)
-box("LatchReleaseTab", (0.55, 0, 0.236), (0.115, 0.142, 0.028), plug_solid,
-    connector_root, 0.007)
-for i, y in enumerate((-0.042, 0, 0.042)):
-    box("LatchGripRidge_%02d" % (i + 1), (0.55, y, 0.255),
-        (0.054, 0.012, 0.009), plug_solid, connector_root, 0.003)
+for pair_index, (pair_info, _, _) in enumerate(pair_layout):
+    name, color_mat, white_mat = pair_info
+    for strand, insulation in ((0, color_mat), (1, white_mat)):
+        points = [pair_point(pair_index, strand, step / 96) for step in range(97)]
+        tube("Twisted%s_%s" % (name, "Color" if strand == 0 else "White"),
+             points, 0.0105, insulation, cutaway_root, 8)
+        tip = Vector(points[-1])
+        preceding = Vector(points[-3])
+        tangent = (tip - preceding).normalized()
+        copper_points = [tuple(tip + tangent * (0.017 * step)) for step in range(12)]
+        tube("ExposedCopper_%s_%d" % (name, strand + 1),
+             copper_points, 0.0044, copper, cutaway_root, 8)
+        if strand == 1:
+            # A colored tracer identifies which white conductor belongs to its pair.
+            stripe = [(x, y + 0.009, z) for x, y, z in points]
+            tube("TracerOnWhite_%s" % name, stripe, 0.0019,
+                 color_mat, cutaway_root, 5)
 
 # Studio setup, separate from model export.
 studio = bpy.data.collections.new("Studio / render only")
@@ -498,7 +481,7 @@ camera.location = (4.6, -7.2, 3.1)
 target = Vector((0.35, 0, 0.05))
 camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
 camera_data.type = "ORTHO"
-camera_data.ortho_scale = 5.9
+camera_data.ortho_scale = 6.5
 scene.camera = camera
 
 def area_light(name, location, energy, size):
@@ -551,18 +534,18 @@ def point_camera(position, target, scale):
 
 bpy.ops.render.render(write_still=True)
 scene.frame_set(64)
-point_camera((6.7, -7.8, 2.8), (1.25, -0.15, -0.15), 8.4)
+point_camera((7.3, -8.1, 3.0), (1.55, -0.15, -0.15), 9.2)
 scene.render.filepath = PULL_PREVIEW_PATH
 bpy.ops.render.render(write_still=True)
 scene.frame_set(112)
 scene.render.filepath = SWAY_PREVIEW_PATH
 bpy.ops.render.render(write_still=True)
 scene.frame_set(64)
-point_camera((5.8, -2.9, 1.0), (4.9, -0.55, -1.15), 1.55)
-scene.render.filepath = CONNECTOR_PREVIEW_PATH
+point_camera((6.8, -3.3, 1.6), (5.30, -0.54, -1.10), 2.35)
+scene.render.filepath = PAIR_PREVIEW_PATH
 bpy.ops.render.render(write_still=True)
 scene.frame_set(1)
-point_camera((4.6, -7.2, 3.1), (0.35, 0, 0.05), 5.9)
+point_camera((4.6, -7.2, 3.1), (0.55, 0, 0.05), 6.5)
 scene.render.filepath = POSTER_PATH
 bpy.context.preferences.filepaths.save_version = 0
 bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)
@@ -577,7 +560,7 @@ result = {
     "poster": POSTER_PATH,
     "pulled_preview": PULL_PREVIEW_PATH,
     "sway_preview": SWAY_PREVIEW_PATH,
-    "connector_preview": CONNECTOR_PREVIEW_PATH,
+    "pair_preview": PAIR_PREVIEW_PATH,
     "wood_texture": WOOD_TEX_PATH,
     "animation_frames": scene.frame_end,
 }
