@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Cable, ShieldCheck, Sun, Truck, Zap, Star, Award, Users, Wrench, Globe2, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Cable, ShieldCheck, Sun, Truck, Zap, Star, Award, Users, Wrench, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { categories } from "@/data/mockData";
@@ -37,7 +37,7 @@ const Home = () => {
     m.setAttribute("content", desc);
   }, [t, lang]);
 
-  const catIcons: Record<string, LucideIcon> = { networking: Cable, solar: Sun, ups: Zap, accessories: ShieldCheck };
+  const catIcons: Record<string, any> = { networking: Cable, solar: Sun, ups: Zap, accessories: ShieldCheck };
 
   return (
     <>
@@ -203,30 +203,6 @@ const Home = () => {
 
       {/* 2. Trusted brands strip */}
       <BrandStrip />
-
-      {/* BlueStorm 3D product story */}
-      <section className="relative overflow-hidden bg-[#081a34] text-white">
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,#1e4777,transparent_55%)]" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-5 px-5 py-12 md:grid-cols-2 md:gap-10 md:px-8 md:py-20">
-          <div className="relative z-10">
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-sky-300">BLUESTORM / 3D EXPERIENCE</p>
-            <h2 className="mt-4 max-w-lg text-3xl font-black leading-tight md:text-5xl">
-              {lang === "ar" ? "افتح البكرة. اقترب من كل تفصيل." : "Open the reel. Explore every detail."}
-            </h2>
-            <p className="mt-4 max-w-lg text-sm leading-7 text-slate-300 md:text-base">
-              {lang === "ar" ? "تجربة ثلاثية الأبعاد لكيبل BlueStorm: من لفات البكرة إلى رأس RJ45. حرّك الصفحة لتراها عن قرب." : "A 3D look at BlueStorm cable, from the wound reel to the RJ45 plug. Scroll in for a closer view."}
-            </p>
-            <Link to="/experience/bluestorm-lan" className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-sky-100">
-              {lang === "ar" ? "ابدأ التجربة" : "Explore in 3D"}
-              <Arrow className="h-4 w-4" />
-            </Link>
-          </div>
-          <Link to="/experience/bluestorm-lan" className="relative block" aria-label={lang === "ar" ? "افتح تجربة بكرة BlueStorm ثلاثية الأبعاد" : "Open the BlueStorm 3D experience"}>
-            <div aria-hidden className="absolute inset-[10%] rounded-full bg-sky-400/10 blur-3xl" />
-            <img src="/models/bluestorm-lan-reel.png" alt={lang === "ar" ? "بكرة كيبل BlueStorm ورأس RJ45" : "BlueStorm cable reel and RJ45 plug"} loading="lazy" className="relative mx-auto max-h-[470px] w-full object-contain transition-transform duration-700 hover:scale-[1.04]" />
-          </Link>
-        </div>
-      </section>
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">

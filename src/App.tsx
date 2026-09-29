@@ -33,7 +33,6 @@ const ProjectsPage = lazy(() => import("@/pages/site/ProjectsPage"));
 const ProjectDetail = lazy(() => import("@/pages/site/ProjectDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ToolsPage = lazy(() => import("./pages/site/Tools"));
-const BlueStormExperience = lazy(() => import("./pages/site/BlueStormExperience"));
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
 const DashboardSwitch = lazy(() => import("./pages/admin/DashboardSwitch"));
@@ -110,7 +109,6 @@ const App = () => {
                         <Route path="/projects" element={<ProjectsPage />} />
                         <Route path="/projects/:slug" element={<ProjectDetail />} />
                         <Route path="/tools" element={<ToolsPage />} />
-                        <Route path="/experience/bluestorm-lan" element={<BlueStormExperience />} />
                       </Route>
                       <Route path="/auth" element={<AuthPage />} />
                       <Route path="/auth/reset" element={<ResetPasswordPage />} />
