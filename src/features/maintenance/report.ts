@@ -35,17 +35,26 @@ function makePages(devices: MaintenanceDevice[], options: ReportOptions): Report
 }
 
 function timelineContent(device: MaintenanceDevice, events: MaintenanceEvent[]): string {
-  const items = events.length ? events.map((event) => `
-    <div style="position:relative;border-right:2px solid #b5d7e3;padding:0 22px 19px 0;break-inside:avoid">
-      <span style="position:absolute;right:-7px;top:4px;width:11px;height:11px;border-radius:50%;background:#0c6b8e;border:2px solid #fff"></span>
-      <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px"><strong>${escapeHtml(eventLabels[event.event_type])} · ${escapeHtml(locationLabel(event.location, event.custom_location))}</strong><span style="color:#66788a;white-space:nowrap">${escapeHtml(dateLabel(event.occurred_at))}</span></div>
-      <div style="font-size:11px;color:#536477;margin-top:4px">الحالة: ${escapeHtml(statusLabels[event.status])}</div>
-      ${event.note ? `<div style="font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f7fb;border-radius:8px;padding:8px;margin-top:7px">${escapeHtml(event.note)}</div>` : ""}
-    </div>`).join("") : `<p style="font-size:13px;color:#66788a">لا توجد أحداث مسجلة لهذا الجهاز.</p>`;
+  const timeline = events.length ? `
+    <div style="position:relative;display:flex;direction:rtl;margin:20px 0 24px;min-height:128px">
+      ${events.length > 1 ? `<div style="position:absolute;top:8px;right:${100 / (events.length * 2)}%;left:${100 / (events.length * 2)}%;height:3px;background:#b5d7e3"></div>` : ""}
+      ${events.map((event) => `<div style="position:relative;flex:1;min-width:0;padding:0 7px;text-align:center;overflow-wrap:anywhere">
+        <span style="display:block;position:relative;z-index:1;width:17px;height:17px;box-sizing:border-box;margin:0 auto 12px;border:4px solid #0c6b8e;border-radius:50%;background:#fff"></span>
+        <strong style="display:block;font-size:12px;line-height:1.5">${escapeHtml(eventLabels[event.event_type])}</strong>
+        <span style="display:block;font-size:11px;color:#536477;line-height:1.5">${escapeHtml(locationLabel(event.location, event.custom_location))}</span>
+        <span style="display:block;font-size:10px;color:#66788a;line-height:1.5;margin-top:4px">${escapeHtml(dateLabel(event.occurred_at))}</span>
+        <span style="display:block;font-size:10px;color:#536477;line-height:1.5">${escapeHtml(statusLabels[event.status])}</span>
+      </div>`).join("")}
+    </div>` : `<p style="font-size:13px;color:#66788a">لا توجد أحداث مسجلة لهذا الجهاز.</p>`;
+  const notes = events.filter((event) => event.note).map((event) => `
+    <div style="padding:9px 12px;margin-top:8px;background:#f4f7fb;border-radius:8px;overflow-wrap:anywhere">
+      <strong style="font-size:11px;color:#0c6b8e">${escapeHtml(eventLabels[event.event_type])} · ${escapeHtml(dateLabel(event.occurred_at))}</strong>
+      <div style="font-size:11px;line-height:1.6;white-space:pre-wrap;margin-top:4px">${escapeHtml(event.note)}</div>
+    </div>`).join("");
   return `<div style="margin:20px 0 22px;padding:15px 18px;border-radius:10px;background:#eef6f9">
       <div style="font-size:18px;font-weight:700">${escapeHtml(device.device_name)}</div>
       <div style="font-size:12px;color:#536477;margin-top:5px">السيريل: ${escapeHtml(device.serial_number)} · صاحب الجهاز: ${escapeHtml(device.owner_name)}</div>
-    </div><div style="font-size:15px;font-weight:700;margin-bottom:18px">الخط الزمني للجهاز</div><div>${items}</div>`;
+    </div><div style="font-size:15px;font-weight:700;margin-bottom:18px">الخط الزمني للجهاز</div>${timeline}${notes ? `<div style="font-size:12px;font-weight:700;margin-top:12px">تفاصيل الحركات</div>${notes}` : ""}`;
 }
 
 export async function exportMaintenanceReport(devices: MaintenanceDevice[], options: ReportOptions = { includeTimeline: false, events: [] }): Promise<void> {
