@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import { dateLabel, eventLabels, locationLabel, statusLabel, type MaintenanceDevice, type MaintenanceEvent } from "./model";
+import { dateLabel, eventLabel, locationLabel, statusLabel, type MaintenanceDevice, type MaintenanceEvent } from "./model";
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] || char);
@@ -47,7 +47,7 @@ function timelineContent(device: MaintenanceDevice, events: MaintenanceEvent[], 
       ${group.length > 1 ? `<div style="position:absolute;top:8px;right:${100 / (group.length * 2)}%;left:${100 / (group.length * 2)}%;height:3px;background:#b5d7e3"></div>` : ""}
       ${group.map((event) => `<div style="position:relative;flex:1;min-width:0;padding:0 7px;text-align:center;overflow-wrap:anywhere">
         <span style="display:block;position:relative;z-index:1;width:17px;height:17px;box-sizing:border-box;margin:0 auto 12px;border:4px solid #0c6b8e;border-radius:50%;background:#fff"></span>
-        <strong style="display:block;font-size:12px;line-height:1.5">${escapeHtml(eventLabels[event.event_type])}</strong>
+        <strong style="display:block;font-size:12px;line-height:1.5">${escapeHtml(eventLabel(event.event_type))}</strong>
         <span style="display:block;font-size:11px;color:#536477;line-height:1.5">${escapeHtml(locationLabel(event.location, event.custom_location))}</span>
         <span style="display:block;font-size:10px;color:#66788a;line-height:1.5;margin-top:4px">${escapeHtml(dateLabel(event.occurred_at))}</span>
         <span style="display:block;font-size:10px;color:#536477;line-height:1.5">${escapeHtml(statusLabel(event.status))}</span>
@@ -55,7 +55,7 @@ function timelineContent(device: MaintenanceDevice, events: MaintenanceEvent[], 
     </div>`).join("") : `<p style="font-size:13px;color:#66788a">لا توجد أحداث مسجلة لهذا الجهاز.</p>`;
   const notes = events.filter((event) => event.note).map((event) => `
     <div style="padding:9px 12px;margin-top:8px;background:#f4f7fb;border-radius:8px;overflow-wrap:anywhere">
-      <strong style="font-size:11px;color:#0c6b8e">${escapeHtml(eventLabels[event.event_type])} · ${escapeHtml(dateLabel(event.occurred_at))}</strong>
+      <strong style="font-size:11px;color:#0c6b8e">${escapeHtml(eventLabel(event.event_type))} · ${escapeHtml(dateLabel(event.occurred_at))}</strong>
       <div style="font-size:11px;line-height:1.6;white-space:pre-wrap;margin-top:4px">${escapeHtml(event.note)}</div>
     </div>`).join("");
   return `${compact ? "" : `<div style="margin:20px 0 22px;padding:15px 18px;border-radius:10px;background:#eef6f9">

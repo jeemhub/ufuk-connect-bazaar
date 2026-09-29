@@ -57,4 +57,9 @@ describe("maintenance report timeline", () => {
     await exportMaintenanceReport([{ ...device, status: "بانتظار قطعة غيار" }], { includeTimeline: true, events: [{ ...events[0], status: "بانتظار قطعة غيار" }] });
     expect(renderedPages[0]).toContain("بانتظار قطعة غيار");
   });
+
+  it("prints a custom event name on the timeline", async () => {
+    await exportMaintenanceReport([device], { includeTimeline: true, events: [{ ...events[0], event_type: "إرسال إلى الوكيل" }] });
+    expect(renderedPages[0]).toContain("إرسال إلى الوكيل");
+  });
 });
