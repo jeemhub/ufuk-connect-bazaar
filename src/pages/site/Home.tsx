@@ -9,6 +9,7 @@ import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { useProducts } from "@/hooks/useProducts";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { BrandStrip } from "@/components/site/BrandStrip";
+import { BlueStormScrollSection } from "@/components/site/BlueStormScrollSection";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
 import { GlobalSearch } from "@/components/site/GlobalSearch";
@@ -203,6 +204,8 @@ const Home = () => {
 
       {/* 2. Trusted brands strip */}
       <BrandStrip />
+
+      <BlueStormScrollSection />
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
