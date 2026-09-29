@@ -7,14 +7,14 @@ const BlueStormScene = lazy(() => import("./BlueStormScene"));
 
 const copy = {
   ar: [
-    { title: "بكرة BlueStorm", body: "شاهد بكرة كيبل الشبكات وتفاصيلها من زاوية أقرب." },
+    { title: "بكرة BlueStorm", body: "خشب طبيعي، لفّات كيبل متراصة، وتفاصيل يمكن استكشافها عن قرب." },
     { title: "اسحب الكيبل", body: "مع التمرير، ينفك الكيبل من البكرة ويتمايل أثناء سحبه." },
-    { title: "اقترب من الاتصال", body: "لقطة قريبة لموصل RJ45 وتفاصيله الدقيقة." },
+    { title: "اقترب من الاتصال", body: "شاهد الأطراف الثمانية والأسلاك الملونة داخل موصل RJ45 الشفاف." },
   ],
   en: [
-    { title: "The BlueStorm reel", body: "Explore the network cable reel and its details up close." },
+    { title: "The BlueStorm reel", body: "Natural wood, tightly wound cable, and details worth a closer look." },
     { title: "Pull the cable", body: "Scroll to unwind the cable and follow its movement." },
-    { title: "See the connection", body: "Move closer to the RJ45 connector and its fine details." },
+    { title: "See the connection", body: "See eight contacts and colored wires inside the clear RJ45 connector." },
   ],
 };
 
@@ -103,7 +103,7 @@ export function BlueStormScrollSection() {
           <img
             src="/models/bluestorm-lan-reel.png"
             alt=""
-            className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${ready && !failed ? "opacity-0" : "opacity-100"}`}
+            className={`absolute inset-0 h-full w-full object-contain ${ready && !failed ? "opacity-0" : "opacity-100"}`}
             loading="lazy"
           />
           {near && !failed && (
@@ -118,12 +118,10 @@ export function BlueStormScrollSection() {
             <span className="h-px w-8 bg-[#9cc7f6]" />BlueStorm LAN
           </div>
           <div className="relative min-h-[154px] md:min-h-[220px]" aria-live="polite">
-            {stages.map((item, index) => (
-              <div key={item.title} className={`absolute inset-0 transition-[opacity,transform] duration-500 ${stage === index ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"}`} aria-hidden={stage !== index}>
-                <h2 id={index === 0 ? "bluestorm-title" : undefined} className="text-3xl font-bold leading-[1.18] sm:text-4xl md:text-5xl xl:text-6xl">{item.title}</h2>
-                <p className="mt-4 max-w-md text-base leading-relaxed text-[#c3d2e6] md:text-lg">{item.body}</p>
-              </div>
-            ))}
+            <div key={stage} className="animate-fade-in-up">
+              <h2 id={stage === 0 ? "bluestorm-title" : undefined} className="text-3xl font-bold leading-[1.18] sm:text-4xl md:text-5xl xl:text-6xl">{stages[stage].title}</h2>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-[#c3d2e6] md:text-lg">{stages[stage].body}</p>
+            </div>
           </div>
           <Link to="/products?category=networking" className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/40 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
             {lang === "ar" ? "تصفح تجهيزات الشبكات" : "Browse networking equipment"}<Arrow size={17} />

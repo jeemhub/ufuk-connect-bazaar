@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 type Props = {
   progress: React.MutableRefObject<number>;
@@ -32,20 +33,26 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.55;
+    renderer.toneMappingExposure = 1.18;
     renderer.domElement.style.cssText = "display:block;width:100%;height:100%";
     renderer.domElement.setAttribute("aria-hidden", "true");
     element.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.add(new THREE.HemisphereLight(0xe9f2ff, 0x645247, 3));
-    const key = new THREE.DirectionalLight(0xffffff, 4.2);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const room = new RoomEnvironment();
+    const studioReflection = pmrem.fromScene(room);
+    room.dispose();
+    scene.environment = studioReflection.texture;
+    scene.environmentIntensity = 0.45;
+    scene.add(new THREE.HemisphereLight(0xe9f2ff, 0x645247, 1.8));
+    const key = new THREE.DirectionalLight(0xffffff, 2.6);
     key.position.set(-3, 5, 8);
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0x7eafff, 3);
+    const rim = new THREE.DirectionalLight(0x7eafff, 1.7);
     rim.position.set(5, 3, -4);
     scene.add(rim);
-    const plugLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    const plugLight = new THREE.DirectionalLight(0xffffff, 1.4);
     plugLight.position.set(8, 2, 2);
     scene.add(plugLight);
 
@@ -68,6 +75,7 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
     let mixer: THREE.AnimationMixer | null = null;
     let frame = 0;
     let disposed = false;
+    let readyNotified = false;
     let width = 0;
     let height = 0;
 
@@ -94,12 +102,35 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
         const cableObject = model.getObjectByName("PullableOuterCable");
         cable = cableObject instanceof THREE.Mesh ? cableObject : null;
         connector = model.getObjectByName("RJ45Connector") ?? null;
+        model.traverse((object) => {
+          if (!(object instanceof THREE.Mesh)) return;
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          for (const material of materials) {
+            if (!(material instanceof THREE.MeshPhysicalMaterial)) continue;
+            if (material.name.includes("Clear RJ45 polycarbonate shell")) {
+              material.transmission = 0;
+              material.transparent = true;
+              material.opacity = 0.17;
+              material.depthWrite = false;
+              material.roughness = 0.08;
+              material.side = THREE.DoubleSide;
+              material.needsUpdate = true;
+            } else if (material.name.includes("RJ45 clear edge refraction")) {
+              material.transmission = 0;
+              material.transparent = true;
+              material.opacity = 0.31;
+              material.depthWrite = false;
+              material.roughness = 0.12;
+              material.side = THREE.DoubleSide;
+              material.needsUpdate = true;
+            }
+          }
+        });
         scene.add(model);
         if (gltf.animations[0]) {
           mixer = new THREE.AnimationMixer(model);
           mixer.clipAction(gltf.animations[0]).play();
         }
-        onReady();
       },
       undefined,
       () => { if (!disposed) onError(); },
@@ -179,6 +210,10 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
       }
       camera.lookAt(look);
       renderer.render(scene, camera);
+      if (model && !readyNotified) {
+        readyNotified = true;
+        onReady();
+      }
     };
     render();
 
@@ -193,6 +228,8 @@ export default function BlueStormScene({ progress, onReady, onError }: Props) {
         materials.forEach((material) => material.dispose());
       });
       mixer?.stopAllAction();
+      studioReflection.dispose();
+      pmrem.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };

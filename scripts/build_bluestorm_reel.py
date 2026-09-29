@@ -14,7 +14,7 @@ from mathutils import Vector
 
 ROOT = "/Users/JeemHome/ufuk/ufuk-connect-bazaar"
 GLB_PATH = os.path.join(ROOT, "public/models/bluestorm-lan-reel.glb")
-BLEND_PATH = os.path.join(ROOT, "assets/bluestorm-lan-reel.blend")
+BLEND_PATH = os.path.join(ROOT, "assets/bluestorm-lan-reel-detailed.blend")
 POSTER_PATH = os.path.join(ROOT, "public/models/bluestorm-lan-reel.png")
 PULL_PREVIEW_PATH = os.path.join(ROOT, "assets/bluestorm-cable-pulled.png")
 SWAY_PREVIEW_PATH = os.path.join(ROOT, "assets/bluestorm-cable-sway.png")
@@ -57,7 +57,7 @@ def material(name, color, metallic=0.0, roughness=0.6, alpha=1.0, transmission=0
 wood = material("Birch plywood / natural grain", (0.58, 0.39, 0.22), roughness=0.79)
 wood_edge = material("Plywood cut edge", (0.39, 0.25, 0.14), roughness=0.86)
 wood_light = material("Plywood grain highlight", (0.69, 0.48, 0.27), roughness=0.83)
-navy = material("BlueStorm deep navy print", (0.025, 0.08, 0.23), roughness=0.82)
+navy = material("BlueStorm deep navy print", (0.012, 0.035, 0.11), roughness=0.94)
 black = material("Outdoor LAN cable / textured black jacket", (0.008, 0.014, 0.023), roughness=0.61)
 black_highlight = material("Cable seam", (0.06, 0.08, 0.11), roughness=0.51)
 metal = material("Brushed steel axle fittings", (0.43, 0.49, 0.53), metallic=0.82, roughness=0.31)
@@ -82,7 +82,7 @@ wire_order_t568b = [
 
 def make_wood_texture():
     """Image based grain survives glTF export; the previous procedural look did not."""
-    size = 512
+    size = 1024
     image = bpy.data.images.new("BlueStorm birch grain atlas", width=size, height=size, alpha=True)
     pixels = [0.0] * (size * size * 4)
     for j in range(size):
@@ -94,7 +94,7 @@ def make_wood_texture():
             grain = math.sin(direction + 0.35 * math.sin(radial * 26))
             fine = math.sin(x * 83 + z * 11 + 1.1 * math.sin(z * 18))
             knots = math.exp(-((x + 0.27) ** 2 / 0.012 + (z - 0.36) ** 2 / 0.005))
-            variation = 0.028 * grain + 0.009 * fine - 0.04 * knots
+            variation = 0.044 * grain + 0.013 * fine - 0.055 * knots
             variation += 0.018 * math.sin(3 * x + 2 * z) * math.sin(5 * z - 4 * x)
             speckle = 0.006 * math.sin(i * 12.9898 + j * 78.233)
             v = variation + speckle
@@ -274,11 +274,18 @@ annulus("FrontInnerRing", -0.755, 0.235, 0.18, 0.012, metal, front_root)
 annulus("BackPlywood", 0.68, 1.72, 0.18, 0.135, wood, back_root)
 annulus("BackCutEdge", 0.68, 1.72, 1.685, 0.137, wood_edge, back_root)
 annulus("DrumCore", 0, 0.63, 0.18, 1.28, wood_edge, spool_body_root)
+annulus("DarkAxleBore", 0, 0.179, 0.153, 1.52, black_highlight,
+        spool_body_root, 64)
 
-# Thin rings make the broad wooden surface read as layered birch, without heavy textures.
-for idx, radius in enumerate((0.9, 1.24, 1.56)):
-    annulus("PlywoodGrowthRing_%d" % idx, -0.752, radius, radius - 0.007,
-            0.002, wood_light if idx != 1 else wood_edge, front_root, 96)
+# Fine alternating layers on the cut rim make the flanges read as plywood,
+# rather than a single smooth molded disc.
+for side_name, root, center in (("Front", front_root, -0.68),
+                                ("Back", back_root, 0.68)):
+    for layer in range(5):
+        y = center - 0.052 + layer * 0.026
+        annulus("%sPlywoodPly_%02d" % (side_name, layer + 1), y,
+                1.726, 1.704, 0.011,
+                wood_light if layer % 2 else wood_edge, root, 96)
 
 # Printed face art follows the reference layout.
 text_mesh("BlueStormLogo", "BlueStorm", (-0.50, -0.759, 0.93), 0.33, navy, front_root)
@@ -422,6 +429,8 @@ def prism_xz(name, outline, y_half_width, mat, parent):
 prism_xz("TaperedStrainBoot", [(-0.23, -0.092), (-0.16, -0.125), (0.12, -0.125),
                                (0.14, 0.125), (-0.16, 0.125), (-0.23, 0.092)],
          0.142, boot_material, connector_root)
+tube("FlexibleCableGrommet", [(-0.31, 0, 0), (-0.25, 0, 0), (-0.20, 0, 0)],
+     0.075, boot_material, connector_root, 12)
 for i in range(6):
     x = -0.205 + i * 0.046
     box("MoldedFlexRib_%02d" % i, (x, 0, 0), (0.015, 0.302, 0.267),
@@ -442,6 +451,8 @@ box("ClearNoseUpperLip", (0.720, 0, 0.098), (0.100, 0.303, 0.024), plug_solid, c
 box("CableJacketInPlug", (0.232, 0, -0.025), (0.27, 0.18, 0.105), black, connector_root, 0.026)
 box("ClearCrimpBlock", (0.370, 0, -0.008), (0.095, 0.277, 0.136), plug_solid,
     connector_root, 0.008)
+box("CrimpPressurePlate", (0.350, 0, 0.065), (0.095, 0.225, 0.017),
+    plug_solid, connector_root, 0.004)
 
 for i in range(8):
     y = -0.133 + i * 0.038
@@ -454,6 +465,9 @@ for i in range(8):
         (0.190, 0.022, 0.013), gold, connector_root, 0.002)
     box("GoldBladeNose_%02d" % (i + 1), (0.760, y, 0.078),
         (0.018, 0.023, 0.088), gold, connector_root, 0.002)
+    tube("GoldContactBend_%02d" % (i + 1),
+         [(0.710, y, 0.152), (0.744, y, 0.138), (0.760, y, 0.120)],
+         0.008, gold, connector_root, 8)
     if i < 7:
         y_gap = y + 0.019
         box("ClearPinSeparator_%02d" % (i + 1), (0.660, y_gap, 0.035),
@@ -464,6 +478,9 @@ prism_xz("SpringLockTongue", [(0.18, 0.144), (0.48, 0.148), (0.60, 0.236),
          0.068, plug_solid, connector_root)
 box("LatchReleaseTab", (0.55, 0, 0.236), (0.115, 0.142, 0.028), plug_solid,
     connector_root, 0.007)
+for i, y in enumerate((-0.042, 0, 0.042)):
+    box("LatchGripRidge_%02d" % (i + 1), (0.55, y, 0.255),
+        (0.054, 0.012, 0.009), plug_solid, connector_root, 0.003)
 
 # Studio setup, separate from model export.
 studio = bpy.data.collections.new("Studio / render only")
@@ -547,6 +564,7 @@ bpy.ops.render.render(write_still=True)
 scene.frame_set(1)
 point_camera((4.6, -7.2, 3.1), (0.35, 0, 0.05), 5.9)
 scene.render.filepath = POSTER_PATH
+bpy.context.preferences.filepaths.save_version = 0
 bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)
 
 result = {
