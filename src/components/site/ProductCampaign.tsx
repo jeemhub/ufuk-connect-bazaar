@@ -13,7 +13,7 @@ type ProductCampaignProps = {
   description: string;
   action: string;
   to: string;
-  brand?: "bluestorm" | "hikvision";
+  brand?: "bluestorm" | "hikvision" | "energy";
   footer?: ReactNode;
 };
 
