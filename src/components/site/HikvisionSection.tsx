@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import "./hikvision.css";
+import { ProductCampaign } from "./ProductCampaign";
 
 export function HikvisionHero({ landing = false }: { landing?: boolean }) {
   const { lang } = useLanguage();
@@ -24,5 +25,15 @@ export function HikvisionHero({ landing = false }: { landing?: boolean }) {
 }
 
 export function HikvisionSection() {
-  return <div className="hik-home"><div className="hik-home-inner"><HikvisionHero /></div></div>;
+  const { lang } = useLanguage();
+  const ar = lang === "ar";
+  return <ProductCampaign
+    id="hik-home" brand="hikvision" image="/images/hikvision/campaign.webp"
+    alt={ar ? "مجموعة كاميرات Hikvision وجهاز تسجيل شبكي" : "Hikvision camera collection and network recorder"}
+    label={<p className="hik-wordmark" dir="ltr">HIK<span>VISION</span></p>}
+    title={ar ? <>رؤية أوضح.<br />حماية أذكى.</> : <>A clearer view.<br />Smarter protection.</>}
+    description={ar ? "من تفاصيل المداخل إلى اتساع الساحات. اكتشف كاميرات وتقنيات تسجيل تختار منها ما يناسب موقعك." : "From entrance details to open courtyards. Explore cameras and recording technology to suit your site."}
+    action={ar ? "اكتشف حلول Hikvision" : "Explore Hikvision solutions"} to="/hikvision"
+    footer={<p className="hik-hero-foot">ColorVu <span /> TandemVu <span /> AcuSense</p>}
+  />;
 }

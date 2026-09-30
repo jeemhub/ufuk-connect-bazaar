@@ -1,0 +1,118 @@
+.product-campaign {
+  --campaign-bg: #061831;
+  --campaign-muted: #d5e5f6;
+  --campaign-label: #a7d3ff;
+  --campaign-button: #fff;
+  --campaign-button-text: #0b2a4e;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: max(620px, 100vh);
+  min-height: max(620px, 100svh);
+  overflow: hidden;
+  background: var(--campaign-bg);
+  color: #fff;
+}
+.product-campaign-hikvision {
+  --campaign-bg: #0c1119;
+  --campaign-muted: #d6dbe4;
+  --campaign-label: #fff;
+  --campaign-button: #d8102a;
+  --campaign-button-text: #fff;
+}
+.product-campaign-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+.product-campaign-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 48%, var(--campaign-bg) 78%);
+}
+.product-campaign-copy {
+  position: relative;
+  z-index: 1;
+  width: 44%;
+  margin-left: auto;
+  padding: 64px clamp(32px, 5vw, 96px) 64px 20px;
+}
+.product-campaign-label {
+  margin-bottom: 24px;
+  color: var(--campaign-label);
+  font-size: 14px;
+  font-weight: 600;
+}
+.product-campaign-label .hik-wordmark { margin: 0; }
+.product-campaign h2 {
+  margin: 0 0 24px;
+  font-size: clamp(38px, 4vw, 62px);
+  font-weight: 750;
+  line-height: 1.24;
+  letter-spacing: -.025em;
+}
+.product-campaign-description {
+  margin: 0 0 28px;
+  max-width: 520px;
+  color: var(--campaign-muted);
+  font-size: 17px;
+  line-height: 1.95;
+}
+.product-campaign-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 13px 24px;
+  border-radius: 100px;
+  background: var(--campaign-button);
+  color: var(--campaign-button-text);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  transition: transform .2s, opacity .2s;
+}
+.product-campaign-action:hover { transform: translateY(-2px); opacity: .9; }
+.product-campaign-action:focus-visible { outline: 3px solid #fff; outline-offset: 6px; }
+.product-campaign-footer { margin-top: 28px; }
+.product-campaign-footer .hik-hero-foot { margin-top: 0; }
+@media (max-width: 1023px) {
+  .product-campaign { display: block; min-height: 0; }
+  .product-campaign-image {
+    position: relative;
+    display: block;
+    width: 148%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 1672 / 941;
+  }
+  .product-campaign-shade {
+    height: 83.3vw;
+    bottom: auto;
+    background: linear-gradient(180deg, transparent 83%, var(--campaign-bg) 100%);
+  }
+  .product-campaign-copy {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 12px 40px 52px;
+  }
+  .product-campaign h2 { font-size: 44px; }
+}
+@media (max-width: 639px) {
+  .product-campaign-copy { padding: 12px 26px 44px; }
+  .product-campaign h2 { font-size: 39px; }
+  .product-campaign-label { margin-bottom: 20px; font-size: 12px; }
+  .product-campaign-description { font-size: 15px; line-height: 1.9; }
+  .product-campaign-action { padding-inline: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-campaign-action { transition: none; }
+  .product-campaign-action:hover { transform: none; }
+}
