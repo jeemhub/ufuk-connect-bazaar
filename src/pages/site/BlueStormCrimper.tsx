@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
+import "@/components/site/crimper-campaign.css";
 
 const variants = {
   standard: {
@@ -136,11 +137,11 @@ export default function BlueStormCrimper({ professional = false }: { professiona
         }}
       />
 
-      <section aria-labelledby="crimper-title" className="relative isolate min-h-[760px] overflow-hidden bg-[#061831] text-white md:min-h-[640px]">
-        <img src={variant.image} alt={c.imageAlt} fetchPriority="high" width={1672} height={941} className="absolute inset-0 h-full w-full object-cover object-left" />
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[8%] md:via-[#061831]/80 md:via-[39%] md:to-transparent" />
-        <div className="relative mx-auto flex min-h-[760px] max-w-7xl items-end px-5 pb-16 pt-[410px] md:min-h-[640px] md:items-center md:px-10 md:py-20">
-          <div className="ml-auto w-full max-w-[590px]">
+      <section aria-labelledby="crimper-title" className="bs-crimper-campaign bs-crimper-landing relative isolate min-h-[760px] overflow-hidden bg-[#061831] text-white md:min-h-[640px]">
+        <img src={variant.image} alt={c.imageAlt} fetchPriority="high" width={1672} height={941} className="bs-crimper-image absolute inset-0 h-full w-full object-cover object-left" />
+        <div aria-hidden="true" className="bs-crimper-shade absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[8%] md:via-[#061831]/80 md:via-[39%] md:to-transparent" />
+        <div className="bs-crimper-inner relative mx-auto flex min-h-[760px] max-w-7xl items-end px-5 pb-16 pt-[410px] md:min-h-[640px] md:items-center md:px-10 md:py-20">
+          <div className="bs-crimper-copy ml-auto w-full max-w-[590px]">
             <p dir="ltr" className={`text-sm font-semibold tracking-wide text-[#a7d3ff] ${lang === "ar" ? "text-right" : "text-left"}`}>{c.heroLabel}</p>
             <h1 id="crimper-title" className="mt-4 text-5xl font-bold leading-[1.08] sm:text-6xl">{c.heroTitle}</h1>
             <p className="mt-6 max-w-lg text-lg leading-9 text-[#d7e5f4]">{c.heroBody}</p>

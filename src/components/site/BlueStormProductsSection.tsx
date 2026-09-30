@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import "./crimper-campaign.css";
 
 const assets = {
   reel: "/images/bluestorm-feature/cable-reel-banner.jpg",
@@ -93,10 +94,10 @@ export function BlueStormProductsSection() {
             { item: c.red, image: assets.redCrimper, to: products.redCrimper },
             { item: c.blue, image: assets.blueCrimper, to: products.blueCrimper },
           ].map(({ item, image, to }) => (
-            <article key={to} className="relative isolate min-h-[690px] overflow-hidden bg-[#061831] text-white md:min-h-[590px]">
-              <img src={image} alt={item.image} loading="lazy" decoding="async" width={1672} height={941} className={`absolute inset-0 w-full object-cover object-left ${to === products.cable ? "h-[390px] md:h-full" : "h-full"}`} />
-              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[6%] md:via-[#061831]/75 md:via-[36%] md:to-transparent" />
-              <div className="relative z-10 ml-auto flex min-h-[690px] w-full max-w-[610px] flex-col justify-end px-7 pb-12 pt-[390px] sm:px-12 md:min-h-[590px] md:justify-center md:px-12 md:py-16">
+            <article key={to} className={`relative isolate min-h-[690px] overflow-hidden bg-[#061831] text-white md:min-h-[590px] ${to !== products.cable ? "bs-crimper-campaign" : ""}`}>
+              <img src={image} alt={item.image} loading="lazy" decoding="async" width={1672} height={941} className={`absolute inset-0 w-full object-cover object-left ${to === products.cable ? "h-[390px] md:h-full" : "h-full bs-crimper-image"}`} />
+              <div aria-hidden="true" className="bs-crimper-shade absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[6%] md:via-[#061831]/75 md:via-[36%] md:to-transparent" />
+              <div className="bs-crimper-copy relative z-10 ml-auto flex min-h-[690px] w-full max-w-[610px] flex-col justify-end px-7 pb-12 pt-[390px] sm:px-12 md:min-h-[590px] md:justify-center md:px-12 md:py-16">
                 <p dir="ltr" className={`text-sm font-semibold tracking-wide text-[#a7d3ff] ${lang === "ar" ? "text-right" : "text-left"}`}>{item.type}</p>
                 <h3 className="mt-4 max-w-xl text-4xl font-bold leading-[1.12] sm:text-5xl">{item.title}</h3>
                 <p className="mt-6 max-w-lg text-base leading-8 text-[#d5e5f6] md:text-lg">{item.body}</p>

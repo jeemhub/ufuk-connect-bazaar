@@ -1,0 +1,33 @@
+/* Keep the full product height visible, regardless of the banner's aspect ratio. */
+.bs-crimper-campaign .bs-crimper-image {
+  object-fit: contain;
+  object-position: left center;
+}
+.bs-crimper-campaign .bs-crimper-copy { width: 50%; max-width: 610px; }
+
+@media (max-width: 1023px) {
+  .bs-crimper-campaign { --crimper-image-height: clamp(260px, 85vw, 420px); min-height: 0; }
+  .bs-crimper-campaign .bs-crimper-image {
+    left: 0;
+    right: auto;
+    height: var(--crimper-image-height);
+    width: auto;
+    max-width: none;
+    object-position: left top;
+  }
+  .bs-crimper-campaign .bs-crimper-shade {
+    background: linear-gradient(to bottom, transparent calc(var(--crimper-image-height) - 60px), #061831 var(--crimper-image-height));
+  }
+  .bs-crimper-campaign .bs-crimper-copy {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    padding: calc(var(--crimper-image-height) + 16px) 28px 48px;
+  }
+  .bs-crimper-landing .bs-crimper-inner {
+    display: block;
+    min-height: 0;
+    padding: calc(var(--crimper-image-height) + 16px) 24px 48px;
+  }
+  .bs-crimper-landing .bs-crimper-copy { padding: 0; }
+}
