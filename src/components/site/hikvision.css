@@ -1,0 +1,621 @@
+.hik-home {
+  background: #092448;
+  padding: 0 0 80px;
+  color: #fff;
+}
+.hik-home-inner {
+  max-width: 1280px;
+  margin: auto;
+  padding: 0 24px;
+}
+.hik-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #0c1119;
+  color: white;
+  min-height: 590px;
+  display: flex;
+  align-items: center;
+}
+.hik-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+.hik-hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,transparent 48%,rgba(12,17,25,.65) 67%,#0c1119 100%);
+}
+.hik-hero-copy {
+  position: relative;
+  margin-left: auto;
+  width: 44%;
+  padding: 56px 40px 56px 16px;
+  z-index: 1;
+}
+.hik-wordmark {
+  font-family: Arial,sans-serif;
+  font-size: 27px;
+  font-weight: 900;
+  font-style: italic;
+  color: #f13c49;
+  width: fit-content;
+  margin: 0 0 28px;
+  letter-spacing: -1px;
+}
+.hik-wordmark span {
+  color: #fff;
+}
+.hik-hero h1,.hik-hero h2 {
+  font-size: clamp(38px,4vw,62px);
+  font-weight: 750;
+  line-height: 1.24;
+  letter-spacing: -.025em;
+  margin: 0 0 24px;
+}
+.hik-lead {
+  font-size: 17px;
+  line-height: 1.95;
+  color: #d6dbe4;
+  margin: 0 0 28px;
+  max-width: 440px;
+}
+.hik-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 13px 24px;
+  background: #d8102a;
+  color: white;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background .2s,transform .2s;
+  text-align: center;
+}
+.hik-button:hover {
+  background: #b50e23;
+  transform: translateY(-2px);
+}
+.hik-hero-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  direction: ltr;
+  font-size: 11px;
+  color: #c1c7d1;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+.hik-hero-foot span {
+  width: 3px;
+  height: 3px;
+  background: #ed3449;
+  border-radius: 50%;
+}
+.hik-page {
+  background: #f6f7f8;
+  color: #1c2736;
+}
+.hik-hero-landing {
+  min-height: 690px;
+}
+.hik-hero-landing .hik-hero-image {
+  object-fit: contain;
+  object-position: left center;
+}
+.hik-hero-landing .hik-hero-copy {
+  padding-top: 120px;
+  padding-right: max(40px,calc((100vw - 1200px)/2));
+  width: 44%;
+}
+.hik-wrap {
+  max-width: 1240px;
+  padding-inline: 32px;
+  margin-inline: auto;
+}
+.hik-selector {
+  padding-block: 80px 68px;
+  scroll-margin-top: 110px;
+}
+.hik-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 35px;
+}
+.hik-section-heading h2 {
+  font-size: clamp(26px,3vw,38px);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.hik-section-heading p {
+  max-width: 360px;
+  font-size: 15px;
+  line-height: 1.9;
+  color: #606975;
+}
+.hik-use-nav {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 0;
+  border-top: 1px solid #d9dce1;
+  border-bottom: 1px solid #d9dce1;
+}
+.hik-use-nav a {
+  position: relative;
+  padding: 25px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border-inline-end: 1px solid #d9dce1;
+  transition: background .2s;
+}
+.hik-use-nav a:last-child {
+  border: 0;
+}
+.hik-use-nav a:hover {
+  background: #fff;
+}
+.hik-use-nav a span {
+  font-size: 13px;
+  color: #626a76;
+}
+.hik-use-nav a strong {
+  font-size: 17px;
+  font-weight: 600;
+  padding-inline-end: 20px;
+}
+.hik-use-nav svg {
+  position: absolute;
+  inset-inline-end: 16px;
+  bottom: 27px;
+  color: #d8102a;
+}
+.hik-product {
+  background: #fff;
+  scroll-margin-top: 100px;
+}
+.hik-product:nth-child(even) {
+  background: #f6f7f8;
+}
+.hik-product-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  padding-block: 84px;
+  direction: ltr;
+}
+.hik-product-copy {
+  direction: inherit;
+  min-width: 0;
+}
+.hik-page[dir=rtl] .hik-product-copy {
+  direction: rtl;
+}
+.hik-product-reverse .hik-product-art {
+  order: 2;
+}
+.hik-product-reverse .hik-product-copy {
+  order: 1;
+}
+.hik-product-art {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f3f5;
+  overflow: hidden;
+  margin: 0;
+}
+.hik-art-family {
+  position: absolute;
+  top: 25px;
+  left: 24px;
+  color: #636e7c;
+  font-size: 14px;
+}
+.hik-product-art img {
+  width: 87%;
+  height: 78%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition: transform .5s;
+}
+.hik-product-art:hover img {
+  transform: scale(1.035);
+}
+.hik-art-tandemvu img {
+  height: 75%;
+  width: 75%;
+}
+.hik-art-acusense img {
+  width: 92%;
+  height: auto;
+  mix-blend-mode: normal;
+}
+.hik-product-art figcaption {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.hik-red-line {
+  width: 26px;
+  height: 2px;
+  background: #d8102a;
+}
+.hik-model {
+  font-size: 12px;
+  color: #606975;
+  margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
+.hik-product h2 {
+  font-size: clamp(28px,3vw,42px);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -.02em;
+  margin: 0 0 24px;
+}
+.hik-body {
+  font-size: 16px;
+  line-height: 1.95;
+  color: #576171;
+}
+.hik-spec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 26px 0 8px;
+  gap: 0 22px;
+}
+.hik-spec-grid>div {
+  border-top: 1px solid #d9dce1;
+  padding: 15px 0;
+}
+.hik-spec-grid dt {
+  font-size: 12px;
+  color: #656e7a;
+  margin-bottom: 6px;
+}
+.hik-spec-grid dd {
+  font-size: 18px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.hik-detail {
+  border-top: 1px solid #d9dce1;
+  border-bottom: 1px solid #d9dce1;
+  margin-bottom: 26px;
+}
+.hik-detail summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  font-size: 13px;
+  padding: 16px 0;
+}
+.hik-detail summary::-webkit-details-marker {
+  display: none;
+}
+.hik-detail summary svg {
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.hik-detail[open] summary svg {
+  transform: rotate(45deg);
+}
+.hik-detail p {
+  color: #576171;
+  font-size: 14px;
+  line-height: 1.9;
+  padding-bottom: 20px;
+}
+.hik-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+}
+.hik-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+.hik-download:hover {
+  color: #d8102a;
+}
+.hik-quote-link {
+  display: inline-block;
+  font-size: 13px;
+  color: #566171;
+  margin-top: 20px;
+  padding-block: 6px;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.hik-closing {
+  background: #151e2b;
+  color: #fff;
+  padding-block: 75px;
+}
+.hik-closing-inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 64px;
+}
+.hik-closing-brand {
+  color: #f89aa3;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+.hik-closing h2 {
+  font-size: clamp(28px,3vw,40px);
+  line-height: 1.4;
+  font-weight: 700;
+  margin-bottom: 20px;
+  max-width: 660px;
+}
+.hik-closing p:not(.hik-closing-brand) {
+  color: #c8d0dd;
+  line-height: 1.9;
+  max-width: 660px;
+}
+.hik-closing-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 18px;
+}
+.hik-source {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #646d7a;
+  padding-block: 24px;
+}
+.hik-page a:focus-visible,.hik-home a:focus-visible,.hik-detail summary:focus-visible {
+  outline: 3px solid #e64359;
+  outline-offset: 6px;
+}
+@media(prefers-reduced-motion:no-preference) {
+  .hik-hero-landing .hik-hero-copy {
+    animation: hik-arrive .65s ease-out both;
+  }
+  @keyframes hik-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @supports(animation-timeline:view()) {
+    .hik-product-art img {
+      animation: hik-focus linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+    @keyframes hik-focus {
+      from {
+        opacity: .6;
+        transform: scale(.96);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  }
+}
+@media(min-width:1500px) {
+  .hik-hero-landing {
+    min-height: 780px;
+  }
+  .hik-hero-landing .hik-hero-image {
+    width: min(100%,1600px);
+  }
+}
+@media(max-width:1023px) {
+  .hik-home-inner {
+    padding-inline: 20px;
+  }
+  .hik-hero,.hik-hero-landing {
+    display: block;
+    min-height: 0;
+  }
+  .hik-hero-image,.hik-hero-landing .hik-hero-image {
+    position: relative;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1.5;
+    object-fit: cover;
+    object-position: left center;
+  }
+  .hik-hero-shade {
+    height: 66.666vw;
+    background: linear-gradient(180deg,transparent 75%,#0c1119 100%);
+  }
+  .hik-hero-copy,.hik-hero-landing .hik-hero-copy {
+    width: 100%;
+    max-width: 720px;
+    margin: auto;
+    padding: 0 40px 45px;
+    margin-top: -8px;
+  }
+  .hik-hero-landing {
+    padding-top: 0;
+  }
+  .hik-hero h1,.hik-hero h2 {
+    font-size: 44px;
+  }
+  .hik-lead {
+    max-width: 560px;
+  }
+  .hik-hero-foot {
+    margin-top: 25px;
+  }
+  .hik-product-inner {
+    gap: 32px;
+    padding-block: 60px;
+  }
+  .hik-product h2 {
+    font-size: 30px;
+  }
+  .hik-product-art {
+    aspect-ratio: 4/5;
+  }
+  .hik-section-heading {
+    display: block;
+  }
+  .hik-section-heading p {
+    margin-top: 14px;
+    max-width: none;
+  }
+  .hik-use-nav {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hik-use-nav a:nth-child(2) {
+    border-inline-end: 0;
+  }
+  .hik-use-nav a:nth-child(-n+2) {
+    border-bottom: 1px solid #d9dce1;
+  }
+  .hik-closing-inner {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+@media(max-width:639px) {
+  .hik-home {
+    padding-bottom: 48px;
+  }
+  .hik-home-inner {
+    padding-inline: 16px;
+  }
+  .hik-wrap {
+    padding-inline: 24px;
+  }
+  .hik-hero-image,.hik-hero-landing .hik-hero-image {
+    width: 148%;
+    max-width: none;
+    aspect-ratio: 1672/941;
+    height: auto;
+  }
+  .hik-hero-shade {
+    height: 83.3vw;
+    background: linear-gradient(180deg,transparent 82%,#0c1119 100%);
+  }
+  .hik-hero-copy,.hik-hero-landing .hik-hero-copy {
+    padding: 0 26px 38px;
+    margin-top: -24px;
+  }
+  .hik-hero h1,.hik-hero h2 {
+    font-size: 39px;
+  }
+  .hik-wordmark {
+    font-size: 25px;
+    margin-bottom: 20px;
+  }
+  .hik-lead {
+    font-size: 15px;
+    line-height: 1.9;
+  }
+  .hik-selector {
+    padding-block: 46px;
+  }
+  .hik-use-nav a {
+    padding: 20px 12px;
+  }
+  .hik-use-nav a strong {
+    font-size: 14px;
+  }
+  .hik-use-nav a span {
+    font-size: 11px;
+  }
+  .hik-use-nav svg {
+    width: 15px;
+    inset-inline-end: 10px;
+    bottom: 23px;
+  }
+  .hik-product-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding-block: 36px 50px;
+  }
+  .hik-product-art,.hik-product-reverse .hik-product-art {
+    order: 0;
+    width: 100%;
+    aspect-ratio: 1.1;
+  }
+  .hik-product-copy,.hik-product-reverse .hik-product-copy {
+    order: 1;
+    width: 100%;
+  }
+  .hik-product h2 {
+    font-size: 31px;
+  }
+  .hik-body {
+    font-size: 15px;
+  }
+  .hik-spec-grid dd {
+    font-size: 17px;
+  }
+  .hik-closing {
+    padding-block: 50px;
+  }
+  .hik-art-family {
+    top: 18px;
+    left: 18px;
+  }
+  .hik-product-art figcaption {
+    bottom: 18px;
+    left: 18px;
+  }
+  .hik-actions {
+    gap: 16px;
+  }
+  .hik-button {
+    padding-inline: 20px;
+  }
+  .hik-hero-foot {
+    font-size: 10px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .hik-page *,.hik-home * {
+    animation: none!important;
+    transition: none!important;
+    scroll-behavior: auto!important;
+  }
+  .hik-product-art:hover img,.hik-button:hover {
+    transform: none;
+  }
+}
+

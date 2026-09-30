@@ -1,0 +1,42 @@
+[
+  {
+    "file": "DS-2CD2T87G3-LIS2UY-SLRB_20250411.pdf",
+    "model": "DS-2CD2T87G3-LIS2UY/SL(4mm)",
+    "download_url": "https://www.usacompua.com/cdn/shop/files/DS-2CD2T87G3-LIS2UY_SLRB_Datasheet_20250411.pdf?v=5646253660649599785",
+    "official_reference": "https://assets.hikvision.com/prd/public/all/doc/m000144460/DS-2CD2T87G3-LIS2UY_SLRB_Datasheet_20250411.pdf",
+    "downloaded_on": "2026-09-30",
+    "pages": 7,
+    "bytes": 898026,
+    "sha256": "8aae3627641bfa6fff7b68a7d47f601d1409af4667ef24fa37b6835aa787136c"
+  },
+  {
+    "file": "DS-2CD2387G2P-LSU-SL.pdf",
+    "model": "DS-2CD2387G2P-LSU/SL(4mm)",
+    "download_url": "https://www.pyramid.lt/images/Userfiles/files/8f3000bf3f788ee6a55320d4dc370eb6.pdf",
+    "official_reference": "https://pro-av.hikvision.com/au-en/products/IP-Products/Network-Cameras/Pro-Series-EasyIP-/ds-2cd2387g2p-lsu-sl/",
+    "downloaded_on": "2026-09-30",
+    "pages": 7,
+    "bytes": 1252607,
+    "sha256": "a220b64ae0454bb22f7268bd8914a18bcead885aa7548c1817493b4805a08e77"
+  },
+  {
+    "file": "DS-2SE7C432MW-AEB-14F1-P3_20250522.pdf",
+    "model": "DS-2SE7C432MW-AEB(14F1)(P3)",
+    "download_url": "https://dolinkegypt.com/en/shop/hikvision-tandemvu-4-4mp-32x-colorvu-ir-acusense-network-speed-dome-ds-2se7c432mw-aeb-14f1-p3-382/document/324",
+    "official_reference": "https://assets.hikvision.com/prd/normal/all/doc/m000056249/DS-2SE7C432MW-AEB14F1P3_Datasheet_20250522.pdf",
+    "downloaded_on": "2026-09-30",
+    "pages": 9,
+    "bytes": 1148577,
+    "sha256": "d67fb3a40dad38c51fdee61459258d2ad57d2c45e4f92abe863d93ca8a8cb6d2"
+  },
+  {
+    "file": "DS-7608NXI-K2_20231021.pdf",
+    "model": "DS-7608NXI-K2",
+    "download_url": "https://subpreecha.co.th/wp-content/uploads/2025/10/Datasheet-of-DS-7608NXI-K2_V4.74.000_20231021.pdf",
+    "official_reference": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000002/S000000007/S000000026/OFR000042/M000058887/Data_Sheet/Datasheet-of-DS-7608NXI-K2_V4.74.000_20230209.pdf",
+    "downloaded_on": "2026-09-30",
+    "pages": 5,
+    "bytes": 815379,
+    "sha256": "ff64fa78b2c75eda74417e2bbbb0f6d1d4078bbb8190f7cd4c7c43fb0f86a19f"
+  }
+]

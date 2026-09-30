@@ -10,6 +10,7 @@ import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { useProducts } from "@/hooks/useProducts";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { BrandStrip } from "@/components/site/BrandStrip";
+import { HikvisionSection } from "@/components/site/HikvisionSection";
 import { BlueStormProductsSection } from "@/components/site/BlueStormProductsSection";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -207,6 +208,7 @@ const Home = () => {
       <BrandStrip />
 
       <BlueStormProductsSection />
+      <HikvisionSection />
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
