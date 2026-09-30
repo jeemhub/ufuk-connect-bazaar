@@ -3,10 +3,24 @@ import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
-const image = "/images/bluestorm-feature/crimper-red-banner.jpg";
-const detailImage = "/images/bluestorm-feature/crimper-red-studio.jpg";
-const productPath = "/products/a93cf9cf-13d2-49db-8325-c5bc800bad1e";
-const quotePath = "/quote?product=a93cf9cf-13d2-49db-8325-c5bc800bad1e";
+const variants = {
+  standard: {
+    sku: "BST-CBR-EZ",
+    path: "/bluestorm/pass-through-crimper",
+    productId: "a93cf9cf-13d2-49db-8325-c5bc800bad1e",
+    image: "/images/bluestorm-feature/crimper-red-banner.jpg",
+    detailImage: "/images/bluestorm-feature/crimper-red-studio.jpg",
+    productName: { ar: "كابسة BlueStorm للفيش التمريري", en: "BlueStorm Pass Through Crimper" },
+  },
+  professional: {
+    sku: "BST-CBB-EZ",
+    path: "/bluestorm/professional-pass-through-crimper",
+    productId: "ee3d0851-344a-48b1-9ec7-12b1c545c5da",
+    image: "/images/bluestorm-feature/crimper-blue-banner.jpg",
+    detailImage: "/images/bluestorm-feature/crimper-blue-studio.jpg",
+    productName: { ar: "كابسة BlueStorm الاحترافية للفيش التمريري", en: "BlueStorm Professional Pass-Through Crimper" },
+  },
+};
 
 const copy = {
   ar: {
@@ -51,33 +65,79 @@ const copy = {
   },
 };
 
-export default function BlueStormCrimper() {
+const professionalCopy = {
+  ar: {
+    heroLabel: "BlueStorm  /  BST-CBB-EZ",
+    heroTitle: "كابسة BlueStorm الاحترافية",
+    heroBody: "كابسة احترافية للموصلات التمريرية، تثبّت الفيشة في موضعها الصحيح أثناء الكبس وتمنح الفني قبضة مريحة.",
+    productAction: "عرض السعر والتوفر",
+    quoteAction: "اطلب عرض سعر",
+    introLabel: "أداة عمل للفنيين",
+    introTitle: "تموضع ثابت وقبضة مريحة",
+    introBody: "طراز BST-CBB-EZ مخصص للموصلات ذات النهاية المفتوحة ومتوافق مع EZ-RJ45. يثبت الموصل داخل الأداة لتسهيل تموضعه عند الكبس.",
+    imageAlt: "كابسة BlueStorm الاحترافية ذات المقبض الأزرق في لقطة تفصيلية",
+    features: [
+      { title: "للموصلات التمريرية", body: "تعمل مع موصلات الشبكة ذات النهاية المفتوحة، بما فيها EZ-RJ45." },
+      { title: "تثبيت الموصل", body: "يستقر الموصل داخل الأداة في موضعه الصحيح أثناء الكبس." },
+      { title: "مقبض مريح", body: "قبضة مريحة للإمساك بالأداة خلال أعمال التركيب المتكررة." },
+      { title: "صناعة تايوانية", body: "طراز BST-CBB-EZ الاحترافي من BlueStorm، مصنوع في تايوان." },
+    ],
+    closingTitle: "أضف الكابسة الاحترافية لأدواتك",
+    closingBody: "افتح صفحة المنتج للاطلاع على السعر والتوفر الحالي، أو اطلب عرض سعر من فريق أفق البصرة.",
+    viewProduct: "افتح صفحة المنتج",
+  },
+  en: {
+    heroLabel: "BlueStorm  /  BST-CBB-EZ",
+    heroTitle: "Professional pass-through crimper",
+    heroBody: "A professional crimper for pass-through connectors. It holds the plug in the correct position during crimping and gives the installer a comfortable grip.",
+    productAction: "View price and availability",
+    quoteAction: "Request a quote",
+    introLabel: "A tool for network installers",
+    introTitle: "Secure positioning, comfortable grip",
+    introBody: "The BST-CBB-EZ is made for open-end connectors and is compatible with EZ-RJ45. The connector locks into the tool for correct positioning during the crimp.",
+    imageAlt: "BlueStorm professional pass-through crimper with blue handles in a detailed studio view",
+    features: [
+      { title: "Pass-through connectors", body: "For open-end network connectors, including EZ-RJ45." },
+      { title: "Connector positioning", body: "The connector locks into the tool in the correct position while crimping." },
+      { title: "Comfort grip", body: "An ergonomic handle for repeated installation tasks." },
+      { title: "Made in Taiwan", body: "The BlueStorm BST-CBB-EZ professional crimper is made in Taiwan." },
+    ],
+    closingTitle: "Add the professional crimper to your toolkit",
+    closingBody: "Open the product page for current pricing and availability, or request a quote from UFUK AL-Basra.",
+    viewProduct: "Open product page",
+  },
+};
+
+export default function BlueStormCrimper({ professional = false }: { professional?: boolean }) {
   const { lang } = useLanguage();
-  const c = copy[lang];
+  const variant = professional ? variants.professional : variants.standard;
+  const c = professional ? professionalCopy[lang] : copy[lang];
+  const productPath = `/products/${variant.productId}`;
+  const quotePath = `/quote?product=${variant.productId}`;
   const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
 
   return (
     <>
       <Seo
-        title={`${c.heroTitle} BlueStorm BST-CBR-EZ | ${SITE_NAME}`}
+        title={`${c.heroTitle}${professional && lang === "ar" ? "" : " BlueStorm"} ${variant.sku} | ${SITE_NAME}`}
         description={c.heroBody}
-        path="/bluestorm/pass-through-crimper"
-        image={image}
+        path={variant.path}
+        image={variant.image}
         type="product"
         lang={lang}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Product",
-          name: lang === "ar" ? "كابسة BlueStorm للفيش التمريري" : "BlueStorm Pass Through Crimper",
-          sku: "BST-CBR-EZ",
+          name: variant.productName[lang],
+          sku: variant.sku,
           brand: { "@type": "Brand", name: "BlueStorm" },
-          image: "https://ufukalbasra.com" + image,
+          image: "https://ufukalbasra.com" + variant.image,
           description: c.heroBody,
         }}
       />
 
       <section aria-labelledby="crimper-title" className="relative isolate min-h-[760px] overflow-hidden bg-[#061831] text-white md:min-h-[640px]">
-        <img src={image} alt={c.imageAlt} fetchPriority="high" width={1672} height={941} className="absolute inset-0 h-full w-full object-cover object-left" />
+        <img src={variant.image} alt={c.imageAlt} fetchPriority="high" width={1672} height={941} className="absolute inset-0 h-full w-full object-cover object-left" />
         <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[8%] md:via-[#061831]/80 md:via-[39%] md:to-transparent" />
         <div className="relative mx-auto flex min-h-[760px] max-w-7xl items-end px-5 pb-16 pt-[410px] md:min-h-[640px] md:items-center md:px-10 md:py-20">
           <div className="ml-auto w-full max-w-[590px]">
@@ -111,14 +171,14 @@ export default function BlueStormCrimper() {
               ))}
             </div>
           </div>
-          <img src={detailImage} alt={c.imageAlt} loading="lazy" decoding="async" width={1536} height={1024} className="w-full object-cover shadow-[0_24px_65px_rgba(7,30,60,0.16)]" />
+          <img src={variant.detailImage} alt={c.imageAlt} loading="lazy" decoding="async" width={1536} height={1024} className="w-full object-cover shadow-[0_24px_65px_rgba(7,30,60,0.16)]" />
         </div>
       </section>
 
       <section className="bg-[#0a2d57] px-5 py-16 text-white md:px-6 md:py-20">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div>
-            <p className="text-sm font-semibold text-[#a7d3ff]">BlueStorm  /  BST-CBR-EZ</p>
+            <p className="text-sm font-semibold text-[#a7d3ff]">BlueStorm  /  {variant.sku}</p>
             <h2 className="mt-3 text-3xl font-bold md:text-4xl">{c.closingTitle}</h2>
             <p className="mt-4 max-w-2xl leading-8 text-[#d1dfed]">{c.closingBody}</p>
           </div>

@@ -6,13 +6,13 @@ const assets = {
   reel: "/images/bluestorm-feature/cable-reel.jpeg",
   box: "/images/bluestorm-feature/cable-box.jpg",
   redCrimper: "/images/bluestorm-feature/crimper-red-banner.jpg",
-  blueCrimper: "/images/bluestorm-feature/crimper-blue.webp",
+  blueCrimper: "/images/bluestorm-feature/crimper-blue-banner.jpg",
 };
 
 const products = {
   cable: "/products/2ead67db-9576-4476-aae7-03ffb17ae570",
   redCrimper: "/bluestorm/pass-through-crimper",
-  blueCrimper: "/products/ee3d0851-344a-48b1-9ec7-12b1c545c5da",
+  blueCrimper: "/bluestorm/professional-pass-through-crimper",
 };
 
 const copy = {
@@ -35,10 +35,11 @@ const copy = {
       action: "اكتشف الكابسة",
     },
     blue: {
-      type: "أداة تركيب احترافية",
-      title: "كابسة BlueStorm الاحترافية",
-      body: "نسخة بمقبض أزرق للموصلات ذات النهاية المفتوحة، تعرض الصورة شكل الرأس ومناطق الإمساك بوضوح.",
+      type: "BlueStorm  /  BST-CBB-EZ",
+      title: "احترافية في كل توصيلة.",
+      body: "كابسة احترافية للفيش التمريري EZ-RJ45، تثبّت الموصل أثناء الكبس وتمنح الفني قبضة مريحة للعمل المتكرر.",
       image: "كابسة فيش BlueStorm احترافية بمقبض أزرق",
+      action: "اكتشف الكابسة الاحترافية",
     },
     action: "عرض المنتج",
   },
@@ -61,10 +62,11 @@ const copy = {
       action: "Explore the crimper",
     },
     blue: {
-      type: "Professional installation tool",
-      title: "BlueStorm professional crimper",
-      body: "The blue-handle pass-through model, shown close enough to see the head and grip clearly.",
+      type: "BlueStorm  /  BST-CBB-EZ",
+      title: "Built for every connection.",
+      body: "A professional pass-through crimper for EZ-RJ45 connectors. It holds the connector during crimping and offers a comfortable grip for repeated work.",
       image: "BlueStorm professional crimper with blue handles",
+      action: "Explore the professional crimper",
     },
     action: "View product",
   },
@@ -117,34 +119,26 @@ export function BlueStormProductsSection() {
             </div>
           </article>
 
-          <article className="relative isolate min-h-[690px] overflow-hidden bg-[#061831] text-white md:min-h-[590px]">
-            <img src={assets.redCrimper} alt={c.red.image} loading="lazy" decoding="async" width={1672} height={941} className="absolute inset-0 h-full w-full object-cover object-left" />
-            <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[6%] md:via-[#061831]/75 md:via-[36%] md:to-transparent" />
-            <div className="relative z-10 ml-auto flex min-h-[690px] w-full max-w-[610px] flex-col justify-end px-7 pb-12 pt-[390px] sm:px-12 md:min-h-[590px] md:justify-center md:px-12 md:py-16">
-              <p dir="ltr" className={`text-sm font-semibold tracking-wide text-[#a7d3ff] ${lang === "ar" ? "text-right" : "text-left"}`}>{c.red.type}</p>
-              <h3 className="mt-4 max-w-xl text-4xl font-bold leading-[1.12] sm:text-5xl">{c.red.title}</h3>
-              <p className="mt-6 max-w-lg text-base leading-8 text-[#d5e5f6] md:text-lg">{c.red.body}</p>
-              <Link
-                to={products.redCrimper}
-                className="mt-8 inline-flex min-h-12 w-fit items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#0b2a4e] transition-colors hover:bg-[#d9ebff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-              >
-                {c.red.action}<Arrow aria-hidden="true" className="h-4 w-4" />
-              </Link>
-            </div>
-          </article>
-
-          <article className="grid overflow-hidden rounded-[1.75rem] bg-[#f6f8fa] text-[#10243d] lg:min-h-[400px] lg:grid-cols-2">
-            <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-[#e7edf4] p-5 sm:min-h-[360px] lg:min-h-full">
-              <div aria-hidden="true" className="absolute h-[78%] w-[78%] rounded-full border border-white" />
-              <img src={assets.blueCrimper} alt={c.blue.image} loading="lazy" decoding="async" width={640} height={640} className="relative h-[290px] w-auto max-w-full object-contain drop-shadow-[0_22px_18px_rgba(13,41,71,0.19)] sm:h-[350px] lg:h-[370px]" />
-            </div>
-            <div className="flex flex-col justify-center px-7 py-10 sm:px-11 lg:px-14">
-              <p className="text-sm font-semibold text-[#1d64aa]">{c.blue.type}</p>
-              <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">{c.blue.title}</h3>
-              <p className="mt-5 max-w-xl text-base leading-8 text-[#4b6075]">{c.blue.body}</p>
-              {action(products.blueCrimper)}
-            </div>
-          </article>
+          {[
+            { item: c.red, image: assets.redCrimper, to: products.redCrimper },
+            { item: c.blue, image: assets.blueCrimper, to: products.blueCrimper },
+          ].map(({ item, image, to }) => (
+            <article key={to} className="relative isolate min-h-[690px] overflow-hidden bg-[#061831] text-white md:min-h-[590px]">
+              <img src={image} alt={item.image} loading="lazy" decoding="async" width={1672} height={941} className="absolute inset-0 h-full w-full object-cover object-left" />
+              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[6%] md:via-[#061831]/75 md:via-[36%] md:to-transparent" />
+              <div className="relative z-10 ml-auto flex min-h-[690px] w-full max-w-[610px] flex-col justify-end px-7 pb-12 pt-[390px] sm:px-12 md:min-h-[590px] md:justify-center md:px-12 md:py-16">
+                <p dir="ltr" className={`text-sm font-semibold tracking-wide text-[#a7d3ff] ${lang === "ar" ? "text-right" : "text-left"}`}>{item.type}</p>
+                <h3 className="mt-4 max-w-xl text-4xl font-bold leading-[1.12] sm:text-5xl">{item.title}</h3>
+                <p className="mt-6 max-w-lg text-base leading-8 text-[#d5e5f6] md:text-lg">{item.body}</p>
+                <Link
+                  to={to}
+                  className="mt-8 inline-flex min-h-12 w-fit items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#0b2a4e] transition-colors hover:bg-[#d9ebff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                >
+                  {item.action}<Arrow aria-hidden="true" className="h-4 w-4" />
+                </Link>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>

@@ -102,6 +102,7 @@ const App = () => {
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/products/:id" element={<ProductDetail />} />
                         <Route path="/bluestorm/pass-through-crimper" element={<BlueStormCrimper />} />
+                        <Route path="/bluestorm/professional-pass-through-crimper" element={<BlueStormCrimper professional />} />
                         <Route path="/quote" element={<QuotePage />} />
                         <Route path="/blog" element={<BlogList />} />
                         <Route path="/blog/:slug" element={<BlogPost />} />
