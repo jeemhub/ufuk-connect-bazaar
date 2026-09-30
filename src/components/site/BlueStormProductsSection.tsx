@@ -5,13 +5,13 @@ import { useLanguage } from "@/i18n/LanguageContext";
 const assets = {
   reel: "/images/bluestorm-feature/cable-reel.jpeg",
   box: "/images/bluestorm-feature/cable-box.jpg",
-  redCrimper: "/images/bluestorm-feature/crimper-red-studio.jpg",
+  redCrimper: "/images/bluestorm-feature/crimper-red-banner.jpg",
   blueCrimper: "/images/bluestorm-feature/crimper-blue.webp",
 };
 
 const products = {
   cable: "/products/2ead67db-9576-4476-aae7-03ffb17ae570",
-  redCrimper: "/products/a93cf9cf-13d2-49db-8325-c5bc800bad1e",
+  redCrimper: "/bluestorm/pass-through-crimper",
   blueCrimper: "/products/ee3d0851-344a-48b1-9ec7-12b1c545c5da",
 };
 
@@ -19,7 +19,7 @@ const copy = {
   ar: {
     intro: "من الكيبل إلى آخر وصلة",
     heading: "منتجات BlueStorm المختارة",
-    lead: "كيبل خارجي وأدوات تركيب نستخدم صورها الفعلية لتقريب تفاصيل المنتج قبل اختياره.",
+    lead: "كيبل خارجي وأدوات تركيب، مع عرض واضح لشكل كل منتج وتفاصيله قبل اختياره.",
     cable: {
       type: "كيبل شبكات خارجي",
       title: "كيبل BlueStorm CAT5E بطول 305 متر",
@@ -28,10 +28,11 @@ const copy = {
       specs: ["CAT5E", "SFTP", "305 متر"],
     },
     red: {
-      type: "أداة تركيب",
-      title: "كابسة BlueStorm للفيش المفتوح",
-      body: "أداة لكبس موصلات الشبكة ذات النهاية المفتوحة، بمقبض أحمر وأسود يسهل تمييزها ضمن أدوات الفني.",
+      type: "BlueStorm  /  BST-CBR-EZ",
+      title: "كبسة دقيقة. وصلة جاهزة.",
+      body: "كابسة للموصلات التمريرية EZ-RJ45. تثبّت الفيشة في موضعها الصحيح أثناء الكبس، مع قبضة مريحة للعمل المتكرر.",
       image: "كابسة فيش BlueStorm بمقبض أحمر وأسود",
+      action: "اكتشف الكابسة",
     },
     blue: {
       type: "أداة تركيب احترافية",
@@ -44,7 +45,7 @@ const copy = {
   en: {
     intro: "From cable to final connection",
     heading: "Selected BlueStorm products",
-    lead: "Outdoor cable and installation tools shown with their real product photos, so you can inspect the details before choosing.",
+    lead: "Outdoor cable and installation tools, presented clearly so you can inspect each product before choosing.",
     cable: {
       type: "Outdoor network cable",
       title: "BlueStorm CAT5E cable, 305 m",
@@ -53,10 +54,11 @@ const copy = {
       specs: ["CAT5E", "SFTP", "305 m"],
     },
     red: {
-      type: "Installation tool",
-      title: "BlueStorm pass-through crimper",
-      body: "A tool for pass-through network connectors, with a distinctive red and black grip for the technician's kit.",
+      type: "BlueStorm  /  BST-CBR-EZ",
+      title: "A precise crimp. A ready connection.",
+      body: "A pass-through crimper for EZ-RJ45 connectors. It holds the connector in position while crimping, with a comfortable grip for repeated use.",
       image: "BlueStorm crimper with red and black handles",
+      action: "Explore the crimper",
     },
     blue: {
       type: "Professional installation tool",
@@ -115,15 +117,19 @@ export function BlueStormProductsSection() {
             </div>
           </article>
 
-          <article className="grid overflow-hidden rounded-[1.75rem] bg-[#e6f1fa] text-[#10243d] lg:min-h-[400px] lg:grid-cols-2">
-            <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-[#071b38] sm:min-h-[360px] lg:order-2 lg:min-h-full">
-              <img src={assets.redCrimper} alt={c.red.image} loading="lazy" decoding="async" width={1536} height={1024} className="absolute inset-0 h-full w-full object-contain lg:object-cover" />
-            </div>
-            <div className="flex flex-col justify-center px-7 py-10 sm:px-11 lg:order-1 lg:px-14">
-              <p className="text-sm font-semibold text-[#1d64aa]">{c.red.type}</p>
-              <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">{c.red.title}</h3>
-              <p className="mt-5 max-w-xl text-base leading-8 text-[#4b6075]">{c.red.body}</p>
-              {action(products.redCrimper)}
+          <article className="relative isolate min-h-[690px] overflow-hidden bg-[#061831] text-white md:min-h-[590px]">
+            <img src={assets.redCrimper} alt={c.red.image} loading="lazy" decoding="async" width={1672} height={941} className="absolute inset-0 h-full w-full object-cover object-left" />
+            <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[6%] md:via-[#061831]/75 md:via-[36%] md:to-transparent" />
+            <div className="relative z-10 ml-auto flex min-h-[690px] w-full max-w-[610px] flex-col justify-end px-7 pb-12 pt-[390px] sm:px-12 md:min-h-[590px] md:justify-center md:px-12 md:py-16">
+              <p dir="ltr" className={`text-sm font-semibold tracking-wide text-[#a7d3ff] ${lang === "ar" ? "text-right" : "text-left"}`}>{c.red.type}</p>
+              <h3 className="mt-4 max-w-xl text-4xl font-bold leading-[1.12] sm:text-5xl">{c.red.title}</h3>
+              <p className="mt-6 max-w-lg text-base leading-8 text-[#d5e5f6] md:text-lg">{c.red.body}</p>
+              <Link
+                to={products.redCrimper}
+                className="mt-8 inline-flex min-h-12 w-fit items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#0b2a4e] transition-colors hover:bg-[#d9ebff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+              >
+                {c.red.action}<Arrow aria-hidden="true" className="h-4 w-4" />
+              </Link>
             </div>
           </article>
 
