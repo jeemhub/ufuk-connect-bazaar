@@ -5,7 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 const assets = {
   reel: "/images/bluestorm-feature/cable-reel.jpeg",
   box: "/images/bluestorm-feature/cable-box.jpg",
-  redCrimper: "/images/bluestorm-feature/crimper-red.webp",
+  redCrimper: "/images/bluestorm-feature/crimper-red-studio.jpg",
   blueCrimper: "/images/bluestorm-feature/crimper-blue.webp",
 };
 
@@ -116,9 +116,8 @@ export function BlueStormProductsSection() {
           </article>
 
           <article className="grid overflow-hidden rounded-[1.75rem] bg-[#e6f1fa] text-[#10243d] lg:min-h-[400px] lg:grid-cols-2">
-            <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-[#d0e4f3] p-5 sm:min-h-[360px] lg:order-2 lg:min-h-full">
-              <div aria-hidden="true" className="absolute h-[78%] w-[78%] rounded-full border border-white/60" />
-              <img src={assets.redCrimper} alt={c.red.image} loading="lazy" decoding="async" width={640} height={640} className="relative h-[290px] w-auto max-w-full object-contain drop-shadow-[0_22px_18px_rgba(13,41,71,0.19)] sm:h-[350px] lg:h-[370px]" />
+            <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-[#071b38] sm:min-h-[360px] lg:order-2 lg:min-h-full">
+              <img src={assets.redCrimper} alt={c.red.image} loading="lazy" decoding="async" width={1536} height={1024} className="absolute inset-0 h-full w-full object-contain lg:object-cover" />
             </div>
             <div className="flex flex-col justify-center px-7 py-10 sm:px-11 lg:order-1 lg:px-14">
               <p className="text-sm font-semibold text-[#1d64aa]">{c.red.type}</p>
