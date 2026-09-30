@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-/** Decorative only: the system cursor and every native interaction stay available. */
+/** Replaces the mouse cursor only while the custom pointer is visible. */
 export function PointerEffect() {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -13,16 +13,21 @@ export function PointerEffect() {
     const configure = () => {
       cleanup();
       node.dataset.visible = "false";
+      document.documentElement.classList.remove("ufuk-custom-pointer");
       if (!media.matches) return;
       let frame = 0;
       let x = 0;
       let y = 0;
-      const hide = () => { node.dataset.visible = "false"; };
+      const hide = () => {
+        node.dataset.visible = "false";
+        document.documentElement.classList.remove("ufuk-custom-pointer");
+      };
       const move = (event: PointerEvent) => {
         if (event.pointerType !== "mouse") { hide(); return; }
         const target = event.target instanceof Element ? event.target : null;
         const editing = target?.closest('input, textarea, select, [contenteditable="true"], iframe');
         node.dataset.visible = editing ? "false" : "true";
+        document.documentElement.classList.toggle("ufuk-custom-pointer", !editing);
         node.dataset.active = target?.closest('a, button, [role="button"], [role="tab"], summary, label, [data-cursor="interactive"]') ? "true" : "false";
         x = event.clientX;
         y = event.clientY;
@@ -39,16 +44,15 @@ export function PointerEffect() {
       document.addEventListener("pointerup", release, { passive: true });
       document.documentElement.addEventListener("pointerleave", hide);
       document.addEventListener("keydown", keyboard);
-      document.addEventListener("scroll", hide, { passive: true, capture: true });
       window.addEventListener("blur", hide);
       cleanup = () => {
         cancelAnimationFrame(frame);
+        hide();
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerdown", press);
         document.removeEventListener("pointerup", release);
         document.documentElement.removeEventListener("pointerleave", hide);
         document.removeEventListener("keydown", keyboard);
-        document.removeEventListener("scroll", hide, true);
         window.removeEventListener("blur", hide);
       };
     };

@@ -326,6 +326,10 @@
 
 .ufuk-pointer { position: fixed; top: 0; left: 0; width: 0; height: 0; pointer-events: none; z-index: 2147483646; opacity: 0; transition: opacity 120ms ease; }
 .ufuk-pointer span { position: absolute; width: 30px; height: 30px; top: -15px; left: -15px; border: 1px solid #65aef0b3; border-radius: 50%; background: #70baff08; box-shadow: 0 0 12px #3f8ede18; transition: transform 180ms ease, background-color 180ms ease; }
+.ufuk-pointer::after { content: ""; position: absolute; width: 5px; height: 5px; top: -2.5px; left: -2.5px; border-radius: 50%; background: #65aef0; box-shadow: 0 0 0 1px #06183180; }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html.ufuk-custom-pointer, html.ufuk-custom-pointer * { cursor: none !important; }
+}
 .ufuk-pointer[data-visible="true"] { opacity: 1; }
 .ufuk-pointer[data-active="true"] span { transform: scale(1.6); background: #70baff18; }
 .ufuk-pointer[data-pressed="true"] span { transform: scale(.8); }
