@@ -19,6 +19,7 @@ import Home from "./pages/site/Home";
 // Lazy-load non-critical routes to shrink initial JS bundle and reduce main-thread work (improves FID/TBT)
 const ProductsPage = lazy(() => import("./pages/site/ProductsPage"));
 const ProductDetail = lazy(() => import("./pages/site/ProductDetail"));
+const BlueStormCable = lazy(() => import("./pages/site/BlueStormCable"));
 const BlueStormCrimper = lazy(() => import("./pages/site/BlueStormCrimper"));
 const QuotePage = lazy(() => import("./pages/site/QuotePage"));
 const BlogList = lazy(() => import("./pages/site/BlogList"));
@@ -101,6 +102,7 @@ const App = () => {
                         <Route path="/" element={<Home />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/products/:id" element={<ProductDetail />} />
+                        <Route path="/bluestorm/cat6-sftp-outdoor" element={<BlueStormCable />} />
                         <Route path="/bluestorm/pass-through-crimper" element={<BlueStormCrimper />} />
                         <Route path="/bluestorm/professional-pass-through-crimper" element={<BlueStormCrimper professional />} />
                         <Route path="/quote" element={<QuotePage />} />

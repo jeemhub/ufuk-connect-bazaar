@@ -3,14 +3,13 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const assets = {
-  reel: "/images/bluestorm-feature/cable-reel.jpeg",
-  box: "/images/bluestorm-feature/cable-box.jpg",
+  reel: "/images/bluestorm-feature/cable-reel-banner.jpg",
   redCrimper: "/images/bluestorm-feature/crimper-red-banner.jpg",
   blueCrimper: "/images/bluestorm-feature/crimper-blue-banner.jpg",
 };
 
 const products = {
-  cable: "/products/2ead67db-9576-4476-aae7-03ffb17ae570",
+  cable: "/bluestorm/cat6-sftp-outdoor",
   redCrimper: "/bluestorm/pass-through-crimper",
   blueCrimper: "/bluestorm/professional-pass-through-crimper",
 };
@@ -21,11 +20,11 @@ const copy = {
     heading: "منتجات BlueStorm المختارة",
     lead: "كيبل خارجي وأدوات تركيب، مع عرض واضح لشكل كل منتج وتفاصيله قبل اختياره.",
     cable: {
-      type: "كيبل شبكات خارجي",
-      title: "كيبل BlueStorm CAT5E بطول 305 متر",
-      body: "كيبل SFTP للتركيبات الخارجية، مع طبقات تدريع للحماية من التداخل. شاهد البكرة وعلبة السحب، ثم افتح صفحة المنتج للمواصفات الكاملة.",
-      image: "بكرة كيبل BlueStorm بجانب علبة كيبل الشبكات الخارجي",
-      specs: ["CAT5E", "SFTP", "305 متر"],
+      type: "BlueStorm  /  BS-OSFTP6-305M",
+      title: "شبكتك تبدأ من الداخل.",
+      body: "كيبل CAT6 SFTP خارجي بطول 305 متر. موصلات نحاس صلب، تدريع معدني وغلاف PE مقاوم للعوامل الجوية. اكتشف التفاصيل طبقةً بعد طبقة.",
+      image: "بكرة كيبل BlueStorm CAT6 SFTP الخارجي",
+      action: "اكتشف كيبل CAT6",
     },
     red: {
       type: "BlueStorm  /  BST-CBR-EZ",
@@ -48,11 +47,11 @@ const copy = {
     heading: "Selected BlueStorm products",
     lead: "Outdoor cable and installation tools, presented clearly so you can inspect each product before choosing.",
     cable: {
-      type: "Outdoor network cable",
-      title: "BlueStorm CAT5E cable, 305 m",
-      body: "SFTP cable for outdoor installations, with shielding against interference. See the reel and pull box, then open the product page for full specifications.",
-      image: "BlueStorm cable reel beside the outdoor network cable box",
-      specs: ["CAT5E", "SFTP", "305 m"],
+      type: "BlueStorm  /  BS-OSFTP6-305M",
+      title: "A network built from within.",
+      body: "305 metres of outdoor CAT6 SFTP cable. Solid copper conductors, metallic shielding and a weather-resistant PE jacket. Explore the details, layer by layer.",
+      image: "BlueStorm outdoor CAT6 SFTP cable reel",
+      action: "Explore CAT6 cable",
     },
     red: {
       type: "BlueStorm  /  BST-CBR-EZ",
@@ -77,16 +76,6 @@ export function BlueStormProductsSection() {
   const c = copy[lang];
   const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
 
-  const action = (to: string) => (
-    <Link
-      to={to}
-      className="mt-8 inline-flex min-h-12 w-fit items-center gap-3 rounded-full bg-[#1769bb] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0e4d91] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1769bb]"
-    >
-      {c.action}
-      <Arrow aria-hidden="true" className="h-4 w-4" />
-    </Link>
-  );
-
   return (
     <section aria-labelledby="bluestorm-products-title" className="bg-[#092448] py-16 text-white md:py-24">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
@@ -99,32 +88,13 @@ export function BlueStormProductsSection() {
         </div>
 
         <div className="space-y-5 md:space-y-7">
-          <article className="grid overflow-hidden rounded-[1.75rem] bg-[#f6f8fa] text-[#10243d] lg:min-h-[440px] lg:grid-cols-2">
-            <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden bg-[#e9eff4] p-5 sm:min-h-[390px] sm:p-8 lg:min-h-full">
-              <div aria-hidden="true" className="absolute h-[76%] w-[76%] rounded-full border border-[#cbd8e3]" />
-              <div aria-hidden="true" className="absolute h-[52%] w-[52%] rounded-full border border-[#cbd8e3]" />
-              <div className="relative flex w-full max-w-[560px] items-center justify-center gap-1 sm:gap-3">
-                <img src={assets.reel} alt={c.cable.image} loading="lazy" decoding="async" width={554} height={554} className="w-[65%] rounded-xl object-contain shadow-[0_16px_36px_rgba(12,34,59,0.12)]" />
-                <img src={assets.box} alt="" loading="lazy" decoding="async" width={800} height={800} className="w-[32%] rounded-lg object-contain shadow-[0_14px_28px_rgba(12,34,59,0.12)]" />
-              </div>
-            </div>
-            <div className="flex flex-col justify-center px-7 py-10 sm:px-11 lg:px-14">
-              <p className="text-sm font-semibold text-[#1d64aa]">{c.cable.type}</p>
-              <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">{c.cable.title}</h3>
-              <p className="mt-5 max-w-xl text-base leading-8 text-[#4b6075]">{c.cable.body}</p>
-              <div className="mt-6 flex flex-wrap gap-2" aria-label={lang === "ar" ? "مواصفات أساسية" : "Key specifications"}>
-                {c.cable.specs.map((spec) => <span key={spec} className="rounded-full border border-[#c7d7e5] px-3.5 py-1.5 text-xs font-semibold text-[#34536d]">{spec}</span>)}
-              </div>
-              {action(products.cable)}
-            </div>
-          </article>
-
           {[
+            { item: c.cable, image: assets.reel, to: products.cable },
             { item: c.red, image: assets.redCrimper, to: products.redCrimper },
             { item: c.blue, image: assets.blueCrimper, to: products.blueCrimper },
           ].map(({ item, image, to }) => (
             <article key={to} className="relative isolate min-h-[690px] overflow-hidden bg-[#061831] text-white md:min-h-[590px]">
-              <img src={image} alt={item.image} loading="lazy" decoding="async" width={1672} height={941} className="absolute inset-0 h-full w-full object-cover object-left" />
+              <img src={image} alt={item.image} loading="lazy" decoding="async" width={1672} height={941} className={`absolute inset-0 w-full object-cover object-left ${to === products.cable ? "h-[390px] md:h-full" : "h-full"}`} />
               <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[6%] md:via-[#061831]/75 md:via-[36%] md:to-transparent" />
               <div className="relative z-10 ml-auto flex min-h-[690px] w-full max-w-[610px] flex-col justify-end px-7 pb-12 pt-[390px] sm:px-12 md:min-h-[590px] md:justify-center md:px-12 md:py-16">
                 <p dir="ltr" className={`text-sm font-semibold tracking-wide text-[#a7d3ff] ${lang === "ar" ? "text-right" : "text-left"}`}>{item.type}</p>

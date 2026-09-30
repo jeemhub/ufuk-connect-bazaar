@@ -324,6 +324,13 @@
   }
 }
 
+.ufuk-pointer { position: fixed; top: 0; left: 0; width: 0; height: 0; pointer-events: none; z-index: 2147483646; opacity: 0; transition: opacity 120ms ease; }
+.ufuk-pointer span { position: absolute; width: 30px; height: 30px; top: -15px; left: -15px; border: 1px solid #65aef0b3; border-radius: 50%; background: #70baff08; box-shadow: 0 0 12px #3f8ede18; transition: transform 180ms ease, background-color 180ms ease; }
+.ufuk-pointer[data-visible="true"] { opacity: 1; }
+.ufuk-pointer[data-active="true"] span { transform: scale(1.6); background: #70baff18; }
+.ufuk-pointer[data-pressed="true"] span { transform: scale(.8); }
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) { .ufuk-pointer { display: none; } }
+
 @media (prefers-reduced-transparency: reduce) {
   html.glass .glass-surface,
   html.glass .glass-panel,
@@ -333,4 +340,3 @@
     background: hsl(var(--card)) !important;
   }
 }
-
