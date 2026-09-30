@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Cable, ShieldCheck, Sun, Truck, Zap, Star, Award, Users, Wrench, Globe2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { categories } from "@/data/mockData";
@@ -9,7 +10,7 @@ import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { useProducts } from "@/hooks/useProducts";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { BrandStrip } from "@/components/site/BrandStrip";
-import { BlueStormScrollSection } from "@/components/site/BlueStormScrollSection";
+import { BlueStormProductsSection } from "@/components/site/BlueStormProductsSection";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
 import { GlobalSearch } from "@/components/site/GlobalSearch";
@@ -38,7 +39,7 @@ const Home = () => {
     m.setAttribute("content", desc);
   }, [t, lang]);
 
-  const catIcons: Record<string, any> = { networking: Cable, solar: Sun, ups: Zap, accessories: ShieldCheck };
+  const catIcons: Record<string, LucideIcon> = { networking: Cable, solar: Sun, ups: Zap, accessories: ShieldCheck };
 
   return (
     <>
@@ -205,7 +206,7 @@ const Home = () => {
       {/* 2. Trusted brands strip */}
       <BrandStrip />
 
-      <BlueStormScrollSection />
+      <BlueStormProductsSection />
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
