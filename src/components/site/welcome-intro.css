@@ -1,0 +1,26 @@
+.ufuk-welcome { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; overflow: hidden; color: #f1f6ff; background: radial-gradient(ellipse at 50% 85%, #123b63 0%, #091e38 42%, #040e1e 85%); isolation: isolate; }
+.ufuk-welcome-content { text-align: center; position: relative; padding: 30px 24px 70px; }
+.ufuk-welcome-emblem { width: 156px; height: 156px; margin: 0 auto 34px; position: relative; display: grid; place-items: center; animation: ufuk-welcome-rise 700ms cubic-bezier(.2,.7,.2,1) both; }
+.ufuk-welcome-logo { width: 116px; height: 116px; border-radius: 50%; display: grid; place-items: center; background: #f0f5fc; box-shadow: 0 0 60px #64b8ff20; }
+.ufuk-welcome-logo img { width: 87px; height: 87px; object-fit: contain; }
+.ufuk-welcome-orbit { position: absolute; inset: 0; border: 1px solid #8dc8ff28; border-radius: 50%; }
+.ufuk-welcome-orbit::before { content: ""; position: absolute; inset: -1px; border: 1px solid transparent; border-top-color: #91ccff; border-radius: 50%; animation: ufuk-welcome-orbit 1.7s ease-in-out both; }
+.ufuk-welcome-kicker { font-size: .85rem; color: #98b6d6; letter-spacing: .12em; animation: ufuk-welcome-rise 650ms 100ms both; }
+.ufuk-welcome h2 { margin: 14px 0; font-size: clamp(2.7rem, 7vw, 5rem); font-weight: 700; line-height: 1.25; letter-spacing: -.03em; animation: ufuk-welcome-rise 700ms 160ms both; }
+.ufuk-welcome-tagline { color: #c2d7ed; font-size: clamp(.95rem, 2.5vw, 1.15rem); animation: ufuk-welcome-rise 700ms 230ms both; }
+.ufuk-welcome-line { width: 160px; height: 1px; background: #ffffff15; margin: 35px auto 22px; overflow: hidden; }
+.ufuk-welcome-line span { display: block; height: 100%; width: 100%; background: #91ccff; transform-origin: center; animation: ufuk-welcome-line 1.4s 100ms cubic-bezier(.2,.7,.2,1) both; }
+.ufuk-welcome-fields { font-size: .7rem; color: #839fbe; letter-spacing: .045em; animation: ufuk-welcome-rise 700ms 300ms both; }
+.ufuk-welcome-horizon { position: absolute; z-index: -1; width: 150vw; height: 150vw; min-width: 900px; min-height: 900px; border: 1px solid #8dc8ff15; border-radius: 50%; top: 70%; left: 50%; transform: translateX(-50%); }
+.ufuk-welcome-skip { position: absolute; bottom: max(32px, env(safe-area-inset-bottom)); inset-inline-end: 36px; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 16px; border: 1px solid #8dc8ff35; border-radius: 30px; font-size: .8rem; color: #bbd2ea; transition: background-color 180ms; }
+.ufuk-welcome-skip:hover { background: #8dc8ff16; }
+.ufuk-welcome-skip:focus-visible { outline: 2px solid #a4d5ff; outline-offset: 5px; }
+.ufuk-welcome-signature { position: absolute; bottom: 48px; inset-inline-start: 40px; color: #7595b4; font-size: .6rem; letter-spacing: .22em; }
+.ufuk-welcome-leaving { animation: ufuk-welcome-exit 550ms cubic-bezier(.65,0,.35,1) both; }
+@keyframes ufuk-welcome-rise { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: none; } }
+@keyframes ufuk-welcome-orbit { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+@keyframes ufuk-welcome-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ufuk-welcome-exit { to { opacity: 0; transform: translateY(-5%); } }
+@media (max-width: 480px) { .ufuk-welcome-signature { display: none; } .ufuk-welcome-skip { inset-inline-end: 24px; bottom: 26px; } .ufuk-welcome-emblem { width: 140px; height: 140px; margin-bottom: 27px; } }
+@media (max-height: 600px) { .ufuk-welcome-content { padding-bottom: 65px; } .ufuk-welcome-emblem { width: 100px; height: 100px; margin-bottom: 12px; } .ufuk-welcome-logo { width: 78px; height: 78px; } .ufuk-welcome-logo img { width: 60px; height: 60px; } .ufuk-welcome h2 { font-size: 2.5rem; } .ufuk-welcome-line { margin: 16px auto; } }
+@media (prefers-reduced-motion: reduce) { .ufuk-welcome, .ufuk-welcome *, .ufuk-welcome *::before { animation: none !important; transition: none !important; } }
