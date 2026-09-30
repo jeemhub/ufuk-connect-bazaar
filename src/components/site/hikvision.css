@@ -1,12 +1,12 @@
 .hik-home {
-  background: #092448;
-  padding: 0 0 80px;
+  background: #0c1119;
+  padding: 0;
   color: #fff;
 }
 .hik-home-inner {
-  max-width: 1280px;
-  margin: auto;
-  padding: 0 24px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 .hik-hero {
   position: relative;
@@ -442,9 +442,7 @@
   }
 }
 @media(max-width:1023px) {
-  .hik-home-inner {
-    padding-inline: 20px;
-  }
+
   .hik-hero,.hik-hero-landing {
     display: block;
     min-height: 0;
@@ -512,12 +510,8 @@
   }
 }
 @media(max-width:639px) {
-  .hik-home {
-    padding-bottom: 48px;
-  }
-  .hik-home-inner {
-    padding-inline: 16px;
-  }
+
+
   .hik-wrap {
     padding-inline: 24px;
   }
@@ -619,3 +613,14 @@
   }
 }
 
+
+/* A full-width campaign, with a full viewport stage on desktop. */
+@media (min-width: 1024px) {
+  .hik-home .hik-hero {
+    min-height: 100vh;
+    min-height: 100svh;
+  }
+  .hik-home .hik-hero-copy {
+    padding-right: clamp(32px, 5vw, 96px);
+  }
+}
