@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Package } from "lucide-react";
+import { useState } from "react";
 import { Product, formatIqd } from "@/data/mockData";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +8,9 @@ import { useAuth } from "@/auth/AuthProvider";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
 import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, imageFit = "cover" }: { product: Product; imageFit?: "cover" | "contain" }) {
   const { t, lang } = useLanguage();
+  const [imageError, setImageError] = useState(false);
   const { pricingTier } = useAuth();
   const rawName = lang === "ar" ? product.nameAr : product.nameEn;
   const isFallbackName = !rawName?.trim() && !!product.nameData?.trim();
@@ -30,7 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
     >
       {/* Image area */}
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary/60 via-secondary/30 to-background">
-        <img
+        {imageError ? <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground"><Package className="h-12 w-12 opacity-40" strokeWidth={1.4} /><span className="text-xs">{lang === "ar" ? "صورة المنتج غير متاحة" : "Product image unavailable"}</span></div> : <img
           src={optimizedImage(product.image, { width: 600 }) ?? product.image}
           srcSet={optimizedSrcSet(product.image, [300, 450, 600, 900])}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
@@ -39,8 +41,9 @@ export function ProductCard({ product }: { product: Product }) {
           decoding="async"
           width={600}
           height={600}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
+          className={`h-full w-full transition-transform duration-700 group-hover:scale-105 ${imageFit === "contain" ? "object-contain p-4" : "object-cover"}`}
+          onError={() => setImageError(true)}
+        />}
         {/* Top badges */}
         <div className="absolute inset-x-2 top-2 flex items-start justify-between gap-2">
           <Badge variant="secondary" className="rounded-full border border-border/50 bg-background/85 px-2.5 py-0.5 text-[10px] font-bold backdrop-blur-sm">

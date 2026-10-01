@@ -150,6 +150,19 @@
   .product-campaign-onv .product-campaign-shade { background: linear-gradient(90deg, transparent 51%, var(--campaign-bg) 79%); }
 }
 .product-campaign-energy .product-campaign-label { font-size:20px; }
+.product-campaign-fiber {
+  --campaign-bg: #061b2d;
+  --campaign-muted: #cbdae6;
+  --campaign-label: #88e4f3;
+  --campaign-button: #9cebf0;
+  --campaign-button-text: #082639;
+}
+.product-campaign-fiber .product-campaign-label { font-size: 18px; letter-spacing: .09em; }
+.product-campaign-fiber .product-campaign-footer { color: #bad0da; font-size: 12px; line-height: 1.8; }
+@media (min-width: 1024px) {
+  .product-campaign-fiber .product-campaign-copy { width: 40%; padding-left: 12px; }
+  .product-campaign-fiber .product-campaign-shade { background: linear-gradient(90deg, transparent 48%, var(--campaign-bg) 78%); }
+}
 .product-campaign-energy .product-campaign-label span { padding-inline:12px; font-weight:300; }
 .product-campaign-energy .product-campaign-footer { font-size:12px; color:#acbfc8; }
 @media(min-width:1024px) {
