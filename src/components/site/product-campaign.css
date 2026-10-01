@@ -22,6 +22,13 @@
   --campaign-button: #d8102a;
   --campaign-button-text: #fff;
 }
+.product-campaign-fanvil {
+  --campaign-bg: #06152b;
+  --campaign-muted: #d3e5f5;
+  --campaign-label: #c2dfff;
+  --campaign-button: #f03c48;
+  --campaign-button-text: #fff;
+}
 .product-campaign-image {
   position: absolute;
   inset: 0;

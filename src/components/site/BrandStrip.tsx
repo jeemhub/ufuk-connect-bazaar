@@ -1,6 +1,7 @@
-import { useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Package } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Package, Pause, Play } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useBrands } from "@/hooks/useBrands";
 import type { Product } from "@/data/mockData";
@@ -8,7 +9,7 @@ import { optimizedImage, optimizedSrcSet } from "@/lib/img";
 import "./brand-gallery.css";
 
 type BrandItem = { id: string; name: string; logo_url: string | null; description?: string | null };
-type BrandStory = { ar: string; en: string; fieldAr: string; fieldEn: string; productId: string };
+type BrandStory = { ar: string; en: string; fieldAr: string; fieldEn: string };
 
 const fallbackBrands: BrandItem[] = [
   { id: "fallback-mikrotik", name: "MikroTik", logo_url: null },
@@ -22,14 +23,14 @@ const fallbackBrands: BrandItem[] = [
 ];
 
 const stories: Record<string, BrandStory> = {
-  mikrotik: { ar: "راوترات وسويتشات تمنح الشبكة تحكمًا مرنًا من نقطة الاتصال إلى قلب البنية التحتية.", en: "Routers and switches for flexible control from the network edge to its core.", fieldAr: "البنية الشبكية", fieldEn: "NETWORK INFRASTRUCTURE", productId: "6aa61b02-e500-4c69-a7ee-fb896611da23" },
-  ruijie: { ar: "حلول للشبكات المؤسسية تجمع السويتشات ونقاط الوصول والإدارة السحابية.", en: "Enterprise networking across switches, access points and cloud management.", fieldAr: "شبكات المؤسسات", fieldEn: "ENTERPRISE NETWORKING", productId: "c6a2aac6-7945-474b-8f0b-967a20f1a712" },
-  must: { ar: "عواكس للطاقة الشمسية وبطاريات ليثيوم لتوليد الطاقة وتخزينها حسب حاجة المنظومة.", en: "Solar inverters and lithium batteries for energy conversion and storage.", fieldAr: "الطاقة والتخزين", fieldEn: "ENERGY & STORAGE", productId: "2cb4f5d3-d3e6-4836-8d11-14a96a1c0801" },
-  ubiquiti: { ar: "معدات اتصال لاسلكي ونقاط وصول لبناء تغطية مستقرة للمواقع المختلفة.", en: "Wireless equipment and access points for dependable site coverage.", fieldAr: "الاتصال اللاسلكي", fieldEn: "WIRELESS CONNECTIVITY", productId: "2514ffaf-7273-4c36-ba31-c78c0e25fcf7" },
-  tplink: { ar: "راوترات وسويتشات ونقاط وصول تناسب شبكات المنازل والأعمال.", en: "Routers, switches and access points for home and business networks.", fieldAr: "حلول الاتصال", fieldEn: "CONNECTIVITY", productId: "49017a9a-0c33-4160-a350-b4c1b18d05b6" },
-  bluestorm: { ar: "كيابل وتجهيزات فايبر وأنظمة UPS تكمل البنية التقنية من التوصيل إلى إسناد الطاقة.", en: "Cabling, fiber accessories and UPS systems spanning connectivity to power backup.", fieldAr: "الشبكات وإسناد الطاقة", fieldEn: "CABLING & POWER BACKUP", productId: "131bcced-6c40-4eed-9483-689a60df04c0" },
-  huawei: { ar: "راوترات وسويتشات وحلول فايبر لتجهيز شبكات الأعمال والاتصالات.", en: "Routers, switches and fiber solutions for business networks and connectivity.", fieldAr: "الشبكات والفايبر", fieldEn: "NETWORKING & FIBER", productId: "c60039ae-e7f4-4ddc-91b4-58892cd1dcb5" },
-  fanvil: { ar: "هواتف IP للاتصالات المهنية ومكاتب خدمة العملاء.", en: "IP phones for professional communication and customer-facing teams.", fieldAr: "اتصالات IP", fieldEn: "IP COMMUNICATIONS", productId: "649beaa8-64aa-47d2-9e21-c450f90bcf14" },
+  mikrotik: { ar: "راوترات وسويتشات تمنح الشبكة تحكمًا مرنًا من نقطة الاتصال إلى قلب البنية التحتية.", en: "Routers and switches for flexible control from the network edge to its core.", fieldAr: "البنية الشبكية", fieldEn: "NETWORK INFRASTRUCTURE" },
+  ruijie: { ar: "حلول للشبكات المؤسسية تجمع السويتشات ونقاط الوصول والإدارة السحابية.", en: "Enterprise networking across switches, access points and cloud management.", fieldAr: "شبكات المؤسسات", fieldEn: "ENTERPRISE NETWORKING" },
+  must: { ar: "عواكس للطاقة الشمسية وبطاريات ليثيوم لتوليد الطاقة وتخزينها حسب حاجة المنظومة.", en: "Solar inverters and lithium batteries for energy conversion and storage.", fieldAr: "الطاقة والتخزين", fieldEn: "ENERGY & STORAGE" },
+  ubiquiti: { ar: "معدات اتصال لاسلكي ونقاط وصول لبناء تغطية مستقرة للمواقع المختلفة.", en: "Wireless equipment and access points for dependable site coverage.", fieldAr: "الاتصال اللاسلكي", fieldEn: "WIRELESS CONNECTIVITY" },
+  tplink: { ar: "راوترات وسويتشات ونقاط وصول تناسب شبكات المنازل والأعمال.", en: "Routers, switches and access points for home and business networks.", fieldAr: "حلول الاتصال", fieldEn: "CONNECTIVITY" },
+  bluestorm: { ar: "كيابل وتجهيزات فايبر وأنظمة UPS تكمل البنية التقنية من التوصيل إلى إسناد الطاقة.", en: "Cabling, fiber accessories and UPS systems spanning connectivity to power backup.", fieldAr: "الشبكات وإسناد الطاقة", fieldEn: "CABLING & POWER BACKUP" },
+  huawei: { ar: "راوترات وسويتشات وحلول فايبر لتجهيز شبكات الأعمال والاتصالات.", en: "Routers, switches and fiber solutions for business networks and connectivity.", fieldAr: "الشبكات والفايبر", fieldEn: "NETWORKING & FIBER" },
+  fanvil: { ar: "هواتف IP للاتصالات المهنية ومكاتب خدمة العملاء.", en: "IP phones for professional communication and customer-facing teams.", fieldAr: "اتصالات IP", fieldEn: "IP COMMUNICATIONS" },
 };
 
 const positions = [
@@ -51,7 +52,7 @@ function BrandVisual({ name, url }: { name: string; url: string | null }) {
 function ProductVisual({ product, lang }: { product: Product; lang: "ar" | "en" }) {
   const [failed, setFailed] = useState(false);
   const name = (lang === "ar" ? product.nameAr : product.nameEn) || product.nameData || product.nameEn;
-  return failed ? <Package size={62} strokeWidth={1.2} aria-hidden="true" /> : <img src={optimizedImage(product.image, { width: 560 }) || product.image} alt={name} loading="lazy" decoding="async" width={360} height={280} onError={() => setFailed(true)} />;
+  return failed ? <Package size={62} strokeWidth={1.2} aria-hidden="true" /> : <img src={optimizedImage(product.image, { width: 560 }) || product.image} alt={name} loading="eager" decoding="async" width={360} height={280} onError={() => setFailed(true)} />;
 }
 
 export function BrandStrip({ products }: { products: Product[] }) {
@@ -59,24 +60,76 @@ export function BrandStrip({ products }: { products: Product[] }) {
   const ar = lang === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
   const { brands, loading } = useBrands({ activeOnly: true });
-  const displayBrands: BrandItem[] = (brands?.length ? brands : fallbackBrands).slice(0, 8);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const selectedIndex = Math.min(activeIndex, displayBrands.length - 1);
+  const displayBrands: BrandItem[] = useMemo(() => (brands?.length ? brands : fallbackBrands).slice(0, 8), [brands]);
+  const [selection, setSelection] = useState<{ index: number; productId: string | null }>({ index: 0, productId: null });
+  const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [pageVisible, setPageVisible] = useState(true);
+  const sectionRef = useRef<HTMLElement>(null);
+  const lastProductByBrand = useRef<Record<string, string>>({});
+  const selectedIndex = Math.min(selection.index, displayBrands.length - 1);
   const active = displayBrands[selectedIndex];
   const point = positions[selectedIndex];
   const story = stories[brandKey(active.name)];
-  const representative = products.find(product => product.id === story?.productId)
-    ?? products.find(product => brandKey(product.brand) === brandKey(active.name) && product.image);
+  const candidates = products.filter(product => brandKey(product.brand) === brandKey(active.name) && product.image);
+  const representative = candidates.find(product => product.id === selection.productId) ?? candidates[0];
   const description = story ? (ar ? story.ar : story.en)
     : active.description || (ar ? "اكتشف منتجات هذه العلامة ضمن كتالوج أفق البصرة." : "Explore this brand in the UFUK AL-Basra catalog.");
   const brandHref = `/products?brand=${encodeURIComponent(active.name)}`;
   const name = representative && ((ar ? representative.nameAr : representative.nameEn) || representative.nameData || representative.nameEn);
 
-  return <section className="brand-constellation" aria-labelledby="brand-constellation-title" dir={ar ? "rtl" : "ltr"}>
+  const chooseBrand = useCallback((index: number) => {
+    const brand = displayBrands[index];
+    if (!brand) return;
+    const key = brandKey(brand.name);
+    const available = products.filter(product => brandKey(product.brand) === key && product.image);
+    const alternatives = available.length > 1 ? available.filter(product => product.id !== lastProductByBrand.current[key]) : available;
+    const picked = alternatives[Math.floor(Math.random() * alternatives.length)];
+    if (picked) lastProductByBrand.current[key] = picked.id;
+    setSelection({ index, productId: picked?.id ?? null });
+  }, [displayBrands, products]);
+
+  useEffect(() => {
+    chooseBrand(0);
+  }, [chooseBrand]);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.15 });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotion = () => setReducedMotion(media.matches);
+    const updateVisibility = () => setPageVisible(!document.hidden);
+    updateMotion();
+    updateVisibility();
+    media.addEventListener("change", updateMotion);
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => {
+      media.removeEventListener("change", updateMotion);
+      document.removeEventListener("visibilitychange", updateVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!inView || paused || reducedMotion || !pageVisible || displayBrands.length < 2) return;
+    const timer = window.setTimeout(() => {
+      const next = Math.floor(Math.random() * (displayBrands.length - 1));
+      chooseBrand(next >= selectedIndex ? next + 1 : next);
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [chooseBrand, displayBrands.length, inView, pageVisible, paused, reducedMotion, selectedIndex, selection.productId]);
+
+  return <section ref={sectionRef} className="brand-constellation" aria-labelledby="brand-constellation-title" dir={ar ? "rtl" : "ltr"}>
     <div className="brand-constellation-inner">
       <div className="brand-constellation-header">
-        <div><span className="brand-constellation-kicker"><span aria-hidden="true" />{ar ? "شبكة من الشركاء" : "A NETWORK OF PARTNERS"}</span><h2 id="brand-constellation-title">{t("trusted_brands")}</h2><p>{ar ? "اختر علامة لتكتشف دورها في منظومة أفق البصرة وأحد منتجاتها." : "Select a brand to see how it fits our solutions and explore a featured product."}</p></div>
-        <Link to="/brands" className="brand-constellation-all">{t("view_all_brands")}<Arrow size={18} aria-hidden="true" /></Link>
+        <div><span className="brand-constellation-kicker"><span aria-hidden="true" />{ar ? "شبكة من الشركاء" : "A NETWORK OF PARTNERS"}</span><h2 id="brand-constellation-title">{t("trusted_brands")}</h2><p>{ar ? "تنتقل العلامات تلقائيًا، ويمكنك اختيار أي شعار لاكتشاف مجالها ومنتج مختلف من تشكيلتها." : "Brands change automatically. Select any logo to discover its field and a different product from its range."}</p></div>
+        <div className="brand-constellation-header-actions">{!reducedMotion && <button type="button" className="brand-constellation-motion" aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}{paused ? (ar ? "تشغيل الحركة" : "Play animation") : (ar ? "إيقاف الحركة" : "Pause animation")}</button>}<Link to="/brands" className="brand-constellation-all">{t("view_all_brands")}<Arrow size={18} aria-hidden="true" /></Link></div>
       </div>
 
       <div className="brand-constellation-scene" aria-label={ar ? "مشهد العلامات التجارية" : "Connected brand scene"} aria-busy={loading}>
@@ -87,12 +140,12 @@ export function BrandStrip({ products }: { products: Product[] }) {
           <line key={active.id} x1="500" y1="280" x2={point.x * 10} y2={point.y * 5.6} className="brand-constellation-line-active" />
           <circle cx={point.x * 10} cy={point.y * 5.6} r="5" className="brand-constellation-endpoint" />
         </svg>
-        <div className="brand-constellation-hub"><span className="brand-constellation-hub-mark" aria-hidden="true">U</span><strong>{ar ? "أُفُق البصرة" : "UFUK AL-BASRA"}</strong><span>{ar ? "نربط الحلول" : "CONNECTING SOLUTIONS"}</span></div>
-        {displayBrands.map((brand, index) => <button key={brand.id} type="button" className={`brand-constellation-node ${index === selectedIndex ? "is-active" : ""}`} style={{ "--node-x": `${positions[index].x}%`, "--node-y": `${positions[index].y}%`, "--node-index": index } as CSSProperties} aria-label={ar ? `اختر علامة ${brand.name}` : `Select ${brand.name}`} aria-pressed={index === selectedIndex} onClick={() => setActiveIndex(index)}><span className="brand-constellation-node-logo"><BrandVisual name={brand.name} url={brand.logo_url} /></span><span className="brand-constellation-node-name" dir="auto">{brand.name}</span></button>)}
+        <div className="brand-constellation-hub"><img className="brand-constellation-hub-logo" src={logo} alt={ar ? "شعار أفق البصرة" : "UFUK AL-Basra logo"} width={158} height={124} /></div>
+        {displayBrands.map((brand, index) => <button key={brand.id} type="button" className={`brand-constellation-node ${index === selectedIndex ? "is-active" : ""}`} style={{ "--node-x": `${positions[index].x}%`, "--node-y": `${positions[index].y}%`, "--node-index": index } as CSSProperties} aria-label={ar ? `اختر علامة ${brand.name}` : `Select ${brand.name}`} aria-pressed={index === selectedIndex} onClick={() => chooseBrand(index)}><span className="brand-constellation-node-logo"><BrandVisual name={brand.name} url={brand.logo_url} /></span><span className="brand-constellation-node-name" dir="auto">{brand.name}</span></button>)}
       </div>
 
-      <div className="brand-constellation-detail" key={active.id} aria-live="polite">
-        <div className="brand-constellation-product-art">{representative ? <ProductVisual product={representative} lang={lang} /> : <span className="brand-constellation-product-placeholder"><Package size={46} strokeWidth={1.25} aria-hidden="true" /></span>}</div>
+      <div className="brand-constellation-detail" key={`${active.id}-${representative?.id ?? "none"}`}>
+        <div className="brand-constellation-product-art">{representative ? <ProductVisual key={representative.id} product={representative} lang={lang} /> : <span className="brand-constellation-product-placeholder"><Package size={46} strokeWidth={1.25} aria-hidden="true" /></span>}</div>
         <div className="brand-constellation-detail-copy">
           <span className="brand-constellation-field">{story ? (ar ? story.fieldAr : story.fieldEn) : (ar ? "علامة من شركائنا" : "OUR PARTNER")}</span>
           <h3 dir="auto">{active.name}</h3>

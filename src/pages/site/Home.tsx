@@ -17,6 +17,7 @@ import { OnvSection } from "@/components/site/OnvSection";
 import { FiberSection } from "@/components/site/FiberSection";
 import { MikroTikSection } from "@/components/site/MikroTikSection";
 import { HuaweiSection } from "@/components/site/HuaweiSection";
+import { FanvilSection } from "@/components/site/FanvilSection";
 import { BlueStormProductsSection } from "@/components/site/BlueStormProductsSection";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -221,6 +222,7 @@ const Home = () => {
       <FiberSection />
       <MikroTikSection />
       <HuaweiSection />
+      <FanvilSection />
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
