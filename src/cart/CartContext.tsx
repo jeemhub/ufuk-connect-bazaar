@@ -1,11 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 
+import { DEFAULT_MAX_QUANTITY } from "@/cart/constants";
+
 export interface CartItem {
   id: string;          // product id
   name: string;        // localized name at time of add
   image?: string;
   priceIqd: number;    // unit price applicable for current viewer
   quantity: number;
+  stock?: number;      // available stock when added; caps how much can be ordered
 }
 
 interface CartContextValue {
@@ -22,6 +25,11 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "ufuk_cart_v1";
+
+/** Quantities never exceed what is in stock, whichever way they were changed. */
+function clampQuantity(qty: number, stock?: number): number {
+  return Math.min(Math.max(0, qty), stock ?? DEFAULT_MAX_QUANTITY);
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
@@ -46,9 +54,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => {
       const existing = prev.find((p) => p.id === item.id);
       if (existing) {
-        return prev.map((p) => (p.id === item.id ? { ...p, quantity: p.quantity + qty } : p));
+        return prev.map((p) =>
+          p.id === item.id ? { ...p, quantity: clampQuantity(p.quantity + qty, p.stock) } : p,
+        );
       }
-      return [...prev, { ...item, quantity: qty }];
+      return [...prev, { ...item, quantity: clampQuantity(qty, item.stock) }];
     });
   }, []);
 
@@ -59,7 +69,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const setQty = useCallback((id: string, qty: number) => {
     setItems((prev) =>
       prev
-        .map((p) => (p.id === id ? { ...p, quantity: Math.max(0, qty) } : p))
+        .map((p) => (p.id === id ? { ...p, quantity: clampQuantity(qty, p.stock) } : p))
         .filter((p) => p.quantity > 0),
     );
   }, []);
