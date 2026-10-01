@@ -123,6 +123,20 @@
   --campaign-button: #f4b65d;
   --campaign-button-text: #102330;
 }
+.product-campaign-ruijie {
+  --campaign-bg: #11191f;
+  --campaign-muted: #c9d1d7;
+  --campaign-label: #fff;
+  --campaign-button: #db2535;
+  --campaign-button-text: #fff;
+}
+.product-campaign-ruijie .product-campaign-label { font-size: 25px; font-weight: 800; letter-spacing: -.05em; }
+.product-campaign-ruijie .product-campaign-label span { color: #fc6872; font-size: 18px; }
+.product-campaign-ruijie .product-campaign-footer { color: #a8b8c0; font-size: 12px; }
+@media(min-width:1024px) {
+  .product-campaign-ruijie .product-campaign-copy { width: 39%; padding-left: 12px; }
+  .product-campaign-ruijie .product-campaign-shade { background: linear-gradient(90deg, transparent 51%, var(--campaign-bg) 79%); }
+}
 .product-campaign-energy .product-campaign-label { font-size:20px; }
 .product-campaign-energy .product-campaign-label span { padding-inline:12px; font-weight:300; }
 .product-campaign-energy .product-campaign-footer { font-size:12px; color:#acbfc8; }
