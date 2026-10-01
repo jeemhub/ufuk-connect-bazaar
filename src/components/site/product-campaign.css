@@ -133,9 +133,21 @@
 .product-campaign-ruijie .product-campaign-label { font-size: 25px; font-weight: 800; letter-spacing: -.05em; }
 .product-campaign-ruijie .product-campaign-label span { color: #fc6872; font-size: 18px; }
 .product-campaign-ruijie .product-campaign-footer { color: #a8b8c0; font-size: 12px; }
+.product-campaign-onv {
+  --campaign-bg: #10181d;
+  --campaign-muted: #c8d1d3;
+  --campaign-label: #fff;
+  --campaign-button: #e33338;
+  --campaign-button-text: #fff;
+}
+.product-campaign-onv .product-campaign-label { font-size: 34px; font-weight: 900; letter-spacing: -.08em; }
+.product-campaign-onv .product-campaign-label span { color: #ff7778; font-size: 12px; font-weight: 750; letter-spacing: .12em; }
+.product-campaign-onv .product-campaign-footer { color: #a9b8bd; font-size: 12px; }
 @media(min-width:1024px) {
   .product-campaign-ruijie .product-campaign-copy { width: 39%; padding-left: 12px; }
   .product-campaign-ruijie .product-campaign-shade { background: linear-gradient(90deg, transparent 51%, var(--campaign-bg) 79%); }
+  .product-campaign-onv .product-campaign-copy { width: 39%; padding-left: 12px; }
+  .product-campaign-onv .product-campaign-shade { background: linear-gradient(90deg, transparent 51%, var(--campaign-bg) 79%); }
 }
 .product-campaign-energy .product-campaign-label { font-size:20px; }
 .product-campaign-energy .product-campaign-label span { padding-inline:12px; font-weight:300; }

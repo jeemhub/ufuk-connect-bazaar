@@ -13,6 +13,7 @@ import { BrandStrip } from "@/components/site/BrandStrip";
 import { HikvisionSection } from "@/components/site/HikvisionSection";
 import { EnergySection } from "@/components/site/EnergySection";
 import { RuijieSection } from "@/components/site/RuijieSection";
+import { OnvSection } from "@/components/site/OnvSection";
 import { BlueStormProductsSection } from "@/components/site/BlueStormProductsSection";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -213,6 +214,7 @@ const Home = () => {
       <EnergySection />
       <HikvisionSection />
       <RuijieSection />
+      <OnvSection />
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
