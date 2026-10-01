@@ -211,7 +211,7 @@ const Home = () => {
       </section>
 
       {/* 2. Trusted brands strip */}
-      <BrandStrip />
+      <BrandStrip products={products} />
 
       <BlueStormProductsSection />
       <EnergySection />
