@@ -1,6 +1,6 @@
 export type EnergyText = { ar: string; en: string };
 export type EnergyProduct = {
-  id: string; model: string; choice: string; series: string; image: string; pdf: string;
+  id: string; model: string; choice: string; series: string; image: string; pdf?: string;
   power: string; unit: string; summary: EnergyText;
   specs: { label: EnergyText; value: string }[]; note: EnergyText;
 };
@@ -503,6 +503,28 @@ export const energyBatteries: EnergyProduct[] = [
       "ar": "6000 دورة عند عمق تفريغ 80% وحرارة 25°C وفق اختبار الشركة. يُراجع توافق العاكس قبل الربط.",
       "en": "6000 cycles at 80% depth of discharge and 25°C per manufacturer testing. Confirm inverter compatibility before connection."
     }
+  },
+  {
+    id: "2cb4f5d3-d3e6-4836-8d11-14a96a1c0801",
+    model: "MUST 51.2V · 300Ah",
+    choice: "51.2V · 300Ah",
+    series: "MUST (JOULE) · LiFePO₄",
+    image: "https://ecbbhathvpxrgvfztzeu.supabase.co/storage/v1/object/public/product-images/products/fb2b09c1-c901-41b2-9df6-c6f2c049b489.jpeg",
+    power: "300",
+    unit: "Ah",
+    summary: {
+      ar: "بطارية ليثيوم MUST بجهد 51.2 فولت وسعة 300 أمبير ساعة، متوفرة ضمن كتالوج أفق البصرة.",
+      en: "A MUST lithium battery rated at 51.2 volts and 300 ampere-hours, available in the UFUK AL-Basra catalog.",
+    },
+    specs: [
+      { label: { ar: "تقنية البطارية", en: "Battery chemistry" }, value: "LiFePO₄" },
+      { label: { ar: "الجهد الاسمي", en: "Nominal voltage" }, value: "51.2 V" },
+      { label: { ar: "السعة", en: "Capacity" }, value: "300 Ah" },
+    ],
+    note: {
+      ar: "لم تُرفق داتا شيت لهذا الموديل في المتجر. تأكد من التوافق مع العاكس ومتطلبات التركيب قبل الطلب.",
+      en: "A datasheet is not attached to this catalog model. Confirm inverter compatibility and installation requirements before ordering.",
+    },
   }
 ];
 export const energyUps: EnergyProduct[] = [
