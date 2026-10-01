@@ -24,6 +24,8 @@ const Hikvision = lazy(() => import("./pages/site/Hikvision"));
 const Ruijie = lazy(() => import("./pages/site/Ruijie"));
 const Onv = lazy(() => import("./pages/site/Onv"));
 const FiberOptic = lazy(() => import("./pages/site/FiberOptic"));
+const MikroTik = lazy(() => import("./pages/site/MikroTik"));
+const Huawei = lazy(() => import("./pages/site/Huawei"));
 const BlueStormCable = lazy(() => import("./pages/site/BlueStormCable"));
 const BlueStormCrimper = lazy(() => import("./pages/site/BlueStormCrimper"));
 const QuotePage = lazy(() => import("./pages/site/QuotePage"));
@@ -112,6 +114,8 @@ const App = () => {
                         <Route path="/ruijie" element={<Ruijie />} />
                         <Route path="/onv" element={<Onv />} />
                         <Route path="/fiber-optic" element={<FiberOptic />} />
+                        <Route path="/mikrotik" element={<MikroTik />} />
+                        <Route path="/huawei" element={<Huawei />} />
                         <Route path="/bluestorm/cat6-sftp-outdoor" element={<BlueStormCable />} />
                         <Route path="/bluestorm/pass-through-crimper" element={<BlueStormCrimper />} />
                         <Route path="/bluestorm/professional-pass-through-crimper" element={<BlueStormCrimper professional />} />

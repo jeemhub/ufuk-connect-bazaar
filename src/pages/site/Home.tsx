@@ -15,6 +15,8 @@ import { EnergySection } from "@/components/site/EnergySection";
 import { RuijieSection } from "@/components/site/RuijieSection";
 import { OnvSection } from "@/components/site/OnvSection";
 import { FiberSection } from "@/components/site/FiberSection";
+import { MikroTikSection } from "@/components/site/MikroTikSection";
+import { HuaweiSection } from "@/components/site/HuaweiSection";
 import { BlueStormProductsSection } from "@/components/site/BlueStormProductsSection";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -217,6 +219,8 @@ const Home = () => {
       <RuijieSection />
       <OnvSection />
       <FiberSection />
+      <MikroTikSection />
+      <HuaweiSection />
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">

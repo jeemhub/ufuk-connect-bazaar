@@ -150,6 +150,30 @@
   .product-campaign-onv .product-campaign-shade { background: linear-gradient(90deg, transparent 51%, var(--campaign-bg) 79%); }
 }
 .product-campaign-energy .product-campaign-label { font-size:20px; }
+.product-campaign-mikrotik {
+  --campaign-bg: #101a27;
+  --campaign-muted: #cfdae2;
+  --campaign-label: #f7bc8b;
+  --campaign-button: #f2b783;
+  --campaign-button-text: #1c2831;
+}
+.product-campaign-huawei {
+  --campaign-bg: #081526;
+  --campaign-muted: #d3dbe7;
+  --campaign-label: #ff919b;
+  --campaign-button: #e73c50;
+  --campaign-button-text: #fff;
+}
+.product-campaign-mikrotik .product-campaign-label,
+.product-campaign-huawei .product-campaign-label { font-size: 29px; font-weight: 800; letter-spacing: -.04em; }
+.product-campaign-mikrotik .product-campaign-footer,
+.product-campaign-huawei .product-campaign-footer { color: #aebecb; font-size: 12px; }
+@media (min-width: 1024px) {
+  .product-campaign-mikrotik .product-campaign-copy,
+  .product-campaign-huawei .product-campaign-copy { width: 40%; padding-left: 12px; }
+  .product-campaign-mikrotik .product-campaign-shade { background: linear-gradient(90deg, transparent 50%, var(--campaign-bg) 80%); }
+  .product-campaign-huawei .product-campaign-shade { background: linear-gradient(90deg, transparent 53%, var(--campaign-bg) 81%); }
+}
 .product-campaign-fiber {
   --campaign-bg: #061b2d;
   --campaign-muted: #cbdae6;
