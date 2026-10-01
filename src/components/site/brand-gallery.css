@@ -1,0 +1,33 @@
+.brand-gallery { background: #f5f7fa; color: #132f4a; padding: clamp(64px, 7vw, 112px) 0; border-block: 1px solid #e2e8ee; }
+.brand-gallery-inner { width: min(1440px, calc(100% - 80px)); margin-inline: auto; display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 2fr); gap: clamp(36px, 5vw, 90px); align-items: start; }
+.brand-gallery-intro { padding-block: 18px; }
+.brand-gallery-signature { display: flex; gap: 6px; height: 28px; margin-bottom: 26px; align-items: end; }
+.brand-gallery-signature span { display: block; width: 5px; border-radius: 3px; background: #0954b7; height: 15px; }
+.brand-gallery-signature span:nth-child(2) { height: 28px; background: #2477cc; }
+.brand-gallery-signature span:nth-child(3) { height: 21px; background: #80b9e9; }
+.brand-gallery h2 { margin: 0 0 20px; max-width: 330px; font-size: clamp(35px, 3.7vw, 56px); font-weight: 800; line-height: 1.16; letter-spacing: -.04em; }
+.brand-gallery-intro p { margin: 0; max-width: 310px; font-size: 16px; line-height: 1.95; color: #5b6f82; }
+.brand-gallery-all { display: inline-flex; align-items: center; gap: 15px; padding-block: 12px; margin-top: 24px; border-bottom: 1px solid #97b5d0; color: #1256a1; font-size: 14px; font-weight: 800; }
+.brand-gallery-all:hover { border-color: #1256a1; }
+.brand-gallery-note { display: block; margin-top: 40px; font-size: 11px; color: #728596; }
+.brand-gallery-wall { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #dfe6ed; border: 1px solid #dfe6ed; border-radius: 18px; overflow: hidden; }
+.brand-gallery-tile { position: relative; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; min-height: 152px; padding: 22px 18px 13px; background: #fff; transition: background .2s; }
+.brand-gallery-tile::after { content: ""; position: absolute; inset: 0; border: 2px solid transparent; pointer-events: none; transition: border-color .2s; }
+.brand-gallery-tile:hover { background: #f2f7fc; }
+.brand-gallery-tile:hover::after, .brand-gallery-tile:focus-visible::after { border-color: #3a7dc2; }
+.brand-gallery-tile:focus-visible { outline: none; }
+.brand-gallery-all:focus-visible { outline: 3px solid #3a7dc2; outline-offset: 5px; }
+.brand-gallery-logo { min-height: 75px; display: flex; align-items: center; justify-content: center; }
+.brand-gallery-logo img { display: block; width: 100%; height: 58px; object-fit: contain; }
+.brand-gallery-wordmark { font-size: clamp(17px, 1.8vw, 26px); font-weight: 800; letter-spacing: -.04em; text-align: center; overflow-wrap: anywhere; }
+.brand-gallery-tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; color: #708498; font-size: 10px; font-weight: 600; }
+.brand-gallery-tile-foot svg { flex-shrink: 0; opacity: .35; transition: opacity .2s; }
+.brand-gallery-tile:hover .brand-gallery-tile-foot svg, .brand-gallery-tile:focus-visible .brand-gallery-tile-foot svg { opacity: 1; color: #1256a1; }
+.brand-gallery-placeholder { min-height: 152px; background: #edf1f5; }
+.brand-gallery-expand { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 52px; background: #edf3f9; color: #1256a1; font-size: 12px; font-weight: 700; }
+.brand-gallery-expand:hover { background: #e4edf6; }
+.brand-gallery-expand:focus-visible { outline: 3px solid #3a7dc2; outline-offset: -4px; }
+@media (max-width: 1100px) { .brand-gallery-inner { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.8fr); gap: 30px; } .brand-gallery-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .brand-gallery-inner { width: calc(100% - 48px); grid-template-columns: 1fr; gap: 30px; } .brand-gallery-intro { padding: 0; } .brand-gallery h2 { max-width: none; } .brand-gallery-intro p { max-width: 510px; } .brand-gallery-signature { margin-bottom: 20px; } .brand-gallery-note { margin-top: 20px; } }
+@media (max-width: 480px) { .brand-gallery-inner { width: calc(100% - 32px); } .brand-gallery-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: 14px; } .brand-gallery-tile { min-height: 144px; padding: 18px 16px 12px; } .brand-gallery-logo img { height: 54px; } .brand-gallery h2 { font-size: 38px; } }
+@media (prefers-reduced-motion: reduce) { .brand-gallery-tile, .brand-gallery-tile::after, .brand-gallery-tile-foot svg { transition: none; } }
