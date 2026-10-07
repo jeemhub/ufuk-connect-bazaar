@@ -14,6 +14,9 @@ describe("commerce calculations and customer input", () => {
   it.each([[0,2], [100,-1], [NaN,1], [Infinity,1], [100,1,1.01], [100,1,0.8,0]])("rejects impossible UPS inputs %j", (...values) => {
     expect(calculateUps(values[0],values[1],values[2],values[3])).toBeNull();
   });
+  it.each(["retail", "wholesale", "dealer"])("masks stale prices for an unstable brand for %s", tier => {
+    expect(applicablePrice({priceUnstable:true,priceIqd:10000,priceWholesaleIqd:8000,priceDealerIqd:7000} as Product,tier)).toBe(0);
+  });
   it("uses eligible prices with retail fallback, including products needing a quote", () => {
     const product = {priceIqd:10000,priceDealerIqd:7000,priceWholesaleIqd:8000} as Product;
     expect(applicablePrice(product,"retail")).toBe(10000);

@@ -8,6 +8,7 @@ export interface Brand {
   logo_url: string | null;
   description: string | null;
   is_active: boolean;
+  price_unstable: boolean;
   sort: number;
   created_at: string;
   updated_at: string;

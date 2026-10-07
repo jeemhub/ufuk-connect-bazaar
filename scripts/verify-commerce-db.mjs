@@ -51,5 +51,30 @@ await db.exec("UPDATE products SET stock=4 WHERE id='22222222-2222-2222-2222-222
 check((await db.query('SELECT count(*)::int AS n FROM notifications')).rows[0].n,1);
 await db.exec("SET test.uid='';");
 await assert.rejects(db.exec("SELECT subscribe_stock_alert('22222222-2222-2222-2222-222222222222')"));checks++;
-console.log(`${checks} isolated PostgreSQL checks passed: atomicity, server prices, quantities, phone matching, minimal tracking response and restock notification.`);
+// Brand ON/OFF matrix, with real PostgreSQL view semantics and server checkout guard.
+await db.exec(`
+CREATE TYPE app_role AS ENUM('retail','wholesale','dealer','admin','sales');
+CREATE FUNCTION has_role(u uuid,r app_role) RETURNS boolean LANGUAGE sql AS $$ SELECT has_role(u,r::text) $$;
+CREATE TABLE brands(name text,price_unstable boolean NOT NULL DEFAULT false);
+ALTER TABLE products ADD COLUMN brand text DEFAULT ' Test Brand ';
+ALTER TABLE products ADD COLUMN sku text,ADD COLUMN name_en text,ADD COLUMN name_data text,
+ADD COLUMN desc_ar text,ADD COLUMN desc_en text,ADD COLUMN category_id uuid,ADD COLUMN subcategory text,
+ADD COLUMN image_url text,ADD COLUMN datasheet_url text,ADD COLUMN datasheet_name text,ADD COLUMN created_at timestamptz DEFAULT now();
+INSERT INTO brands(name) VALUES('test brand');
+`);
+await db.exec(await readFile(new URL('../supabase/migrations/20260514090123_8c74b178-89e6-4f53-9b24-b3e0c4ee88f5.sql',import.meta.url),'utf8'));
+await db.exec(await readFile(new URL('../supabase/migrations/20261007140000_brand_price_visibility.sql',import.meta.url),'utf8'));
+for (const [role,expected] of [['retail',[10000,null,null]],['wholesale',[10000,8000,null]],['dealer',[10000,8000,7000]]]) {
+  await db.exec("DELETE FROM user_roles; SET test.uid='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';");
+  if(role!=='retail') await db.query('INSERT INTO user_roles VALUES($1,$2)',['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',role]);
+  for (const enabled of [false,true,false]) {
+    await db.query('UPDATE brands SET price_unstable=$1',[enabled]);
+    const row=(await db.query("SELECT price_iqd,price_wholesale_iqd,price_dealer_iqd,price_unstable FROM products_public WHERE price_unstable=$1 AND id='11111111-1111-1111-1111-111111111111'",[enabled])).rows[0];
+    check([row.price_iqd,row.price_wholesale_iqd,row.price_dealer_iqd],enabled?[null,null,null]:expected);
+    check(row.price_unstable,enabled);
+    if(enabled){await assert.rejects(place(good),/Price is unstable/);checks++;}
+  }
+}
+check((await db.query("SELECT price_iqd,price_wholesale_iqd,price_dealer_iqd FROM products WHERE id='11111111-1111-1111-1111-111111111111'")).rows[0],{price_iqd:10000,price_wholesale_iqd:8000,price_dealer_iqd:7000});
+console.log(`${checks} isolated PostgreSQL checks passed, including brand ON/OFF prices for retail, wholesale, dealer and server checkout rejection.`);
 await db.close();

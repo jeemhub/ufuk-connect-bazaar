@@ -49,6 +49,22 @@ export default function AdminBrands() {
   const [confirmDelete, setConfirmDelete] = useState<Brand | null>(null);
   const [exportingBrand, setExportingBrand] = useState<string | null>(null);
 
+  const [updatingPrice, setUpdatingPrice] = useState<string | null>(null);
+  const togglePricing = async (brand: Brand, enabled: boolean) => {
+    setUpdatingPrice(brand.id);
+    try {
+      const { data, error } = await supabase.from("brands")
+        .update({ price_unstable: enabled }).eq("id", brand.id).select("id").single();
+      if (error || !data) throw error || new Error("Brand update failed");
+      await refresh();
+      toast.success(lang === "ar" ? "تم تحديث عرض الأسعار" : "Price visibility updated");
+    } catch {
+      toast.error(t("error_generic"));
+    } finally {
+      setUpdatingPrice(null);
+    }
+  };
+
   const openNew = () => {
     setEditing({
       id: "",
@@ -57,6 +73,7 @@ export default function AdminBrands() {
       logo_url: null,
       description: null,
       is_active: true,
+      price_unstable: false,
       sort: (brands?.length ?? 0) + 1,
       created_at: "",
       updated_at: "",
@@ -158,6 +175,24 @@ export default function AdminBrands() {
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${b.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                     {b.is_active ? t("is_active") : "—"}
                   </span>
+                </div>
+                <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor={`unstable-${b.id}`} className="text-sm font-semibold">
+                      {lang === "ar" ? "السعر غير مستقر" : "Unstable prices"}
+                    </Label>
+                    <div className="flex items-center gap-2" dir="ltr">
+                      <span className="text-xs font-bold">{b.price_unstable ? "ON" : "OFF"}</span>
+                      <Switch id={`unstable-${b.id}`} aria-label={`${b.name}: ${lang === "ar" ? "السعر غير مستقر" : "Unstable prices"}`}
+                        checked={b.price_unstable === true} disabled={updatingPrice !== null}
+                        onCheckedChange={(enabled) => togglePricing(b, enabled)} />
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    {b.price_unstable
+                      ? (lang === "ar" ? "ON: إخفاء جميع الأسعار وطلب التواصل مع الشركة." : "ON: Hide all prices and ask customers to contact the company.")
+                      : (lang === "ar" ? "OFF: عرض الأسعار حسب نوع الحساب: زبون، مكتب، أو وكيل." : "OFF: Show prices according to the customer, office, or dealer account.")}
+                  </p>
                 </div>
                 <div className="mt-3 flex items-center gap-2">
                   <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => openEdit(b)}>

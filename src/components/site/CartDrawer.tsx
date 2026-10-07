@@ -1,6 +1,8 @@
+import { useSelection } from "@/catalog/SelectionContext";
+import { useCartPrices } from "@/hooks/useCartPrices";
 import { Link } from "react-router-dom";
 import { useCommerceSettings } from "@/hooks/useCommerceSettings";
-import { normalizePhone, validIraqiPhone } from "@/lib/catalog";
+import { normalizePhone, validIraqiPhone, unstablePriceMessage } from "@/lib/catalog";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -20,8 +22,17 @@ type Step = "cart" | "checkout" | "done";
 
 export function CartDrawer() {
   const { lang } = useLanguage();
-  const { items, count, totalIqd, isOpen, setOpen, setQty, remove, clear } = useCart();
+  const { items, count, isOpen, setOpen, setQty, remove, clear } = useCart();
+  const { setQuoteQty } = useSelection();
   const ar = lang === "ar";
+  const { prices, loading: pricesLoading } = useCartPrices(items.map(item => item.id), isOpen);
+  const pricesUnavailable = pricesLoading || items.some(item => !prices[item.id] || prices[item.id].unstable || prices[item.id].price <= 0);
+  const totalIqd = items.reduce((sum, item) => sum + (prices[item.id]?.price ?? 0) * item.quantity, 0);
+  const priceText = (id: string, quantity = 1) => pricesLoading
+    ? (ar ? "جارٍ التحقق من السعر…" : "Checking price…")
+    : prices[id]?.unstable ? unstablePriceMessage(lang)
+    : !prices[id] || prices[id].price <= 0 ? (ar ? "تواصل مع الشركة لتأكيد السعر" : "Contact the company to confirm the price")
+    : `${formatIqd(prices[id].price * quantity)} ${ar ? "د.ع" : "IQD"}`;
   const { settings } = useCommerceSettings();
 
   const [step, setStep] = useState<Step>("cart");
@@ -52,7 +63,7 @@ export function CartDrawer() {
       toast.error(ar ? "أدخل عنوان التوصيل" : "Enter delivery address");
       return;
     }
-    if (items.length === 0) return;
+    if (items.length === 0 || pricesUnavailable) return;
 
     setSubmitting(true);
     try {
@@ -154,7 +165,7 @@ export function CartDrawer() {
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col">
                         <div className="line-clamp-2 text-sm font-semibold">{it.name}</div>
-                        <div className="text-xs text-muted-foreground">{formatIqd(it.priceIqd)} {ar ? "د.ع" : "IQD"}</div>
+                        <div className="text-xs text-muted-foreground">{priceText(it.id)}</div>
                         <div className="mt-auto flex items-center justify-between">
                           <div className="flex items-center gap-1 rounded-full border border-border">
                             <button
@@ -186,7 +197,7 @@ export function CartDrawer() {
                         </div>
                       </div>
                       <div className="shrink-0 whitespace-nowrap text-end text-sm font-bold text-primary">
-                        {formatIqd(it.priceIqd * it.quantity)}
+                        {priceText(it.id, it.quantity)}
                       </div>
                     </li>
                   ))}
@@ -198,12 +209,13 @@ export function CartDrawer() {
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-sm font-semibold text-muted-foreground">{ar ? "الإجمالي" : "Total"}</span>
                   <span dir="ltr" className="shrink-0 whitespace-nowrap text-xl font-extrabold text-primary">
-                    {formatIqd(totalIqd)} <span className="text-xs">{ar ? "د.ع" : "IQD"}</span>
+                    {pricesUnavailable ? (ar ? "يُؤكَّد مع الشركة" : "Confirm with company") : `${formatIqd(totalIqd)} ${ar ? "د.ع" : "IQD"}`}
                   </span>
                 </div>
-                <Button className="w-full bg-gradient-brand text-base font-bold" size="lg" onClick={() => setStep("checkout")}>
+                <Button className="w-full bg-gradient-brand text-base font-bold" size="lg" disabled={pricesUnavailable} onClick={() => setStep("checkout")}>
                   {ar ? "إكمال الطلب" : "Proceed to checkout"}
                 </Button>
+                {pricesUnavailable && !pricesLoading && <Button asChild variant="outline" className="mt-2 w-full"><Link to="/quote" onClick={() => { items.forEach(item => setQuoteQty(item.id, item.quantity)); close(); }}>{ar ? "تواصل لطلب عرض سعر" : "Request a price quote"}</Link></Button>}
               </div>
             )}
           </>
@@ -249,13 +261,13 @@ export function CartDrawer() {
                   {items.map((it) => (
                     <li key={it.id} className="flex justify-between gap-2">
                       <span className="line-clamp-1">{it.name} × {it.quantity}</span>
-                      <span dir="ltr" className="shrink-0 whitespace-nowrap font-semibold">{formatIqd(it.priceIqd * it.quantity)}</span>
+                      <span dir="ltr" className="shrink-0 whitespace-nowrap font-semibold">{priceText(it.id, it.quantity)}</span>
                     </li>
                   ))}
                 </ul>
                 <div className="mt-2 flex justify-between border-t border-border pt-2 text-sm font-bold">
                   <span>{ar ? "الإجمالي" : "Total"}</span>
-                  <span className="text-primary">{formatIqd(payableTotal)} {ar ? "د.ع" : "IQD"}</span>
+                  <span className="text-primary">{pricesUnavailable ? (ar ? "يُؤكَّد مع الشركة" : "Confirm with company") : `${formatIqd(payableTotal)} ${ar ? "د.ع" : "IQD"}`}</span>
                 </div>
               </div>
             </div>
@@ -263,7 +275,7 @@ export function CartDrawer() {
               <Button variant="outline" onClick={() => setStep("cart")} disabled={submitting}>
                 {ar ? "رجوع" : "Back"}
               </Button>
-              <Button className="flex-1 bg-gradient-brand font-bold" onClick={handleCheckout} disabled={submitting}>
+              <Button className="flex-1 bg-gradient-brand font-bold" onClick={handleCheckout} disabled={submitting || pricesUnavailable}>
                 {submitting ? (ar ? "جاري الإرسال..." : "Submitting...") : (ar ? "تأكيد الطلب" : "Confirm order")}
               </Button>
             </div>

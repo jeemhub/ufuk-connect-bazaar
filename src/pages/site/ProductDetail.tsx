@@ -1,3 +1,4 @@
+import { unstablePriceMessage } from "@/lib/catalog";
 import { SiteContextMenu } from "@/components/site/SiteContextMenu";
 import { ProductInformation } from "@/components/site/ProductInformation";
 import { productName } from "@/lib/catalog";
@@ -71,7 +72,7 @@ export default function ProductDetail() {
     brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
     category: product.subcategory || product.category || undefined,
     url: absoluteUrl(`/products/${product.id}`),
-    ...(product.priceIqd > 0
+    ...(!product.priceUnstable && product.priceIqd > 0
       ? {
           offers: {
             "@type": "Offer",
@@ -163,7 +164,9 @@ export default function ProductDetail() {
                       {lang === "ar" ? "زبون" : "Customer"}
                     </div>
                     <div className="mt-1 flex items-baseline gap-1.5">
-                      {product.priceIqd === 0 ? (
+                      {product.priceUnstable ? (
+                        <span className="text-lg font-bold text-amber-700 dark:text-amber-400">{unstablePriceMessage(lang)}</span>
+                      ) : product.priceIqd === 0 ? (
                         <span className="text-lg font-bold text-muted-foreground">{lang === "ar" ? "السعر عند الطلب" : "Price on request"}</span>
                       ) : (
                         <>
@@ -182,7 +185,7 @@ export default function ProductDetail() {
                 </div>
 
                 {/* Wholesale */}
-                {(pricingTier === "wholesale" || pricingTier === "dealer") && product.priceWholesaleIqd ? (
+                {!product.priceUnstable && (pricingTier === "wholesale" || pricingTier === "dealer") && product.priceWholesaleIqd ? (
                   <>
                     <Separator />
                     <div className="flex items-center justify-between gap-3">
@@ -213,7 +216,7 @@ export default function ProductDetail() {
                 ) : null}
 
                 {/* Dealer */}
-                {pricingTier === "dealer" && product.priceDealerIqd ? (
+                {!product.priceUnstable && pricingTier === "dealer" && product.priceDealerIqd ? (
                   <>
                     <Separator />
                     <div className="flex items-center justify-between gap-3">

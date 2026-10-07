@@ -1,3 +1,4 @@
+import { useAuth } from "@/auth/AuthProvider";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product, Brand, CategoryKey } from "@/data/mockData";
@@ -13,7 +14,8 @@ export interface DbProductRow {
   brand: string;
   category_id: string | null;
   subcategory: string | null;
-  price_iqd: number;
+  price_iqd: number | null;
+  price_unstable?: boolean;
   price_wholesale_iqd?: number | null;
   price_dealer_iqd?: number | null;
   stock: number;
@@ -39,9 +41,10 @@ export function dbToProduct(r: DbProductRow, categoryKey?: string): Product {
     brand: (r.brand as Brand) ?? ("" as Brand),
     category: ((r.categories?.key ?? categoryKey) as CategoryKey) ?? ("" as CategoryKey),
     subcategory: r.subcategory ?? "",
-    priceIqd: Number(r.price_iqd ?? 0),
-    priceWholesaleIqd: r.price_wholesale_iqd != null ? Number(r.price_wholesale_iqd) : null,
-    priceDealerIqd: r.price_dealer_iqd != null ? Number(r.price_dealer_iqd) : null,
+    priceUnstable: r.price_unstable === true,
+    priceIqd: r.price_unstable ? 0 : Number(r.price_iqd ?? 0),
+    priceWholesaleIqd: !r.price_unstable && r.price_wholesale_iqd != null ? Number(r.price_wholesale_iqd) : null,
+    priceDealerIqd: !r.price_unstable && r.price_dealer_iqd != null ? Number(r.price_dealer_iqd) : null,
     stock: r.stock ?? 0,
     image: r.image_url || FALLBACK_IMG,
     datasheetUrl: r.datasheet_url ?? undefined,
@@ -58,9 +61,10 @@ async function fetchCategoryKeyMap(): Promise<Record<string, string>> {
 
 /**
  * Customer-facing product list: reads from products_public view
- * which only exposes ONE price (the one the user is allowed to see).
+ * which exposes eligible price tiers and masks all prices for unstable brands.
  */
 export function useProducts(opts?: { activeOnly?: boolean }) {
+  const { pricingTier, user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,12 +86,13 @@ export function useProducts(opts?: { activeOnly?: boolean }) {
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opts?.activeOnly]);
+  }, [opts?.activeOnly, pricingTier, user?.id]);
 
   return { products, loading, error, refetch };
 }
 
 export function useProduct(id: string | undefined) {
+  const { pricingTier, user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -103,7 +108,7 @@ export function useProduct(id: string | undefined) {
       setProduct(row ? dbToProduct(row, row.category_id ? catMap[row.category_id] : undefined) : null);
       setLoading(false);
     })();
-  }, [id]);
+  }, [id, pricingTier, user?.id]);
 
   return { product, loading };
 }

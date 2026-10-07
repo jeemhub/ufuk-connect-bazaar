@@ -13,6 +13,7 @@ export function productName(p: Product, lang: string) {
 }
 
 export function applicablePrice(p: Product, tier: string) {
+  if (p.priceUnstable) return 0;
   return tier === "dealer" && p.priceDealerIqd ? p.priceDealerIqd
     : tier === "wholesale" && p.priceWholesaleIqd ? p.priceWholesaleIqd : p.priceIqd;
 }
@@ -49,3 +50,7 @@ export function calculateUps(loadWatts: number, hours: number, efficiency = 0.85
   if (![loadWatts, hours, efficiency, usable].every(n => Number.isFinite(n) && n > 0) || efficiency > 1 || usable > 1) return null;
   return { minimumWatts: Math.ceil(loadWatts * 1.25), minimumVa: Math.ceil(loadWatts * 1.25 / 0.8), batteryWh: Math.ceil(loadWatts * hours / (efficiency * usable)) };
 }
+
+export const unstablePriceMessage = (lang: string) => lang === "ar"
+  ? "السعر غير مستقر — يجب التواصل مع الشركة"
+  : "Price is unstable — please contact the company";

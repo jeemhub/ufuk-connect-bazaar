@@ -13,6 +13,7 @@ export interface Product {
   category: CategoryKey;
   subcategory: string;
   priceIqd: number;
+  priceUnstable?: boolean;
   priceWholesaleIqd?: number | null;
   priceDealerIqd?: number | null;
   stock: number;

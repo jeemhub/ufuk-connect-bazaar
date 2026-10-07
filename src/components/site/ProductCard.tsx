@@ -1,6 +1,6 @@
 import { SiteContextMenu } from "./SiteContextMenu";
 import { ProductActions } from "./ProductActions";
-import { productName } from "@/lib/catalog";
+import { productName, unstablePriceMessage } from "@/lib/catalog";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Package } from "lucide-react";
 import { useState } from "react";
@@ -21,12 +21,12 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
   const showStock = pricingTier === "dealer" || pricingTier === "wholesale";
   const stockBadge = product.stock === 0 ? "out" : product.stock < 5 ? "low" : "in";
 
-  const tierPrice =
-    pricingTier === "dealer" && product.priceDealerIqd
-      ? { value: product.priceDealerIqd, label: lang === "ar" ? "وكيل" : "Dealer", color: "hsl(0 84% 50%)" }
-      : pricingTier === "wholesale" && product.priceWholesaleIqd
-      ? { value: product.priceWholesaleIqd, label: lang === "ar" ? "مكتب" : "Wholesale", color: "hsl(38 92% 40%)" }
-      : null;
+  const tierPrices = product.priceUnstable ? [] : [
+    ...(pricingTier === "wholesale" || pricingTier === "dealer") && product.priceWholesaleIqd
+      ? [{ value: product.priceWholesaleIqd, label: lang === "ar" ? "جملة" : "Wholesale", color: "hsl(38 92% 40%)" }] : [],
+    ...(pricingTier === "dealer" && product.priceDealerIqd
+      ? [{ value: product.priceDealerIqd, label: lang === "ar" ? "وكيل" : "Dealer", color: "hsl(0 84% 50%)" }] : []),
+  ];
 
   return (
     <SiteContextMenu product={product}><article
@@ -79,7 +79,9 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
         {product.sku && <div dir="ltr" className="truncate text-xs text-muted-foreground">{product.sku}</div>}
         <div className="mt-auto space-y-0.5">
           <div className="flex items-baseline gap-1.5">
-            {product.priceIqd === 0 ? (
+            {product.priceUnstable ? (
+              <span className="text-sm font-bold text-amber-700 dark:text-amber-400">{unstablePriceMessage(lang)}</span>
+            ) : product.priceIqd === 0 ? (
               <span className="text-sm font-bold text-muted-foreground">{lang === "ar" ? "السعر عند الطلب" : "Price on request"}</span>
             ) : (
               <>
@@ -88,8 +90,8 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
               </>
             )}
           </div>
-          {tierPrice && (
-            <div className="flex items-baseline gap-1.5">
+          {tierPrices.map(tierPrice => (
+            <div key={tierPrice.label} className="flex items-baseline gap-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: tierPrice.color }}>
                 {tierPrice.label}
               </span>
@@ -97,7 +99,7 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
                 {formatIqd(tierPrice.value)}
               </span>
             </div>
-          )}
+          ))}
         </div>
         <AddToCartButton product={product} size="sm" fullWidth className="mt-2 min-h-10 text-xs" />
         <ProductActions id={product.id} />
