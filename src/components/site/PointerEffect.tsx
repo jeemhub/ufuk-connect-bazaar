@@ -1,13 +1,15 @@
+import { usePointerPreference } from "@/hooks/usePointerPreference";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 /** Replaces the mouse cursor only while the custom pointer is visible. */
 export function PointerEffect() {
   const ref = useRef<HTMLDivElement>(null);
+  const { enabled } = usePointerPreference();
 
   useEffect(() => {
     const node = ref.current;
-    if (!node) return;
+    if (!enabled || !node) return;
     const media = window.matchMedia("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)");
     let cleanup = () => {};
     const configure = () => {
@@ -59,7 +61,8 @@ export function PointerEffect() {
     configure();
     media.addEventListener("change", configure);
     return () => { cleanup(); media.removeEventListener("change", configure); };
-  }, []);
+  }, [enabled]);
 
+  if (!enabled) return null;
   return createPortal(<div ref={ref} className="ufuk-pointer" aria-hidden="true" data-visible="false"><span /></div>, document.body);
 }

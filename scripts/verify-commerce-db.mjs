@@ -76,5 +76,41 @@ for (const [role,expected] of [['retail',[10000,null,null]],['wholesale',[10000,
   }
 }
 check((await db.query("SELECT price_iqd,price_wholesale_iqd,price_dealer_iqd FROM products WHERE id='11111111-1111-1111-1111-111111111111'")).rows[0],{price_iqd:10000,price_wholesale_iqd:8000,price_dealer_iqd:7000});
-console.log(`${checks} isolated PostgreSQL checks passed, including brand ON/OFF prices for retail, wholesale, dealer and server checkout rejection.`);
+// Global pricing overrides brands; turning it OFF restores the individual brand rules.
+await db.exec(`CREATE FUNCTION public.set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=now(); RETURN NEW; END $$;`);
+await db.exec(await readFile(new URL('../supabase/migrations/20260504122320_7a234704-3986-4871-9368-b71259c8ff10.sql',import.meta.url),'utf8'));
+await db.exec(await readFile(new URL('../supabase/migrations/20261007160000_staff_tools_settings.sql',import.meta.url),'utf8'));
+for(const role of ['retail','wholesale','dealer']) {
+  await db.exec("DELETE FROM user_roles; UPDATE brands SET price_unstable=false;");
+  if(role!=='retail') await db.query('INSERT INTO user_roles VALUES($1,$2)',['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',role]);
+  await db.exec("UPDATE site_pages SET content_ar='true' WHERE key='global-price-visibility';");
+  check((await db.query('SELECT count(*)::int n FROM products_public WHERE NOT price_unstable OR price_iqd IS NOT NULL OR price_wholesale_iqd IS NOT NULL OR price_dealer_iqd IS NOT NULL')).rows[0].n,0);
+  await assert.rejects(place(good),/Price is unstable/);checks++;
+  await db.exec("UPDATE site_pages SET content_ar='false' WHERE key='global-price-visibility';");
+  check((await db.query("SELECT price_iqd FROM products_public WHERE id='11111111-1111-1111-1111-111111111111'")).rows[0].price_iqd,10000);
+}
+await db.exec("UPDATE brands SET price_unstable=true;");
+check((await db.query("SELECT brand_price_unstable('test brand') enabled")).rows[0].enabled,true);
+await db.exec("UPDATE brands SET price_unstable=false; ALTER FUNCTION has_role(uuid,text) SECURITY DEFINER; GRANT USAGE ON SCHEMA auth TO authenticated,anon; GRANT SELECT ON profiles TO authenticated; GRANT ALL ON admin_preferences TO authenticated;");
+// Two staff accounts keep independent pointer settings; own-row RLS hides other accounts.
+await db.exec("SET test.uid='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'; SET ROLE authenticated; INSERT INTO admin_preferences(user_id,pointer_enabled) VALUES('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);");
+check((await db.query('SELECT pointer_enabled FROM admin_preferences')).rows.map(r=>r.pointer_enabled),[false]);
+await db.exec("SET test.uid='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'; INSERT INTO admin_preferences(user_id,pointer_enabled) VALUES('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',true);");
+check((await db.query('SELECT pointer_enabled FROM admin_preferences')).rows.map(r=>r.pointer_enabled),[true]);
+check((await db.query("UPDATE admin_preferences SET pointer_enabled=true WHERE user_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' RETURNING user_id")).rows,[]);
+await db.exec("SET test.uid='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';");
+check((await db.query('SELECT pointer_enabled FROM admin_preferences')).rows.map(r=>r.pointer_enabled),[false]);
+await db.exec("RESET ROLE; DELETE FROM user_roles; INSERT INTO user_roles VALUES('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','sales'),('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','sales'); SET ROLE authenticated;");
+check((await db.query('UPDATE sales_tool_settings SET exchange_rate=1750 WHERE id=true RETURNING exchange_rate')).rows[0].exchange_rate,'1750.0000');
+await db.exec("SET test.uid='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';");
+check((await db.query('SELECT exchange_rate FROM sales_tool_settings')).rows[0].exchange_rate,'1750.0000');
+for(const rate of [0,-1,100001]) { await assert.rejects(db.query('UPDATE sales_tool_settings SET exchange_rate=$1',[rate]));checks++; }
+await assert.rejects(db.exec("UPDATE sales_tool_settings SET updated_by='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'"));checks++;
+await db.exec("RESET ROLE; DELETE FROM user_roles; SET ROLE authenticated;");
+check((await db.query('SELECT * FROM sales_tool_settings')).rows,[]);
+check((await db.query('UPDATE sales_tool_settings SET exchange_rate=1800 RETURNING id')).rows,[]);
+await db.exec("RESET ROLE; SET ROLE anon;");
+await assert.rejects(db.query('SELECT * FROM sales_tool_settings'));checks++;
+await db.exec('RESET ROLE');
+console.log(`${checks} isolated PostgreSQL checks passed: brand/global price masking, role tiers, checkout guards, personal preferences and shared staff exchange-rate permissions.`);
 await db.close();

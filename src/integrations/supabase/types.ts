@@ -14,10 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      sales_tool_settings: {
+        Row: { id: boolean; exchange_rate: number | null; updated_at: string; updated_by: string | null }
+        Insert: { id?: boolean; exchange_rate?: number | null; updated_at?: string; updated_by?: string | null }
+        Update: { exchange_rate?: number | null }
+        Relationships: []
+      }
+
       admin_preferences: {
         Row: {
           accent_color: string
           dark_mode: boolean
+          pointer_enabled: boolean
           glass_enabled: boolean
           glass_intensity: string
           updated_at: string
@@ -26,6 +34,7 @@ export type Database = {
         Insert: {
           accent_color?: string
           dark_mode?: boolean
+          pointer_enabled?: boolean
           glass_enabled?: boolean
           glass_intensity?: string
           updated_at?: string
@@ -34,6 +43,7 @@ export type Database = {
         Update: {
           accent_color?: string
           dark_mode?: boolean
+          pointer_enabled?: boolean
           glass_enabled?: boolean
           glass_intensity?: string
           updated_at?: string

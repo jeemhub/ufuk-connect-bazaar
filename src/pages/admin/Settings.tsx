@@ -1,3 +1,6 @@
+import { useAuth } from "@/auth/AuthProvider";
+import { PointerSettings } from "@/components/admin/PointerSettings";
+import { GlobalPriceSettings } from "@/components/admin/GlobalPriceSettings";
 import { useState } from "react";
 import { Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +20,7 @@ import { GlassThemeSettings } from "@/components/admin/GlassThemeSettings";
 export default function Settings() {
   const { t, lang } = useLanguage();
   const ar = lang === "ar";
+  const { isAdmin } = useAuth();
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
@@ -40,6 +44,9 @@ export default function Settings() {
       </div>
 
       <GlassThemeSettings />
+      <PointerSettings />
+      {isAdmin && <>
+      <GlobalPriceSettings />
 
       <CommerceSettings />
       <ProductDetailsSettings />
@@ -92,6 +99,7 @@ export default function Settings() {
           </AlertDialog>
         </div>
       </div>
+      </>}
     </div>
   );
 }

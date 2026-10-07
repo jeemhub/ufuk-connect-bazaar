@@ -1,3 +1,4 @@
+import { PointerSettings } from "@/components/admin/PointerSettings";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { GlassThemeSettings } from "@/components/admin/GlassThemeSettings";
 
@@ -18,6 +19,7 @@ export default function Preferences() {
       </div>
 
       <GlassThemeSettings />
+      <PointerSettings />
     </div>
   );
 }

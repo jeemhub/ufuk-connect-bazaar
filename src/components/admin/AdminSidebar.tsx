@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote, Newspaper, Award, Home, Info, Hammer, Database, Palette, WalletCards, Wrench } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Users, Settings, ShieldCheck, MessageSquareQuote, Newspaper, Award, Home, Info, Hammer, Database, Palette, WalletCards, Wrench, Calculator } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -39,7 +39,8 @@ export function AdminSidebar() {
     { to: "/admin/maintenance", icon: Wrench, label: "قسم الصيانة", show: can("can_manage_maintenance") },
     { to: "/admin/security", icon: ShieldCheck, label: t("nav_security"), show: isAdmin },
     { to: "/admin/backup", icon: Database, label: lang === "ar" ? "النسخ الاحتياطية" : "Backups", show: isAdmin },
-    { to: "/admin/settings", icon: Settings, label: t("nav_settings"), show: isAdmin },
+    { to: "/admin/sales-tools", icon: Calculator, label: lang === "ar" ? "أدوات موظفين المبيعات" : "Sales employee tools", show: true },
+    { to: "/admin/settings", icon: Settings, label: t("nav_settings"), show: true },
     { to: "/admin/preferences", icon: Palette, label: lang === "ar" ? "تفضيلاتي" : "My Preferences", show: !isAdmin },
   ].filter((i) => i.show);
 

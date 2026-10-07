@@ -53,6 +53,7 @@ const Products = lazy(() => import("./pages/admin/Products"));
 const Categories = lazy(() => import("./pages/admin/Categories"));
 const Orders = lazy(() => import("./pages/admin/Orders"));
 const Users = lazy(() => import("./pages/admin/Users"));
+const SalesTools = lazy(() => import("./pages/admin/SalesTools"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 const Preferences = lazy(() => import("./pages/admin/Preferences"));
 const Security = lazy(() => import("./pages/admin/Security"));
@@ -163,7 +164,8 @@ const App = () => {
                         <Route path="maintenance" element={<ProtectedRoute requirePerm="can_manage_maintenance"><Maintenance /></ProtectedRoute>} />
                         <Route path="security" element={<ProtectedRoute requireAdmin><Security /></ProtectedRoute>} />
                         <Route path="backup" element={<ProtectedRoute requireAdmin><AdminBackup /></ProtectedRoute>} />
-                        <Route path="settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
+                        <Route path="sales-tools" element={<ProtectedRoute requireStaff><SalesTools /></ProtectedRoute>} />
+                        <Route path="settings" element={<ProtectedRoute requireStaff><Settings /></ProtectedRoute>} />
                         <Route path="preferences" element={<ProtectedRoute requireStaff><Preferences /></ProtectedRoute>} />
                       </Route>
                       <Route path="*" element={<NotFound />} />
