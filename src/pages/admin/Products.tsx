@@ -1,3 +1,5 @@
+import { ParallelPrice } from "@/components/admin/ParallelPrice";
+import { useExchangeRate } from "@/features/sales-tools/useExchangeRate";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles, DollarSign, Copy, MoreHorizontal } from "lucide-react";
@@ -44,6 +46,9 @@ type EditState = (Product & {
 export default function Products() {
   const { t, lang } = useLanguage();
   const { isAdmin, isSales } = useAuth();
+  const { query: exchangeRate } = useExchangeRate();
+  const parallelRate = exchangeRate.data?.rate ?? null;
+  const [draftPrices, setDraftPrices] = useState({ retail: 0, wholesale: 0, dealer: 0 });
   const { rows, loading, refetch } = useAdminProducts();
   const { brands: brandRows } = useBrands({ activeOnly: false });
   const brands = useMemo(() => (brandRows ?? []).map((b) => b.name), [brandRows]);
@@ -163,6 +168,7 @@ export default function Products() {
 
   useEffect(() => {
     if (open) {
+      setDraftPrices({ retail: editing?.priceIqd ?? 0, wholesale: editing?.priceWholesale ?? 0, dealer: editing?.priceDealer ?? 0 });
       setDatasheet(editing?.datasheetUrl ? { url: editing.datasheetUrl, name: editing.datasheetName ?? "datasheet.pdf" } : null);
       setImageSrc(editing?.image ?? "");
       setRawImage("");
@@ -487,7 +493,7 @@ export default function Products() {
                   </td>
                   <td className="px-4 py-3">{p.brand}</td>
                   <td className="px-4 py-3 text-muted-foreground">{p.subcategory}</td>
-                  <td className="px-4 py-3 font-semibold">{formatIqd(p.priceIqd)} {t("currency_iqd")}</td>
+                  <td className="px-4 py-3 font-semibold"><div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span>{formatIqd(p.priceIqd)} {t("currency_iqd")}</span><ParallelPrice price={p.priceIqd} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/></div></td>
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end">
@@ -529,15 +535,16 @@ export default function Products() {
                     <td colSpan={7} className="px-4 py-4">
                       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                         {[
-                          { label: lang === "ar" ? "سعر المفرد" : "Retail price", value: p.priceIqd },
-                          { label: lang === "ar" ? "سعر الجملة" : "Wholesale price", value: p.priceWholesale ?? 0 },
-                          { label: lang === "ar" ? "سعر الوكيل" : "Dealer price", value: p.priceDealer ?? 0 },
+                          { label: lang === "ar" ? "سعر المفرد" : "Retail price", value: p.priceIqd, parallel: true },
+                          { label: lang === "ar" ? "سعر الجملة" : "Wholesale price", value: p.priceWholesale ?? 0, parallel: true },
+                          { label: lang === "ar" ? "سعر الوكيل" : "Dealer price", value: p.priceDealer ?? 0, parallel: true },
                           { label: lang === "ar" ? "الكلفة (دينار)" : "Cost (IQD)", value: Math.round((p.costUsd ?? 0) * 1500) },
                         ].map((it) => (
                           <div key={it.label} className="rounded-lg border border-border bg-background p-3">
                             <div className="text-xs text-muted-foreground">{it.label}</div>
-                            <div className="mt-1 font-semibold">
-                              {it.value > 0 ? `${formatIqd(it.value)} ${t("currency_iqd")}` : (lang === "ar" ? "—" : "—")}
+                            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-semibold">
+                              <span>{it.value > 0 ? `${formatIqd(it.value)} ${t("currency_iqd")}` : "—"}</span>
+                              {it.parallel && <ParallelPrice price={it.value} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>}
                             </div>
                           </div>
                         ))}
@@ -710,15 +717,18 @@ export default function Products() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="priceIqd">{t("price_retail")} ({t("currency_iqd")})</Label>
-              <Input id="priceIqd" name="priceIqd" type="number" min="0" defaultValue={editing?.priceIqd ?? 0} required />
+              <Input id="priceIqd" name="priceIqd" type="number" min="0" defaultValue={editing?.priceIqd ?? 0} required onChange={e => setDraftPrices(values => ({ ...values, retail: Number(e.target.value) }))} />
+              <ParallelPrice price={draftPrices.retail} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="priceWholesale">{t("price_wholesale")} ({t("currency_iqd")})</Label>
-              <Input id="priceWholesale" name="priceWholesale" type="number" min="0" defaultValue={editing?.priceWholesale ?? 0} />
+              <Input id="priceWholesale" name="priceWholesale" type="number" min="0" defaultValue={editing?.priceWholesale ?? 0} onChange={e => setDraftPrices(values => ({ ...values, wholesale: Number(e.target.value) }))} />
+              <ParallelPrice price={draftPrices.wholesale} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="priceDealer">{t("price_dealer")} ({t("currency_iqd")})</Label>
-              <Input id="priceDealer" name="priceDealer" type="number" min="0" defaultValue={editing?.priceDealer ?? 0} />
+              <Input id="priceDealer" name="priceDealer" type="number" min="0" defaultValue={editing?.priceDealer ?? 0} onChange={e => setDraftPrices(values => ({ ...values, dealer: Number(e.target.value) }))} />
+              <ParallelPrice price={draftPrices.dealer} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="stock">{t("product_stock")}</Label>
