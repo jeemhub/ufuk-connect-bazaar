@@ -1,3 +1,4 @@
+import { SiteContextMenu } from "./SiteContextMenu";
 import { SelectionBar } from "./ProductActions";
 import { Outlet } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -18,7 +19,7 @@ export default function SiteLayout() {
   return (
     <>
     {welcome && <WelcomeIntro onComplete={finishWelcome} />}
-    <div ref={contentRef} aria-hidden={welcome || undefined} className="flex min-h-screen flex-col bg-background">
+    <SiteContextMenu><div ref={contentRef} aria-hidden={welcome || undefined} className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex-1">
         <Outlet />
@@ -27,7 +28,7 @@ export default function SiteLayout() {
       <SiteFooter />
       {!welcome && <PushOnboardingDialog />}
       {!welcome && <PwaInstallDialog />}
-    </div>
+    </div></SiteContextMenu>
     </>
   );
 }

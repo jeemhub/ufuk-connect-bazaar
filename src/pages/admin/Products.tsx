@@ -1,10 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles, DollarSign, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as CropIcon, Loader2, FileSpreadsheet, Eye, EyeOff, ImageOff, FileQuestion, Type, ChevronDown, Check, Sparkles, DollarSign, Copy, MoreHorizontal } from "lucide-react";
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { ImportProductsFullDialog } from "@/components/admin/ImportProductsFullDialog";
 import { exportProductsToExcel } from "@/lib/exportProductsExcel";
 import { exportProductsToPdf } from "@/lib/exportProductsPdf";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -489,32 +490,37 @@ export default function Products() {
                   <td className="px-4 py-3 font-semibold">{formatIqd(p.priceIqd)} {t("currency_iqd")}</td>
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:text-primary"
-                        title={lang === "ar" ? "نسخ الاسم في Data" : "Copy data name"}
-                        onClick={async () => {
-                          const val = p.nameData?.trim();
-                          if (!val) { toast.error(lang === "ar" ? "لا يوجد اسم في Data" : "No data name"); return; }
-                          try {
-                            await navigator.clipboard.writeText(val);
-                          } catch {
-                            const ta = document.createElement("textarea");
-                            ta.value = val; document.body.appendChild(ta); ta.select();
-                            document.execCommand("copy"); ta.remove();
-                          }
-                          toast.success(lang === "ar" ? "تم نسخ الاسم في Data" : "Data name copied");
-                        }}
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => toggleVisibility(p)} className="h-8 w-8 hover:text-primary" title={p.is_active ? (lang === "ar" ? "إخفاء" : "Hide") : (lang === "ar" ? "إظهار" : "Show")}>
-                        {p.is_active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="h-8 w-8 hover:text-primary"><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(p)} className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <div className="flex justify-end">
+                      <DropdownMenu dir={lang === "ar" ? "rtl" : "ltr"}>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={lang === "ar" ? "إجراءات المنتج" : "Product actions"}>
+                            <MoreHorizontal className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onSelect={() => openEdit(p)}><Pencil className="me-2 h-4 w-4" />{lang === "ar" ? "تعديل المنتج" : "Edit product"}</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => toggleVisibility(p)}>
+                            {p.is_active ? <EyeOff className="me-2 h-4 w-4" /> : <Eye className="me-2 h-4 w-4" />}
+                            {p.is_active ? (lang === "ar" ? "إخفاء المنتج" : "Hide product") : (lang === "ar" ? "إظهار المنتج" : "Show product")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={async () => {
+                              const val = p.nameData?.trim();
+                              if (!val) { toast.error(lang === "ar" ? "لا يوجد اسم في Data" : "No data name"); return; }
+                              try {
+                                await navigator.clipboard.writeText(val);
+                              } catch {
+                                const ta = document.createElement("textarea");
+                                ta.value = val; document.body.appendChild(ta); ta.select();
+                                document.execCommand("copy"); ta.remove();
+                              }
+                              toast.success(lang === "ar" ? "تم نسخ الاسم في Data" : "Data name copied");
+                            }}
+                          ><Copy className="me-2 h-4 w-4" />{lang === "ar" ? "نسخ الاسم في Data" : "Copy data name"}</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onSelect={() => setConfirmDelete(p)}><Trash2 className="me-2 h-4 w-4" />{lang === "ar" ? "حذف المنتج" : "Delete product"}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>

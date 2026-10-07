@@ -1,3 +1,4 @@
+import { SiteContextMenu } from "@/components/site/SiteContextMenu";
 import { ProductInformation } from "@/components/site/ProductInformation";
 import { productName } from "@/lib/catalog";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -97,7 +98,7 @@ export default function ProductDetail() {
         type="product"
         jsonLd={productJsonLd}
       />
-      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
+      <SiteContextMenu product={product}><div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
         {/* Breadcrumb */}
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="transition-colors hover:text-foreground">{t("nav_home")}</Link>
@@ -306,7 +307,7 @@ export default function ProductDetail() {
             </div>
           </section>
         )}
-      </div>
+      </div></SiteContextMenu>
     </div>
   );
 }

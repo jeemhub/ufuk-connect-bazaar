@@ -1,3 +1,4 @@
+import { SiteContextMenu } from "./SiteContextMenu";
 import { ProductActions } from "./ProductActions";
 import { productName } from "@/lib/catalog";
 import { Link } from "react-router-dom";
@@ -28,7 +29,7 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
       : null;
 
   return (
-    <article
+    <SiteContextMenu product={product}><article
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-elegant"
     >
       {/* Image area */}
@@ -101,6 +102,6 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
         <AddToCartButton product={product} size="sm" fullWidth className="mt-2 min-h-10 text-xs" />
         <ProductActions id={product.id} />
       </div>
-    </article>
+    </article></SiteContextMenu>
   );
 }
