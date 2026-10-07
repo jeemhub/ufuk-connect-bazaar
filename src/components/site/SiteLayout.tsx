@@ -1,3 +1,4 @@
+import { SelectionBar } from "./ProductActions";
 import { Outlet } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SiteHeader } from "./SiteHeader";
@@ -22,6 +23,7 @@ export default function SiteLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
+      <SelectionBar />
       <SiteFooter />
       {!welcome && <PushOnboardingDialog />}
       {!welcome && <PwaInstallDialog />}

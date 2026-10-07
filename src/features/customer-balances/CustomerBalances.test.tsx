@@ -69,7 +69,7 @@ describe("customer balances admin page", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { name: "أرصدة العملاء" })).toBeInTheDocument();
-    expect(screen.getByText("البحث واستعراض أرصدة العملاء بالدولار والدينار")).toBeInTheDocument();
+    expect(screen.getByText("البحث واستعراض وتصدير تقارير أرصدة العملاء بالدولار والدينار")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("ابحث باسم العميل أو رقمه")).toBeInTheDocument();
     expect(screen.getByLabelText("نوع الرصيد")).toBeInTheDocument();
     expect(screen.getByLabelText("العملة")).toBeInTheDocument();

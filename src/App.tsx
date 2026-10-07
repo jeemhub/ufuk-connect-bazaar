@@ -14,6 +14,7 @@ import { AppShell } from "@/components/site/AppShell";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 
 import SiteLayout from "@/components/site/SiteLayout";
+import { SelectionProvider } from "@/catalog/SelectionContext";
 import Home from "./pages/site/Home";
 
 // Lazy-load non-critical routes to shrink initial JS bundle and reduce main-thread work (improves FID/TBT)
@@ -41,6 +42,9 @@ const AboutPage = lazy(() => import("@/pages/site/About"));
 const ProjectsPage = lazy(() => import("@/pages/site/ProjectsPage"));
 const ProjectDetail = lazy(() => import("@/pages/site/ProjectDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ComparePage = lazy(() => import("./pages/site/ComparePage"));
+const TrackOrder = lazy(() => import("./pages/site/TrackOrder"));
+const PoliciesPage = lazy(() => import("./pages/site/PoliciesPage"));
 const ToolsPage = lazy(() => import("./pages/site/Tools"));
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -96,6 +100,7 @@ const App = () => {
         <BrowserRouter>
           <AuthProvider>
             <CartProvider>
+            <SelectionProvider>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -127,6 +132,9 @@ const App = () => {
                         <Route path="/about" element={<AboutPage />} />
                         <Route path="/projects" element={<ProjectsPage />} />
                         <Route path="/projects/:slug" element={<ProjectDetail />} />
+                        <Route path="/compare" element={<ComparePage />} />
+                        <Route path="/track-order" element={<TrackOrder />} />
+                        <Route path="/policies" element={<PoliciesPage />} />
                         <Route path="/tools" element={<ToolsPage />} />
                       </Route>
                       <Route path="/auth" element={<AuthPage />} />
@@ -164,6 +172,7 @@ const App = () => {
                   </ChunkErrorBoundary>
                 </AppShell>
               </TooltipProvider>
+            </SelectionProvider>
             </CartProvider>
           </AuthProvider>
         </BrowserRouter>

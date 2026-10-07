@@ -1,17 +1,18 @@
 import { lazy, Suspense, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import UpsCalculator from "@/components/site/UpsCalculator";
 import SolarCalculator from "@/components/site/SolarCalculator";
 import SolarSystemDesigner from "@/components/site/SolarSystemDesigner";
 import { cn } from "@/lib/utils";
 import { Calculator, Sun, Zap } from "lucide-react";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
-type Tool = "calculator" | "designer" | "power";
+type Tool = "calculator" | "designer" | "power" | "ups";
 
 // Loaded only when opened: it pulls in the SmartValue cloud client, QR scanner and IndexedDB layer.
 const UfukPower = lazy(() => import("@/features/ufuk-power/UfukPower"));
 
-const isTool = (v: string | null): v is Tool => v === "calculator" || v === "designer" || v === "power";
+const isTool = (v: string | null): v is Tool => v === "ups" || v === "calculator" || v === "designer" || v === "power";
 
 export default function ToolsPage() {
   const [params, setParams] = useSearchParams();
@@ -26,7 +27,7 @@ export default function ToolsPage() {
   return (
     <div dir="rtl">
       <Seo
-        title={`أدوات هندسية — حاسبة ومصمم منظومات الطاقة الشمسية | ${SITE_NAME}`}
+        title={`أدوات هندسية — حاسبات UPS والطاقة الشمسية | ${SITE_NAME}`}
         description="أدوات مجانية من أُفُق البصرة: حاسبة وقت تشغيل الأحمال، مصمم منظومات الطاقة الشمسية، وUFUK POWER لمراقبة والتحكم بعواكس MUST."
         path="/tools"
         lang="ar"
@@ -36,6 +37,7 @@ export default function ToolsPage() {
         <div className="container mx-auto max-w-5xl px-4 py-4">
           <div className="flex flex-wrap gap-2">
             {[
+              { v: "ups" as Tool, icon: Zap, label: "حاسبة اختيار UPS" },
               { v: "calculator" as Tool, icon: Calculator, label: "حاسبة وقت التشغيل" },
               { v: "designer" as Tool, icon: Sun, label: "مصمم منظومات الطاقة الشمسية" },
               { v: "power" as Tool, icon: Zap, label: "UFUK POWER — مراقبة العاكس" },
@@ -60,6 +62,7 @@ export default function ToolsPage() {
         </div>
       </div>
 
+      {tool === "ups" && <UpsCalculator />}
       {tool === "calculator" && <SolarCalculator />}
       {tool === "designer" && <SolarSystemDesigner />}
       {tool === "power" && (

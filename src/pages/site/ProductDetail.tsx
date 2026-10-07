@@ -1,3 +1,5 @@
+import { ProductInformation } from "@/components/site/ProductInformation";
+import { productName } from "@/lib/catalog";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight, Download, FileText, Package, ShieldCheck, Truck, Zap } from "lucide-react";
@@ -21,7 +23,7 @@ export default function ProductDetail() {
 
   const rawName = product ? (lang === "ar" ? product.nameAr : product.nameEn) : "";
   const isFallbackName = product ? !rawName?.trim() && !!product.nameData?.trim() : false;
-  const name = rawName?.trim() || product?.nameData || "";
+  const name = product ? productName(product, lang) : "";
 
   useEffect(() => {
     if (product) document.title = `${name} · ${t("brand")}`;
@@ -42,15 +44,14 @@ export default function ProductDetail() {
   }
   if (!product) return <Navigate to="/products" replace />;
 
-  const desc = lang === "ar" ? product.descAr : product.descEn;
-  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+    const related = products.filter((p) => p.category === product.category && p.id !== product.id && p.stock > 0).sort((a,b) => Number(b.subcategory === product.subcategory) - Number(a.subcategory === product.subcategory)).slice(0, 4);
   const Chevron = lang === "ar" ? ChevronLeft : ChevronRight;
 
   const inStock = product.stock > 0;
 
   // ---- SEO (per-product title / description / og / canonical / JSON-LD) ----
-  const seoNameAr = product.nameAr?.trim() || product.nameData || "";
-  const seoNameEn = product.nameEn?.trim() || "";
+  const seoNameAr = productName(product, "ar");
+  const seoNameEn = product.nameEn ? productName(product, "en") : "";
   const seoTitle = [seoNameAr, seoNameEn].filter(Boolean).join(" - ") + ` | ${SITE_NAME}`;
   const seoDesc =
     clamp(product.descAr || product.descEn) ||
@@ -146,7 +147,7 @@ export default function ProductDetail() {
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary" className="rounded-full">{product.subcategory}</Badge>
-                <span className="text-xs font-mono text-muted-foreground">SKU: {product.sku}</span>
+                {product.sku && <span dir="ltr" className="text-xs font-mono text-muted-foreground">SKU: {product.sku}</span>}
               </div>
               <h1 className={`text-2xl font-extrabold tracking-tight md:text-4xl ${isFallbackName ? "text-yellow-500" : ""}`}>{name}</h1>
             </div>
@@ -162,7 +163,7 @@ export default function ProductDetail() {
                     </div>
                     <div className="mt-1 flex items-baseline gap-1.5">
                       {product.priceIqd === 0 ? (
-                        <span className="text-lg font-bold text-muted-foreground">{t("no_price")}</span>
+                        <span className="text-lg font-bold text-muted-foreground">{lang === "ar" ? "السعر عند الطلب" : "Price on request"}</span>
                       ) : (
                         <>
                           <span className="text-3xl font-extrabold text-primary md:text-4xl">{formatIqd(product.priceIqd)}</span>
@@ -263,16 +264,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Description */}
-            {desc && (
-              <div className="rounded-2xl border border-border/60 bg-card p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-bold">{lang === "ar" ? "الوصف" : "Description"}</h3>
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/80">{desc}</p>
-              </div>
-            )}
+            <ProductInformation key={product.id} product={product} />
 
             {/* Features */}
             <div className="grid grid-cols-3 gap-3">

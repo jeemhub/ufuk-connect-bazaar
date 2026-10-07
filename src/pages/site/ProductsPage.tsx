@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,9 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { useBrands } from "@/hooks/useBrands";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
+import { titleSpecs } from "@/lib/catalog";
+import { useProductDetails } from "@/hooks/useCommerceSettings";
+import { Label } from "@/components/ui/label";
 import { expandTokens, matchesAllTokens, normalizeSearchText, searchTokens } from "@/lib/search";
 
 export default function ProductsPage() {
@@ -20,9 +23,20 @@ export default function ProductsPage() {
   const [sort, setSort] = useState("newest");
   const category = params.get("category") || "all";
   const brand = params.get("brand") || "all";
+  const stock = params.get("stock") || "all";
+  const subcategory = params.get("subcategory") || "all";
+  const minimum = params.get("min") || "";
+  const maximum = params.get("max") || "";
+  const [page,setPage] = useState(1);
+  const { data: details = {} } = useProductDetails();
+  const specFields = useMemo(() => category === "networking" ? ["ports","poe","wifi"] : category === "solar" || category === "ups" ? ["power","capacity"] : [], [category]);
+  const specLabels: Record<string,string> = lang === "ar" ? {ports:"عدد المنافذ",poe:"PoE",wifi:"جيل Wi-Fi",power:"القدرة",capacity:"سعة البطارية"} : {ports:"Ports",poe:"PoE",wifi:"Wi-Fi generation",power:"Power",capacity:"Battery capacity"};
+  const setFilter = (key: string, value: string) => { const next = new URLSearchParams(params); if (!value || value === "all") next.delete(key); else next.set(key,value); setParams(next,{replace:true}); };
+
 
   const setCategory = (v: string) => {
     const next = new URLSearchParams(params);
+    next.delete("subcategory"); ["ports","poe","wifi","power","capacity"].forEach(k=>next.delete(k));
     if (v === "all") next.delete("category"); else next.set("category", v);
     setParams(next, { replace: true });
   };
@@ -36,13 +50,16 @@ export default function ProductsPage() {
     setSearch("");
     setSort("newest");
   };
-  const { products, loading } = useProducts({ activeOnly: true });
+  const { products, loading, error } = useProducts({ activeOnly: true });
   const { brands } = useBrands({ activeOnly: true });
   const brandNames = useMemo(
     () => ["all", ...Array.from(new Set((brands ?? []).map((b) => b.name).filter(Boolean)))],
     [brands]
   );
 
+  const scoped = products.filter(p => category === "all" || p.category === category);
+  const subcategories = [...new Set(scoped.map(p=>p.subcategory).filter(Boolean))];
+  const specsFor = useCallback((p: typeof products[number]) => details[p.id]?.specs ?? titleSpecs(p), [details]);
   const qParam = params.get("q") ?? "";
   useEffect(() => { setSearch(qParam); }, [qParam]);
 
@@ -51,6 +68,11 @@ export default function ProductsPage() {
   const filtered = useMemo(() => {
     const searchTerms = search ? expandTokens(searchTokens(search)) : [];
     let list = products.filter((p) => {
+      if (stock === "in" && p.stock <= 0 || stock === "out" && p.stock > 0) return false;
+      if (subcategory !== "all" && p.subcategory !== subcategory) return false;
+      if ((minimum || maximum) && p.priceIqd <= 0) return false;
+      if (minimum && p.priceIqd < Number(minimum) || maximum && p.priceIqd > Number(maximum)) return false;
+      if (specFields.some(key=>params.get(key) && specsFor(p)[key] !== params.get(key))) return false;
       if (category !== "all" && p.category !== category) return false;
       if (brand !== "all" && p.brand !== brand) return false;
       if (searchTerms.length) {
@@ -64,12 +86,16 @@ export default function ProductsPage() {
       }
       return true;
     });
-    if (sort === "price_low") list = [...list].sort((a, b) => a.priceIqd - b.priceIqd);
-    if (sort === "price_high") list = [...list].sort((a, b) => b.priceIqd - a.priceIqd);
+    if (sort === "price_low") list = [...list].sort((a, b) => (a.priceIqd || Infinity) - (b.priceIqd || Infinity));
+    if (sort === "price_high") list = [...list].sort((a, b) => (b.priceIqd || -Infinity) - (a.priceIqd || -Infinity));
     return list;
-  }, [search, brand, category, sort, products]);
+  }, [search, brand, category, sort, products, stock, subcategory, minimum, maximum, params, specFields, specsFor]);
 
-  const hasFilters = category !== "all" || brand !== "all" || !!search || sort !== "newest";
+  const hasFilters = params.size > 0 || !!search || sort !== "newest";
+  useEffect(()=>setPage(1),[search, brand, category, sort, stock, subcategory, minimum, maximum, params]);
+  const pages = Math.max(1, Math.ceil(filtered.length / 24));
+  const currentPage = Math.min(page,pages);
+
 
   // ---- SEO: title/description reflect the active category & brand ----
   const catMeta = categories.find((c) => c.key === category);
@@ -134,12 +160,12 @@ export default function ProductsPage() {
           <div className="grid gap-2 md:grid-cols-[1fr_180px_180px_180px] md:items-center">
             <div className="relative">
               <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="rounded-xl ps-9" placeholder={t("search_placeholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input aria-label={lang === "ar" ? "البحث في المنتجات" : "Search products"} className="rounded-xl ps-9" placeholder={t("search_placeholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
               {search && (
                 <button
                   onClick={() => setSearch("")}
                   className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label="clear"
+                  aria-label={lang === "ar" ? "مسح البحث" : "Clear search"}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -179,6 +205,17 @@ export default function ProductsPage() {
           </div>
         </div>
 
+        <details className="mb-6 rounded-2xl border bg-card p-4" open={!!stock && stock!=="all" || !!minimum || !!maximum || subcategory!=="all" || specFields.some(k=>params.has(k))}>
+          <summary className="cursor-pointer font-bold">{lang === "ar" ? "فلاتر السعر والتوفر والمواصفات" : "Price, stock and specification filters"}</summary>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div><Label htmlFor="filter-stock">{lang === "ar" ? "التوفر" : "Availability"}</Label><select id="filter-stock" className="mt-1 w-full rounded-md border bg-background p-2" value={stock} onChange={e=>setFilter("stock",e.target.value)}><option value="all">{lang === "ar" ? "الكل" : "All"}</option><option value="in">{lang === "ar" ? "متوفر" : "In stock"}</option><option value="out">{lang === "ar" ? "نافد" : "Out of stock"}</option></select></div>
+            <div><Label htmlFor="filter-sub">{lang === "ar" ? "الفئة الفرعية" : "Subcategory"}</Label><select id="filter-sub" className="mt-1 w-full rounded-md border bg-background p-2" value={subcategory} onChange={e=>setFilter("subcategory",e.target.value)}><option value="all">{lang === "ar" ? "الكل" : "All"}</option>{subcategories.map(v=><option key={v} value={v}>{v}</option>)}</select></div>
+            <div><Label htmlFor="filter-min">{lang === "ar" ? "أقل سعر (د.ع)" : "Minimum IQD"}</Label><Input id="filter-min" type="number" min={0} value={minimum} onChange={e=>setFilter("min",e.target.value)} /></div>
+            <div><Label htmlFor="filter-max">{lang === "ar" ? "أعلى سعر (د.ع)" : "Maximum IQD"}</Label><Input id="filter-max" type="number" min={0} value={maximum} onChange={e=>setFilter("max",e.target.value)} /></div>
+            {specFields.map(key=><div key={key}><Label htmlFor={`filter-${key}`}>{specLabels[key]}</Label><select id={`filter-${key}`} className="mt-1 w-full rounded-md border bg-background p-2" value={params.get(key)||"all"} onChange={e=>setFilter(key,e.target.value)}><option value="all">{lang === "ar" ? "الكل" : "All"}</option>{[...new Set(scoped.map(p=>specsFor(p)[key]).filter(Boolean))].sort().map(v=><option key={v} value={v}>{v}</option>)}</select></div>)}
+          </div>
+          {!!specFields.length && <p className="mt-3 text-xs text-muted-foreground">{lang === "ar" ? "تُستخدم المواصفات المدخلة من الإدارة، أو المعلومات المذكورة في العنوان عند عدم توفرها." : "Uses managed specifications, or title information when unavailable."}</p>}
+        </details>
         {/* Results meta */}
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
@@ -188,7 +225,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Grid */}
-        {loading ? (
+        {error ? (<div role="alert" className="rounded-xl border p-8">{lang === "ar" ? "تعذر تحميل المنتجات. أعد تحميل الصفحة." : "Could not load products. Please reload."}</div>) : loading ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="overflow-hidden rounded-2xl border border-border/60 bg-card">
@@ -214,9 +251,10 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((p) => <ProductCard key={p.id} product={p} />)}
+            {filtered.slice((currentPage-1)*24,currentPage*24).map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         )}
+        {pages>1 && <nav aria-label={lang === "ar" ? "صفحات المنتجات" : "Product pages"} className="mt-8 flex items-center justify-center gap-4"><Button variant="outline" disabled={currentPage===1} onClick={()=>{setPage(currentPage-1);window.scrollTo({top:300,behavior:"smooth"});}}>{lang === "ar" ? "السابق" : "Previous"}</Button><span aria-live="polite">{currentPage} / {pages}</span><Button variant="outline" disabled={currentPage===pages} onClick={()=>{setPage(currentPage+1);window.scrollTo({top:300,behavior:"smooth"});}}>{lang === "ar" ? "التالي" : "Next"}</Button></nav>}
       </div>
     </div>
   );

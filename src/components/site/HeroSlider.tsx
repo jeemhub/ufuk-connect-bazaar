@@ -141,7 +141,7 @@ export function HeroSlider() {
             <>
               <button
                 type="button"
-                aria-label="previous"
+                aria-label={isRtl ? "المقال السابق" : "Previous article"}
                 onClick={() => go(-1)}
                 className="group absolute top-1/2 start-3 md:start-5 -translate-y-1/2 z-10 h-11 w-11 rounded-full bg-background/80 backdrop-blur border border-border/60 shadow-card flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
               >
@@ -149,7 +149,7 @@ export function HeroSlider() {
               </button>
               <button
                 type="button"
-                aria-label="next"
+                aria-label={isRtl ? "المقال التالي" : "Next article"}
                 onClick={() => go(1)}
                 className="group absolute top-1/2 end-3 md:end-5 -translate-y-1/2 z-10 h-11 w-11 rounded-full bg-background/80 backdrop-blur border border-border/60 shadow-card flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
               >
@@ -165,7 +165,7 @@ export function HeroSlider() {
                 <button
                   key={i}
                   onClick={() => setIdx(i)}
-                  aria-label={`slide-${i + 1}`}
+                  aria-label={isRtl ? `عرض المقال ${i + 1}` : `Show article ${i + 1}`}
                   aria-current={i === idx}
                   className={`h-1.5 rounded-full transition-all duration-500 ${
                     i === idx

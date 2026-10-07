@@ -1,3 +1,5 @@
+import { ProductActions } from "./ProductActions";
+import { productName } from "@/lib/catalog";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Package } from "lucide-react";
 import { useState } from "react";
@@ -14,7 +16,7 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
   const { pricingTier } = useAuth();
   const rawName = lang === "ar" ? product.nameAr : product.nameEn;
   const isFallbackName = !rawName?.trim() && !!product.nameData?.trim();
-  const name = rawName?.trim() || product.nameData || "";
+  const name = productName(product, lang);
   const showStock = pricingTier === "dealer" || pricingTier === "wholesale";
   const stockBadge = product.stock === 0 ? "out" : product.stock < 5 ? "low" : "in";
 
@@ -26,12 +28,11 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
       : null;
 
   return (
-    <Link
-      to={`/products/${product.id}`}
+    <article
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-elegant"
     >
       {/* Image area */}
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary/60 via-secondary/30 to-background">
+      <Link to={`/products/${product.id}`} className="relative block aspect-square overflow-hidden bg-gradient-to-br from-secondary/60 via-secondary/30 to-background">
         {imageError ? <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground"><Package className="h-12 w-12 opacity-40" strokeWidth={1.4} /><span className="text-xs">{lang === "ar" ? "صورة المنتج غير متاحة" : "Product image unavailable"}</span></div> : <img
           src={optimizedImage(product.image, { width: 600 }) ?? product.image}
           srcSet={optimizedSrcSet(product.image, [300, 450, 600, 900])}
@@ -49,7 +50,7 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
           <Badge variant="secondary" className="rounded-full border border-border/50 bg-background/85 px-2.5 py-0.5 text-[10px] font-bold backdrop-blur-sm">
             {product.brand}
           </Badge>
-          {showStock && stockBadge === "out" && (
+          {stockBadge === "out" && (
             <Badge variant="destructive" className="rounded-full text-[10px]">{t("out_of_stock")}</Badge>
           )}
           {showStock && stockBadge === "low" && (
@@ -67,17 +68,18 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
         <div className="absolute bottom-2 end-2 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-primary-foreground opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 translate-y-2">
           <ArrowUpRight className="h-4 w-4" />
         </div>
-      </div>
+      </Link>
 
       {/* Body */}
       <div className="flex flex-1 flex-col gap-2 p-4">
         <h3 className={`line-clamp-2 min-h-[2.6rem] text-sm font-semibold transition-colors group-hover:text-primary ${isFallbackName ? "text-yellow-500" : "text-foreground"}`}>
-          {name}
+          <Link to={`/products/${product.id}`} title={name}>{name}</Link>
         </h3>
+        {product.sku && <div dir="ltr" className="truncate text-xs text-muted-foreground">{product.sku}</div>}
         <div className="mt-auto space-y-0.5">
           <div className="flex items-baseline gap-1.5">
             {product.priceIqd === 0 ? (
-              <span className="text-sm font-bold text-muted-foreground">{t("no_price")}</span>
+              <span className="text-sm font-bold text-muted-foreground">{lang === "ar" ? "السعر عند الطلب" : "Price on request"}</span>
             ) : (
               <>
                 <span className="text-lg font-extrabold text-primary">{formatIqd(product.priceIqd)}</span>
@@ -96,8 +98,9 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
             </div>
           )}
         </div>
-        <AddToCartButton product={product} size="sm" fullWidth className="mt-2 h-8 text-xs" />
+        <AddToCartButton product={product} size="sm" fullWidth className="mt-2 min-h-10 text-xs" />
+        <ProductActions id={product.id} />
       </div>
-    </Link>
+    </article>
   );
 }

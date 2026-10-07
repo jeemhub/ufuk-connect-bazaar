@@ -31,6 +31,8 @@ export function SiteHeader() {
     { to: "/projects", label: t("nav_projects") },
     { to: "/blog", label: t("nav_blog") },
     { to: "/about", label: t("nav_about") },
+    { to: "/tools", label: lang === "ar" ? "الأدوات" : "Tools" },
+    { to: "/track-order", label: lang === "ar" ? "تتبع الطلب" : "Track" },
     { to: "/quote", label: t("request_quote") },
   ];
 
@@ -68,14 +70,14 @@ export function SiteHeader() {
           </Link>
 
           {/* Center nav */}
-          <nav className="hidden items-center gap-0.5 rounded-full border border-white/40 bg-white/40 p-1 backdrop-blur-xl md:flex">
+          <nav className="hidden items-center gap-0.5 rounded-full border border-white/40 bg-white/40 p-1 backdrop-blur-xl xl:flex">
             {links.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
-                end={l.end as any}
+                end={l.end}
                 className={({ isActive }) =>
-                  `relative rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ${
+                  `relative rounded-full px-2.5 py-1.5 text-sm font-medium transition-all duration-300 ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_hsl(217_91%_32%/0.5)]"
                       : "text-foreground/70 hover:text-foreground hover:bg-white/60"
@@ -89,7 +91,7 @@ export function SiteHeader() {
 
           {/* Actions */}
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={toggle} className="h-9 gap-1 rounded-full hover:bg-white/60">
+            <Button variant="ghost" size="sm" onClick={toggle} aria-label={lang === "ar" ? "التبديل إلى الإنجليزية" : "Switch to Arabic"} className="h-9 gap-1 rounded-full hover:bg-white/60">
               <Languages className="h-4 w-4" />
               <span className="hidden sm:inline text-xs font-semibold">{lang === "ar" ? "EN" : "ع"}</span>
             </Button>
@@ -98,7 +100,7 @@ export function SiteHeader() {
               variant="ghost"
               size="icon"
               onClick={() => setCartOpen(true)}
-              aria-label="cart"
+              aria-label={lang === "ar" ? "سلة المشتريات" : "Cart"}
               className="relative h-9 w-9 rounded-full hover:bg-white/60"
             >
               <ShoppingCart className="h-4 w-4" />
@@ -200,7 +202,7 @@ export function SiteHeader() {
               </Button>
             )}
 
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/60 md:hidden" onClick={() => setOpen(!open)}>
+            <Button variant="ghost" size="icon" aria-label={lang === "ar" ? (open ? "إغلاق القائمة" : "فتح القائمة") : (open ? "Close menu" : "Open menu")} aria-expanded={open} className="h-9 w-9 rounded-full hover:bg-white/60 xl:hidden" onClick={() => setOpen(!open)}>
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
@@ -208,13 +210,13 @@ export function SiteHeader() {
 
         {/* Mobile dropdown */}
         {open && (
-          <div className="mt-2 rounded-2xl border border-white/40 bg-white/70 p-2 backdrop-blur-2xl shadow-[0_10px_40px_-16px_hsl(217_91%_32%/0.25)] md:hidden animate-fade-in">
+          <div className="mt-2 rounded-2xl border border-white/40 bg-white/70 p-2 backdrop-blur-2xl shadow-[0_10px_40px_-16px_hsl(217_91%_32%/0.25)] xl:hidden animate-fade-in">
             <div className="flex flex-col">
               {links.map((l) => (
                 <NavLink
                   key={l.to}
                   to={l.to}
-                  end={l.end as any}
+                  end={l.end}
                   onClick={() => setOpen(false)}
                   className={({ isActive }) =>
                     `rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${

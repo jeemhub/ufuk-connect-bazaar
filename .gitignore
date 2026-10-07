@@ -27,3 +27,6 @@ mcp-server/.env
 *.sln
 *.sw?
 .vercel
+
+# Local dependency cache
+.pnpm-store/

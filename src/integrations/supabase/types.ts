@@ -1175,6 +1175,18 @@ export type Database = {
       }
     }
     Functions: {
+      place_order: {
+        Args: { p_name: string; p_phone: string; p_city: string; p_address: string; p_notes: string; p_items: Json }
+        Returns: Json
+      }
+      track_order: {
+        Args: { p_order_no: string; p_phone: string }
+        Returns: { order_no: string; status: string; updated_at: string }[]
+      }
+      subscribe_stock_alert: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
       maintenance_record_event: {
         Args: {
           _device_id: string

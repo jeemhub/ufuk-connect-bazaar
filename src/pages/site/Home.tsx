@@ -21,13 +21,15 @@ import { FanvilSection } from "@/components/site/FanvilSection";
 import { BlueStormProductsSection } from "@/components/site/BlueStormProductsSection";
 import { useReveal } from "@/hooks/useReveal";
 import { CountUp } from "@/components/site/CountUp";
+import { useCommerceSettings, safeHttps } from "@/hooks/useCommerceSettings";
 import { GlobalSearch } from "@/components/site/GlobalSearch";
 
 const Home = () => {
   const { t, lang } = useLanguage();
   const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
   const { products } = useProducts({ activeOnly: true });
-  const featured = products.slice(0, 8);
+  const featured = products.filter(p => p.stock > 0 && p.priceIqd > 0).slice(0, 8);
+  const { settings } = useCommerceSettings();
 
   // reveal refs
   const catHead = useReveal<HTMLDivElement>();
@@ -176,12 +178,7 @@ const Home = () => {
 
           {/* Inline rating / trust */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 animate-fade-in-up [animation-delay:480ms] text-base text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" style={{ animation: `fade-in 0.4s ease-out ${500 + i * 80}ms both` }} />
-              ))}
-              <span className="ms-1 font-semibold text-foreground">4.9/5</span>
-            </div>
+            {safeHttps(settings.reviewsUrl) && settings.rating && <a href={settings.reviewsUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">{settings.rating} / 5 - {lang === "ar" ? "اقرأ تقييمات العملاء" : "Read customer reviews"}</a>}
             <div className="h-4 w-px bg-border" />
             <div>{lang === "ar" ? "+5,000 عميل سعيد" : "5,000+ happy customers"}</div>
             <div className="h-4 w-px bg-border" />
@@ -210,19 +207,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* 2. Trusted brands strip */}
-      <BrandStrip products={products} />
-
-      <BlueStormProductsSection />
-      <EnergySection />
-      <HikvisionSection />
-      <RuijieSection />
-      <OnvSection />
-      <FiberSection />
-      <MikroTikSection />
-      <HuaweiSection />
-      <FanvilSection />
 
       {/* 3. Categories */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
@@ -261,6 +245,45 @@ const Home = () => {
         </div>
       </section>
 
+      {/* 5. Featured */}
+      <section className="bg-secondary/30 py-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <div ref={featHead} className="reveal mb-8 flex items-end justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                {lang === "ar" ? "الأكثر طلباً" : "Top picks"}
+              </div>
+              <h2 className="mt-2 text-2xl font-bold md:text-3xl">{t("featured_products")}</h2>
+            </div>
+            <Link to="/products" className="story-link text-sm font-semibold text-primary">
+              {t("view_all")} →
+            </Link>
+          </div>
+          <div ref={featGrid} className="reveal grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {featured.map((p, i) => (
+              <div key={p.id} style={{ animation: `fade-in-up 0.6s cubic-bezier(0.22,1,0.36,1) ${i * 60}ms both` }}>
+                <ProductCard product={p} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Trusted brands strip */}
+      <BrandStrip products={products} />
+
+      {/* Section banners retain their original designs and stay visible on the landing page. */}
+      <BlueStormProductsSection />
+      <EnergySection />
+      <HikvisionSection />
+      <RuijieSection />
+      <OnvSection />
+      <FiberSection />
+      <MikroTikSection />
+      <HuaweiSection />
+      <FanvilSection />
+
+
       {/* 3.5 Stats */}
       <section className="bg-gradient-hero py-16 text-primary-foreground">
         <div ref={statsRef} className="reveal mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 md:grid-cols-4 md:px-6">
@@ -289,30 +312,7 @@ const Home = () => {
       {/* 4. Featured blog posts slider */}
       <HeroSlider />
 
-      {/* 5. Featured */}
-      <section className="bg-secondary/30 py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div ref={featHead} className="reveal mb-8 flex items-end justify-between">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                {lang === "ar" ? "الأكثر طلباً" : "Top picks"}
-              </div>
-              <h2 className="mt-2 text-2xl font-bold md:text-3xl">{t("featured_products")}</h2>
-            </div>
-            <Link to="/products" className="story-link text-sm font-semibold text-primary">
-              {t("view_all")} →
-            </Link>
-          </div>
-          <div ref={featGrid} className="reveal grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {featured.map((p, i) => (
-              <div key={p.id} style={{ animation: `fade-in-up 0.6s cubic-bezier(0.22,1,0.36,1) ${i * 60}ms both` }}>
-                <ProductCard product={p} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3 px-4 py-8">{[{to:"/tools",ar:"حاسبات الطاقة الشمسية وUPS",en:"Solar and UPS calculators"},{to:"/track-order",ar:"تتبع طلبك",en:"Track your order"},{to:"/policies",ar:"الضمان والتوصيل",en:"Warranty and delivery"}].map(x=><Button key={x.to} variant="outline" asChild><Link to={x.to}>{lang === "ar" ? x.ar : x.en}</Link></Button>)}</div>
       {/* 6. CTA */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
         <div ref={ctaRef} className="reveal surface-card relative overflow-hidden bg-gradient-brand p-8 text-primary-foreground md:p-12">
