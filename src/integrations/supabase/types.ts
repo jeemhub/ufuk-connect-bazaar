@@ -15,9 +15,9 @@ export type Database = {
   public: {
     Tables: {
       sales_tool_settings: {
-        Row: { id: boolean; exchange_rate: number | null; updated_at: string; updated_by: string | null }
-        Insert: { id?: boolean; exchange_rate?: number | null; updated_at?: string; updated_by?: string | null }
-        Update: { exchange_rate?: number | null }
+        Row: { id: boolean; markup_percentage: number; pricing_mode: string; exchange_rate: number | null; updated_at: string; updated_by: string | null }
+        Insert: { id?: boolean; markup_percentage?: number; pricing_mode?: string; exchange_rate?: number | null; updated_at?: string; updated_by?: string | null }
+        Update: { markup_percentage?: number; pricing_mode?: string; exchange_rate?: number | null }
         Relationships: []
       }
 

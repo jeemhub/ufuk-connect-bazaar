@@ -17,5 +17,13 @@ it("asks for a rate without inventing a converted amount",()=>{
 it("hides stale converted amounts when fetching the rate fails",()=>{
   render(<ParallelPrice price={150000} rate={1750} error/>);
   expect(screen.queryByText("175,000 د.ع")).not.toBeInTheDocument();
-  expect(screen.getByText("تعذر تحميل سعر الصرف")).toBeInTheDocument();
+  expect(screen.getByText("تعذر تحميل إعدادات السعر")).toBeInTheDocument();
+});
+
+it("uses the percentage regardless of exchange rate and accepts zero markup",()=>{
+ const {rerender}=render(<ParallelPrice price={150000} rate={1750} mode="percentage" percentage={10}/>);
+ expect(screen.getByText("165,000 د.ع")).toBeInTheDocument();
+ expect(screen.queryByText("175,000 د.ع")).not.toBeInTheDocument();
+ rerender(<ParallelPrice price={150000} rate={null} mode="percentage" percentage={0}/>);
+ expect(screen.getByText("150,000 د.ع")).toBeInTheDocument();
 });

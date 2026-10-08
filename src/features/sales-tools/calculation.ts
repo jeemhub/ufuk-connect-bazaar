@@ -12,3 +12,10 @@ export function calculateParallelPrice(productPrice: number | null, rate: number
   return { dollars: productPrice / BASE_EXCHANGE_RATE, dinars: productPrice * rate / BASE_EXCHANGE_RATE };
 }
 export const formatAmount = (value: number) => new Intl.NumberFormat("en-US", {maximumFractionDigits: 4}).format(value);
+
+export type PricingMode = "parallel" | "percentage";
+export function calculatePercentagePrice(price: number | null, percentage: number | null) {
+  if(price===null||percentage===null||!Number.isFinite(price)||!Number.isFinite(percentage)
+    ||price<0||price>1_000_000_000_000||percentage<0||percentage>100000) return null;
+  return price + price * percentage / 100;
+}

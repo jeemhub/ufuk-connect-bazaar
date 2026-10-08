@@ -1,3 +1,5 @@
+import { PricingModeSettings } from "@/components/admin/PricingModeSettings";
+import { PercentageSettings } from "@/components/admin/PercentageSettings";
 import { useEffect, useState } from "react";
 import { Calculator, Save } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -15,6 +17,8 @@ export default function SalesTools() {
   const result=calculateParallelPrice(price,rate);
   return <div className="space-y-6" dir={ar ? "rtl" : "ltr"}>
     <div><h1 className="text-2xl font-bold md:text-3xl">{ar ? "أدوات موظفين المبيعات" : "Sales employee tools"}</h1><p className="mt-1 text-sm text-muted-foreground">{ar ? "أدوات تساعدك في حساب أسعار المنتجات أثناء العمل." : "Tools for calculating product prices during work."}</p></div>
+    <PricingModeSettings />
+    <PercentageSettings />
     <section className="surface-card max-w-3xl p-5 md:p-6">
       <h2 className="flex items-center gap-2 text-xl font-bold"><Calculator className="h-5 w-5 text-primary"/>{ar ? "سعر صرف الموازي" : "Parallel exchange rate"}</h2>
       {query.isPending ? <p role="status" className="mt-4">{ar ? "جارٍ تحميل سعر الصرف…" : "Loading exchange rate…"}</p> : query.isError ? <div role="alert" className="mt-4"><p>{ar ? "تعذر تحميل سعر الصرف المشترك." : "Failed to load shared exchange rate."}</p><Button variant="outline" onClick={()=>query.refetch()}>{ar ? "إعادة المحاولة" : "Retry"}</Button></div> : <>

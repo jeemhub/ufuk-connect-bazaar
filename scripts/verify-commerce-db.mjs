@@ -112,5 +112,15 @@ check((await db.query('UPDATE sales_tool_settings SET exchange_rate=1800 RETURNI
 await db.exec("RESET ROLE; SET ROLE anon;");
 await assert.rejects(db.query('SELECT * FROM sales_tool_settings'));checks++;
 await db.exec('RESET ROLE');
+await db.exec(await readFile(new URL('../supabase/migrations/20261008100000_sales_percentage_pricing.sql',import.meta.url),'utf8'));
+await db.exec("INSERT INTO user_roles VALUES('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','sales'),('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','sales'); SET test.uid='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'; SET ROLE authenticated;");
+check((await db.query("UPDATE sales_tool_settings SET markup_percentage=10,pricing_mode='percentage' RETURNING markup_percentage,pricing_mode")).rows[0],{markup_percentage:'10.0000',pricing_mode:'percentage'});
+await db.exec("SET test.uid='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'; UPDATE sales_tool_settings SET exchange_rate=1800;");
+check((await db.query('SELECT markup_percentage,pricing_mode FROM sales_tool_settings')).rows[0],{markup_percentage:'10.0000',pricing_mode:'percentage'});
+for(const percentage of [-1,100001]) {await assert.rejects(db.query('UPDATE sales_tool_settings SET markup_percentage=$1',[percentage]));checks++;}
+await assert.rejects(db.exec("UPDATE sales_tool_settings SET pricing_mode='invalid'"));checks++;
+await db.exec("RESET ROLE; DELETE FROM user_roles; SET ROLE authenticated;");
+check((await db.query("UPDATE sales_tool_settings SET markup_percentage=20,pricing_mode='parallel' RETURNING id")).rows,[]);
+await db.exec('RESET ROLE');
 console.log(`${checks} isolated PostgreSQL checks passed: brand/global price masking, role tiers, checkout guards, personal preferences and shared staff exchange-rate permissions.`);
 await db.close();

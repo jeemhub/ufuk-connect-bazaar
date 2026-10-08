@@ -1,4 +1,5 @@
 import { useAuth } from "@/auth/AuthProvider";
+import { PricingModeSettings } from "@/components/admin/PricingModeSettings";
 import { PointerSettings } from "@/components/admin/PointerSettings";
 import { GlobalPriceSettings } from "@/components/admin/GlobalPriceSettings";
 import { useState } from "react";
@@ -45,6 +46,7 @@ export default function Settings() {
 
       <GlassThemeSettings />
       <PointerSettings />
+      <PricingModeSettings />
       {isAdmin && <>
       <GlobalPriceSettings />
 

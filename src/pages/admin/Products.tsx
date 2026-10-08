@@ -1,3 +1,4 @@
+import { PricingModeSettings } from "@/components/admin/PricingModeSettings";
 import { ParallelPrice } from "@/components/admin/ParallelPrice";
 import { useExchangeRate } from "@/features/sales-tools/useExchangeRate";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
@@ -348,6 +349,7 @@ export default function Products() {
 
   return (
     <div className="space-y-6">
+      <PricingModeSettings />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("products_title")}</h1>
@@ -493,7 +495,7 @@ export default function Products() {
                   </td>
                   <td className="px-4 py-3">{p.brand}</td>
                   <td className="px-4 py-3 text-muted-foreground">{p.subcategory}</td>
-                  <td className="px-4 py-3 font-semibold"><div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span>{formatIqd(p.priceIqd)} {t("currency_iqd")}</span><ParallelPrice price={p.priceIqd} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/></div></td>
+                  <td className="px-4 py-3 font-semibold"><div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span>{formatIqd(p.priceIqd)} {t("currency_iqd")}</span><ParallelPrice price={p.priceIqd} rate={parallelRate} mode={exchangeRate.data?.mode ?? "parallel"} percentage={exchangeRate.data?.percentage ?? null} loading={exchangeRate.isPending} error={exchangeRate.isError}/></div></td>
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end">
@@ -544,7 +546,7 @@ export default function Products() {
                             <div className="text-xs text-muted-foreground">{it.label}</div>
                             <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-semibold">
                               <span>{it.value > 0 ? `${formatIqd(it.value)} ${t("currency_iqd")}` : "—"}</span>
-                              {it.parallel && <ParallelPrice price={it.value} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>}
+                              {it.parallel && <ParallelPrice price={it.value} rate={parallelRate} mode={exchangeRate.data?.mode ?? "parallel"} percentage={exchangeRate.data?.percentage ?? null} loading={exchangeRate.isPending} error={exchangeRate.isError}/>}
                             </div>
                           </div>
                         ))}
@@ -718,17 +720,17 @@ export default function Products() {
             <div className="space-y-1.5">
               <Label htmlFor="priceIqd">{t("price_retail")} ({t("currency_iqd")})</Label>
               <Input id="priceIqd" name="priceIqd" type="number" min="0" defaultValue={editing?.priceIqd ?? 0} required onChange={e => setDraftPrices(values => ({ ...values, retail: Number(e.target.value) }))} />
-              <ParallelPrice price={draftPrices.retail} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
+              <ParallelPrice price={draftPrices.retail} rate={parallelRate} mode={exchangeRate.data?.mode ?? "parallel"} percentage={exchangeRate.data?.percentage ?? null} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="priceWholesale">{t("price_wholesale")} ({t("currency_iqd")})</Label>
               <Input id="priceWholesale" name="priceWholesale" type="number" min="0" defaultValue={editing?.priceWholesale ?? 0} onChange={e => setDraftPrices(values => ({ ...values, wholesale: Number(e.target.value) }))} />
-              <ParallelPrice price={draftPrices.wholesale} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
+              <ParallelPrice price={draftPrices.wholesale} rate={parallelRate} mode={exchangeRate.data?.mode ?? "parallel"} percentage={exchangeRate.data?.percentage ?? null} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="priceDealer">{t("price_dealer")} ({t("currency_iqd")})</Label>
               <Input id="priceDealer" name="priceDealer" type="number" min="0" defaultValue={editing?.priceDealer ?? 0} onChange={e => setDraftPrices(values => ({ ...values, dealer: Number(e.target.value) }))} />
-              <ParallelPrice price={draftPrices.dealer} rate={parallelRate} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
+              <ParallelPrice price={draftPrices.dealer} rate={parallelRate} mode={exchangeRate.data?.mode ?? "parallel"} percentage={exchangeRate.data?.percentage ?? null} loading={exchangeRate.isPending} error={exchangeRate.isError}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="stock">{t("product_stock")}</Label>
