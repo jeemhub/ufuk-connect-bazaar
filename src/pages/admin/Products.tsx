@@ -1,3 +1,4 @@
+import { ProductsPdfButton } from "@/components/admin/ProductsPdfButton";
 import { PricingModeSettings } from "@/components/admin/PricingModeSettings";
 import { ParallelPrice } from "@/components/admin/ParallelPrice";
 import { useExchangeRate } from "@/features/sales-tools/useExchangeRate";
@@ -7,8 +8,7 @@ import { Plus, Pencil, Trash2, FileText, Upload, Download, X, ImagePlus, Crop as
 import { ImportProductsDialog } from "@/components/admin/ImportProductsDialog";
 import { ImportProductsFullDialog } from "@/components/admin/ImportProductsFullDialog";
 import { exportProductsToExcel } from "@/lib/exportProductsExcel";
-import { exportProductsToPdf } from "@/lib/exportProductsPdf";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -85,25 +85,6 @@ export default function Products() {
   const [importOpen, setImportOpen] = useState(false);
   const [importFullOpen, setImportFullOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [exportingPdf, setExportingPdf] = useState(false);
-
-  async function handlePdfExport() {
-    setExportingPdf(true);
-    toast.info(lang === "ar" ? "جاري إعداد وتوليد تقرير PDF للمنتجات..." : "Generating Products PDF Report...");
-    try {
-      const count = await exportProductsToPdf({
-        products: filtered,
-        filterBrand: brand,
-        filterCategory: cat,
-        searchQuery: search,
-      });
-      toast.success(lang === "ar" ? `تم طباعة وتصدير تقرير PDF لـ ${count} منتج بنجاح` : `Exported PDF report for ${count} products`);
-    } catch (e: any) {
-      toast.error(e?.message || (lang === "ar" ? "فشل تصدير تقرير PDF" : "PDF Export failed"));
-    } finally {
-      setExportingPdf(false);
-    }
-  }
   const imgInputRef = useRef<HTMLInputElement>(null);
   const [autoFetching, setAutoFetching] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
@@ -356,29 +337,15 @@ export default function Products() {
           <p className="mt-1 text-sm text-muted-foreground">{t("products_subtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={handlePdfExport}
-            disabled={exportingPdf}
-            className="gap-2 text-sky-700 border-sky-300 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/50"
-          >
-            {exportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-            {lang === "ar" ? "طباعة / تصدير تقرير PDF" : "Print / Export PDF"}
-          </Button>
-          {(isAdmin || isSales) && (
-            <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
-              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              {lang === "ar" ? "تصدير Excel" : "Export to Excel"}
-            </Button>
-          )}
-          {isAdmin && (
-            <Button variant="outline" onClick={() => setImportFullOpen(true)} className="gap-2">
-              <FileSpreadsheet className="h-4 w-4" /> {lang === "ar" ? "استيراد تحديث كامل" : "Import full update"}
-            </Button>
-          )}
-          <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
-            <Upload className="h-4 w-4" /> {lang === "ar" ? "استيراد الرصيد فقط" : "Import stock only"}
-          </Button>
+          <ProductsPdfButton products={filtered} brand={brand} category={cat} search={search} loading={loading} />
+          <DropdownMenu dir={lang === "ar" ? "rtl" : "ltr"}>
+            <DropdownMenuTrigger asChild><Button variant="outline" className="gap-2" disabled={exporting}><FileSpreadsheet className="h-4 w-4" />{lang === "ar" ? "استيراد وتصدير" : "Import and export"}<ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {(isAdmin || isSales) && <DropdownMenuItem onSelect={handleExport}><Download className="me-2 h-4 w-4" />{lang === "ar" ? "تصدير Excel" : "Export to Excel"}</DropdownMenuItem>}
+              {isAdmin && <DropdownMenuItem onSelect={()=>setImportFullOpen(true)}><FileSpreadsheet className="me-2 h-4 w-4" />{lang === "ar" ? "استيراد تحديث كامل" : "Import full update"}</DropdownMenuItem>}
+              <DropdownMenuItem onSelect={()=>setImportOpen(true)}><Upload className="me-2 h-4 w-4" />{lang === "ar" ? "استيراد الرصيد فقط" : "Import stock only"}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={openNew} className="gap-2 bg-gradient-brand shadow-elegant hover:opacity-95">
             <Plus className="h-4 w-4" /> {t("add_product")}
           </Button>
@@ -410,30 +377,18 @@ export default function Products() {
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            { key: "noName" as const, label: lang === "ar" ? "بدون اسم" : "No name", icon: Type },
-            { key: "noDesc" as const, label: lang === "ar" ? "بدون وصف" : "No description", icon: FileQuestion },
-            { key: "noImage" as const, label: lang === "ar" ? "بدون صورة" : "No image", icon: ImageOff },
-            { key: "noPrice" as const, label: lang === "ar" ? "بدون سعر" : "No price", icon: DollarSign },
-            { key: "hidden" as const, label: lang === "ar" ? "المخفية" : "Hidden", icon: EyeOff },
-          ].map(({ key, label, icon: Icon }) => {
-            const active = missingFilters[key];
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setMissingFilters((s) => ({ ...s, [key]: !s[key] }))}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                  active
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background hover:bg-secondary"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            );
-          })}
+          <DropdownMenu dir={lang === "ar" ? "rtl" : "ltr"}>
+            <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="gap-2"><FileQuestion className="h-4 w-4" />{lang === "ar" ? "فلاتر المنتجات" : "Product filters"}{Object.values(missingFilters).filter(Boolean).length > 0 && <span className="rounded-full bg-primary px-2 text-primary-foreground">{Object.values(missingFilters).filter(Boolean).length}</span>}<ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {[
+                { key: "noName" as const, label: lang === "ar" ? "بدون اسم" : "No name", icon: Type },
+                { key: "noDesc" as const, label: lang === "ar" ? "بدون وصف" : "No description", icon: FileQuestion },
+                { key: "noImage" as const, label: lang === "ar" ? "بدون صورة" : "No image", icon: ImageOff },
+                { key: "noPrice" as const, label: lang === "ar" ? "بدون سعر" : "No price", icon: DollarSign },
+                { key: "hidden" as const, label: lang === "ar" ? "المخفية" : "Hidden", icon: EyeOff },
+              ].map(({key,label,icon:Icon})=><DropdownMenuCheckboxItem key={key} checked={missingFilters[key]} onSelect={e=>e.preventDefault()} onCheckedChange={checked=>setMissingFilters(s=>({...s,[key]:checked}))}><Icon className="me-2 h-4 w-4" />{label}</DropdownMenuCheckboxItem>)}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="ms-auto flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1">
             <Switch id="show-hidden" checked={showHidden} onCheckedChange={setShowHidden} disabled={missingFilters.hidden} />
             <Label htmlFor="show-hidden" className="cursor-pointer text-xs font-medium text-muted-foreground">
@@ -451,8 +406,8 @@ export default function Products() {
               <tr className="text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3 text-start font-medium">{t("product_image")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("product_name")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("product_brand")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("product_category")}</th>
+                <th className="hidden px-4 py-3 text-start font-medium md:table-cell">{t("product_brand")}</th>
+                <th className="hidden px-4 py-3 text-start font-medium md:table-cell">{t("product_category")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("product_price")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("product_stock")}</th>
                 <th className="px-4 py-3 text-end font-medium">{t("actions")}</th>
@@ -493,8 +448,8 @@ export default function Products() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{p.brand}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.subcategory}</td>
+                  <td className="hidden px-4 py-3 md:table-cell">{p.brand}</td>
+                  <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{p.subcategory}</td>
                   <td className="px-4 py-3 font-semibold"><div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span>{formatIqd(p.priceIqd)} {t("currency_iqd")}</span><ParallelPrice price={p.priceIqd} rate={parallelRate} mode={exchangeRate.data?.mode ?? "parallel"} percentage={exchangeRate.data?.percentage ?? null} loading={exchangeRate.isPending} error={exchangeRate.isError}/></div></td>
                   <td className="px-4 py-3"><StockBadge stock={p.stock} /></td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>

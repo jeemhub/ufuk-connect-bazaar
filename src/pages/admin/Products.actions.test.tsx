@@ -1,7 +1,9 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Products from "./Products";
+const pdfState=vi.hoisted(()=>({export:vi.fn()}));
+vi.mock("@/lib/exportProductsPdf",()=>({exportProductsToPdf:pdfState.export}));
 const pricing=vi.hoisted(()=>({mode:"parallel",percentage:10,saveMode:vi.fn()}));
 const row = vi.hoisted(() => ({id:"p1",nameAr:"منتج اختبار",nameEn:"Test",name_data:"DATA name",stock:5,priceIqd:150000,price_wholesale_iqd:120000,price_dealer_iqd:90000,brand:"Test",category:"networking",subcategory:"Routers",image:"/test.png",is_active:true}));
 vi.mock("@/hooks/useProducts",()=>({useAdminProducts:()=>({rows:[row],loading:false,refetch:vi.fn()}),dbToProduct:(value:unknown)=>value}));
@@ -51,4 +53,32 @@ it("switches all selling tiers to percentage calculation and reacts to shared ch
  expect(screen.getByText("144,000 د.ع")).toBeInTheDocument();
  fireEvent.change(screen.getByLabelText("طريقة حساب السعر الأحمر"),{target:{value:"parallel"}});
  expect(pricing.saveMode).toHaveBeenCalledWith("parallel",expect.any(Object));
+});
+
+it("groups import/export actions and supports independent filters",async()=>{
+ await act(async()=>{render(<MemoryRouter><Products/></MemoryRouter>);});
+ expect(screen.queryByRole("button",{name:"تصدير Excel"})).not.toBeInTheDocument();
+ fireEvent.keyDown(screen.getByRole("button",{name:"استيراد وتصدير"}),{key:"Enter"});
+ expect(screen.getByRole("menuitem",{name:"تصدير Excel"})).toBeInTheDocument();
+ expect(screen.getByRole("menuitem",{name:"استيراد تحديث كامل"})).toBeInTheDocument();
+ expect(screen.getByRole("menuitem",{name:"استيراد الرصيد فقط"})).toBeInTheDocument();
+ fireEvent.keyDown(screen.getByRole("menu"),{key:"Escape"});
+ fireEvent.keyDown(screen.getByRole("button",{name:"فلاتر المنتجات"}),{key:"Enter"});
+ expect(screen.getAllByRole("menuitemcheckbox")).toHaveLength(5);
+ fireEvent.click(screen.getByRole("menuitemcheckbox",{name:"بدون سعر"}));
+ expect(screen.getByRole("menuitemcheckbox",{name:"بدون سعر"})).toHaveAttribute("aria-checked","true");
+ expect(screen.queryByText("منتج اختبار")).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("menuitemcheckbox",{name:"بدون سعر"}));
+ expect(screen.getByText("منتج اختبار")).toBeInTheDocument();
+});
+it("shows progress and prevents duplicate PDF exports until download completes",async()=>{
+ let finish!:(n:number)=>void;
+ pdfState.export.mockImplementation(({onProgress})=>{onProgress(50);return new Promise<number>(resolve=>{finish=resolve;});});
+ await act(async()=>{render(<MemoryRouter><Products/></MemoryRouter>);});
+ fireEvent.click(screen.getByRole("button",{name:"طباعة / تصدير تقرير PDF"}));
+ await waitFor(()=>expect(screen.getByRole("button",{name:"جارٍ التصدير… 50%"})).toBeDisabled());
+ expect(screen.getByRole("button",{name:"جارٍ التصدير… 50%"})).toHaveAttribute("aria-busy","true");
+ expect(pdfState.export).toHaveBeenCalledTimes(1);
+ await act(async()=>{finish(1);});
+ expect(screen.getByRole("button",{name:"طباعة / تصدير تقرير PDF"})).toBeEnabled();
 });
