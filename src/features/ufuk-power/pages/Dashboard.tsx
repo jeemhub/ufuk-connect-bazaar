@@ -204,7 +204,7 @@ export function Dashboard({ onDevices }: { onDevices(): void }) {
 
       <Card>
         <SectionTitle>آخر 24 ساعة</SectionTitle>
-        <HistoryChart samples={history[selected.id] ?? []} />
+        <HistoryChart samples={(history[selected.id] ?? []).filter(s=>s.ts>=now-86400000)} />
       </Card>
 
       <button className={`${btn.ghost} w-full`} onClick={onDevices}>

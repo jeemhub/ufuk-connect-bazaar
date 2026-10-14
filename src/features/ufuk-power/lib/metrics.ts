@@ -48,6 +48,39 @@ export const num = (p?: Point): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+/** Resolve the whole array, rather than treating the first MPPT input as the total. */
+export function solarPowerWatts(points: Point[]): number | null {
+  const label = (point: Point) => labelOf(point).replace(/\b(PV|MPPT)(?=[A-Z0-9])/g, '$1 ').replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+  const watts = (point: Point): number | null => {
+    const value = num(point);
+    if (value == null || value < 0) return null;
+    const unit = (point.unit || String(point.val).match(/(?:kW|W)\s*$/i)?.[0] || 'W').trim().toLowerCase();
+    return unit === 'kw' ? value * 1000 : unit === 'w' ? value : null;
+  };
+  const isPower = (text: string) => /\bpower\b/.test(text) && !/\b(max|maximum|rated|rating|limit|energy|daily|yield)\b/.test(text);
+  const pvPoints = points.filter(point => /\b(pv|solar|photovoltaic|mppt)\s*\d*\b/.test(label(point)) && isPower(label(point)));
+  // Explicit aggregate beats every channel and must not be added to those channels again.
+  const total = pvPoints.find(point => /\b(total|combined|aggregate)\b/.test(label(point)) && watts(point) != null);
+  if (total) return watts(total);
+  const channels = new Map<string, Point>();
+  for (const point of pvPoints) {
+    const match = label(point).match(/\b(?:pv|mppt|solar)\s*(\d+)\b/);
+    if (!match) continue;
+    const previous = channels.get(match[1]);
+    if (!previous || (watts(previous) == null && watts(point) != null)) channels.set(match[1], point);
+  }
+  if (channels.size) {
+    const values = [...channels.values()].map(watts);
+    // An unreadable channel is not zero: don't present a partial sum as the total.
+    return values.some(value => value == null) ? null : values.reduce<number>((sum, value) => sum + value!, 0);
+  }
+  const single = pvPoints.find(point => watts(point) != null);
+  if (single) return watts(single);
+  // Compatibility for a protocol with one explicitly named P PV point.
+  const compact = points.find(point => /^p\s*pv$/i.test(point.title.trim()));
+  return compact ? watts(compact) : null;
+}
+
 export interface Summary {
   pvPower: number | null;
   pvVoltage: number | null;
@@ -117,7 +150,7 @@ export function summarize(points: Point[]): Summary {
   const faults = points.filter((p) => /(fault|error|warning|alarm)/i.test(p.title) && !BAD_FAULT_VALUES.test(p.val.trim()));
 
   return {
-    pvPower: g('pvPower'),
+    pvPower: solarPowerWatts(points),
     pvVoltage: g('pvVoltage'),
     battVoltage,
     battPower,

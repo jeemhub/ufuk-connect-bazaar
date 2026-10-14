@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {MAX_INTERVAL_MS} from '../lib/history';
 import type { Sample } from '../types';
 
 const VIEWS = {
@@ -18,14 +19,18 @@ const VIEWS = {
   },
 } as const;
 
-const time = (ts: number) => new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const time = (ts: number) => new Date(ts).toLocaleString('en-GB', {timeZone:'Asia/Baghdad',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 
 /** Built from this app's own cloud polls (one point per minute while the app is open). */
 export function HistoryChart({ samples }: { samples: Sample[] }) {
   const [view, setView] = useState<keyof typeof VIEWS>('power');
   const rows = useMemo(() => {
     const step = Math.max(1, Math.floor(samples.length / 300));
-    return samples.filter((_, i) => i % step === 0 || i === samples.length - 1);
+    return samples.flatMap((row,i)=>{
+      const gap=i>0&&row.ts-samples[i-1].ts>MAX_INTERVAL_MS;
+      const separator=gap?[{ts:samples[i-1].ts+1,pv:null,load:null,battV:null,battP:null}]:[];
+      return [...separator,...(i%step===0||i===samples.length-1||gap?[row]:[])];
+    });
   }, [samples]);
 
   if (samples.length < 2) {
@@ -62,7 +67,7 @@ export function HistoryChart({ samples }: { samples: Sample[] }) {
               formatter={(x) => `${Math.round(Number(x) * 10) / 10} ${v.unit}`}
             />
             {v.series.map((s) => (
-              <Area key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} fill={s.color} fillOpacity={0.1} strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+              <Area key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} fill={s.color} fillOpacity={0.1} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
             ))}
           </AreaChart>
         </ResponsiveContainer>

@@ -27,8 +27,11 @@ export interface LiveData {
   points: Point[];
 }
 
-/** One sample recorded by this app from its own polls (SmartValue exposes no history endpoint we can rely on). */
+/** One locally recorded cloud poll; older samples may lack SOC, grid and faults. */
 export interface Sample {
+  soc?: number | null;
+  gridConnected?: boolean | null;
+  faults?: string[];
   ts: number;
   pv: number | null;
   load: number | null;
@@ -86,3 +89,5 @@ export const DEFAULT_PREFS: AlertPrefs = {
   systemNotifications: false,
   batteryAh: 200,
 };
+
+export interface ControlLog {ts:number;field:string;requested:string;result:string;}

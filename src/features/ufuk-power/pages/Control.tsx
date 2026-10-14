@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconDevices, IconSearch } from '../components/Icons';
 import { btn, Card, EmptyState, input, Num } from '../components/ui';
+import {store} from '../lib/db';
 import { diagnostics } from '../lib/cloud';
 import { useApp } from '../store';
 import type { CtrlField, CtrlGroup } from '../types';
@@ -27,6 +28,7 @@ const timeOf = (ts: number) => new Date(ts).toLocaleTimeString('en-GB', { hour: 
 
 export function Control() {
   const { client, selected, nameOf, pushToast } = useApp();
+  const revision=useRef(0);
   const [groups, setGroups] = useState<CtrlGroup[] | null>(null);
   const [groupId, setGroupId] = useState<string>('');
   const [values, setValues] = useState<Record<string, string>>({});
@@ -36,11 +38,14 @@ export function Control() {
   const [error, setError] = useState<string | null>(null);
   const [tried, setTried] = useState<string[]>([]);
   const [query, setQuery] = useState('');
-  const [pending, setPending] = useState<{ group: CtrlGroup; field: CtrlField; value: string } | null>(null);
+  const [pending, setPending] = useState<{ group: CtrlGroup; field: CtrlField; value: string; deviceId:string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!client || !selected) return;
+    const version=++revision.current;
+    setReading(new Set());
+    setPending(null);
     setError(null);
     setGroups(null);
     setValues({});
@@ -48,15 +53,16 @@ export function Control() {
     setReadAt({});
     try {
       const { groups: g, tried: t } = await client.controlGroups(selected);
+      if(version!==revision.current)return;
       setTried(t);
       setGroups(g);
       setGroupId(g[0]?.id ?? '');
       const initial: Record<string, string> = {};
       for (const grp of g) for (const f of grp.fields) if (f.initial != null) initial[f.id] = f.initial;
       setValues(initial);
-      setDraft(initial);
+      setDraft(Object.fromEntries(g.flatMap(grp=>grp.fields.filter(f=>f.initial!=null).map(f=>[f.id,keyOf(f,f.initial)??f.initial!]))));
     } catch (e) {
-      setError((e as Error).message);
+      if(version===revision.current)setError((e as Error).message);
     }
     // Device objects are rebuilt when the account list refreshes; only a different inverter should reload.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,9 +75,11 @@ export function Control() {
   const read = useCallback(
     async (group: CtrlGroup, fields: CtrlField[], quiet = false): Promise<Record<string, string>> => {
       if (!client || !selected || !fields.length) return {};
+      const version=revision.current;
       setReading((s) => new Set([...s, ...fields.map((f) => f.id)]));
       try {
         const got = await client.readValues(selected, group, fields);
+        if(version!==revision.current)return got;
         const now = Date.now();
         setValues((all) => ({ ...all, ...got }));
         setDraft((all) => {
@@ -88,7 +96,7 @@ export function Control() {
         if (!quiet) pushToast({ key: `read:${group.id}`, level: 'error', title: 'تعذّرت القراءة من العاكس', body: (e as Error).message });
         return {};
       } finally {
-        setReading((s) => {
+        if(version===revision.current)setReading((s) => {
           const n = new Set(s);
           for (const f of fields) n.delete(f.id);
           return n;
@@ -102,7 +110,7 @@ export function Control() {
   const visible = useMemo(() => {
     if (!groups) return [];
     const q = query.trim().toLowerCase();
-    if (q) return groups.flatMap((g) => g.fields.filter((f) => `${f.name} ${f.id}`.toLowerCase().includes(q)).map((f) => ({ group: g, field: f })));
+    if (q) return groups.flatMap((g) => g.fields.filter((f) => `${f.name} ${f.id} ${f.order??""} ${f.hint??""}`.toLowerCase().includes(q) || (q==='restart'&&/reboot/i.test(f.name)) || (q==='protocol'&&/bms|lithium.*communication/i.test(f.name))).map((f) => ({ group: g, field: f })));
     return current ? current.fields.map((f) => ({ group: current, field: f })) : [];
   }, [groups, current, query]);
 
@@ -117,7 +125,8 @@ export function Control() {
   };
 
   const send = async () => {
-    if (!pending || !client) return;
+    if (!pending || !client || busy) return;
+    if(pending.deviceId!==selected.id){setPending(null);return;}
     const { group, field, value } = pending;
     setBusy(true);
     try {
@@ -126,6 +135,7 @@ export function Control() {
       await new Promise((r) => setTimeout(r, 3000));
       const got = await read(group, [field], true);
       const now = got[field.id];
+      await store.recordControl(selected.id,{ts:Date.now(),field:field.name,requested:label(field,value)??value,result:now==null?'أُرسل دون تحقق':same(field,now,value)?'تم التحقق من التطبيق':`لم يُطبق؛ القراءة: ${label(field,now)}`}).catch(()=>pushToast({key:'log',level:'warning',title:'تعذر حفظ سجل الأمر',body:''}));
       if (now == null) {
         pushToast({ key: `write:${field.id}`, level: 'warning', title: 'أُرسل التعديل', body: 'لم يتمكن التطبيق من التحقق — اضغط 🔍 بعد قليل' });
       } else if (!same(field, now, value)) {
@@ -135,6 +145,7 @@ export function Control() {
       }
       setPending(null);
     } catch (e) {
+      await store.recordControl(selected.id,{ts:Date.now(),field:field.name,requested:label(field,value)??value,result:`فشل الأمر: ${(e as Error).message}`}).catch(()=>{});
       pushToast({ key: `write-err:${field.id}`, level: 'error', title: 'رُفض التعديل', body: (e as Error).message });
     } finally {
       setBusy(false);
@@ -143,6 +154,9 @@ export function Control() {
 
   return (
     <div className="space-y-3">
+      <Card><h2 className="font-semibold">بروتوكول البطارية BMS وإعادة التشغيل</h2><p className="mt-2 text-xs leading-6 text-slate-500">الخيارات تعتمد على موديل العاكس وصلاحيات حساب SmartValue. إذا لم يرسل الجهاز إعداد البروتوكول أو أمر Restart/Reboot إلى السحابة، يلزم تنفيذه محليًا حسب دليل الموديل. إيقاف الخرج لا يعني فصل الألواح أو إعادة تشغيل العاكس، وإعادة التشغيل لا تعالج سبب الـFault.</p><div className="mt-3 flex flex-wrap gap-2"><button className={btn.ghost} onClick={()=>setQuery('protocol')}>بحث عن بروتوكول البطارية</button><button className={btn.ghost} onClick={()=>setQuery('41')}>بحث عن الخيار 41</button><button className={btn.ghost} disabled={!groups?.some(g=>g.fields.some(f=>/restart|reboot/i.test(f.name)&&!f.readOnly))} onClick={()=>setQuery('restart')}>إعادة تشغيل العاكس</button><button className={btn.ghost} disabled={busy} onClick={load}>تحديث خيارات الموديل</button></div>
+      {groups&&!groups.some(g=>g.fields.some(f=>/restart|reboot/i.test(f.name)))&&<p className="mt-2 text-xs text-amber-700">لم تُرجع السحابة أمر إعادة تشغيل لهذا الجهاز. لن نرسل أمر إطفاء بدل الريستارت.</p>}
+      </Card>
       <div className="flex gap-2">
         <div className="relative flex-1">
           <IconSearch className="pointer-events-none absolute right-3.5 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
@@ -243,7 +257,7 @@ export function Control() {
                 return;
               }
             }
-            setPending({ group, field: f, value: v });
+            setPending({ group, field: f, value: v, deviceId:selected.id });
           };
 
           return (
@@ -252,6 +266,7 @@ export function Control() {
                 <h3 className="text-[15px] font-semibold leading-snug text-slate-900">{f.name}</h3>
                 {query && <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">{group.name}</span>}
               </div>
+              {/protocol|\bbms\b/i.test(f.name)&&<p className="mt-2 text-xs leading-6 text-amber-700">اختر البروتوكول المطابق للبطارية ودليل العاكس؛ قد يتطلب اعتماد التغيير إعادة تشغيل محلية حسب الموديل. لم يحدد الموقع رقم بروتوكول موحدًا لجميع البطاريات.</p>}
               {(f.hint || range) && (
                 <div className="mt-0.5 text-[11px] text-slate-400">
                   {f.hint ?? `${range!.min}–${range!.max}`}
@@ -341,7 +356,7 @@ export function Control() {
                   )}
                 </div>
                 {!segmented && !f.readOnly && (
-                  <button className={`${changed ? btn.primary : btn.ghost} !min-h-11 shrink-0 !px-5 !text-sm`} disabled={!changed || busy} onClick={() => request(value)}>
+                  <button className={`${changed ? btn.primary : btn.ghost} !min-h-11 shrink-0 !px-5 !text-sm`} disabled={!changed || busy || isReading} onClick={() => request(value)}>
                     إرسال
                   </button>
                 )}

@@ -1,4 +1,6 @@
 import { useState, type ComponentType, type SVGProps } from 'react';
+import {History as HistoryIcon} from 'lucide-react';
+import {History} from './pages/History';
 import logo from '@/assets/logo.png';
 import { DeviceHeader } from './components/DeviceHeader';
 import { IconCog, IconDevices, IconHome, IconSliders } from './components/Icons';
@@ -14,12 +16,13 @@ import { AppProvider, useApp } from './store';
 // SmartValue account. Same code as the standalone PWA (ufuk-must-monitor), embedded in
 // the Tools page: tabs sit at the top so they don't collide with the site header/footer.
 
-type Tab = 'home' | 'devices' | 'control' | 'settings';
+type Tab = 'home' | 'devices' | 'control' | 'settings' | 'history';
 
 const TABS: { id: Tab; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { id: 'home', label: 'الرئيسية', Icon: IconHome },
   { id: 'devices', label: 'العواكس', Icon: IconDevices },
   { id: 'control', label: 'التحكم', Icon: IconSliders },
+  {id:'history',label:'السجلات',Icon:HistoryIcon},
   { id: 'settings', label: 'الإعدادات', Icon: IconCog },
 ];
 
@@ -45,7 +48,7 @@ function Shell() {
           <Login />
         ) : (
           <>
-            <nav className="sticky top-[5.5rem] z-20 mx-3 mt-4 grid grid-cols-4 gap-1 rounded-2xl bg-white/90 p-1 shadow-sm ring-1 ring-slate-200/70 backdrop-blur sm:mx-4">
+            <nav className="sticky top-[5.5rem] z-20 mx-3 mt-4 grid grid-cols-5 gap-1 rounded-2xl bg-white/90 p-1 shadow-sm ring-1 ring-slate-200/70 backdrop-blur sm:mx-4">
               {TABS.map(({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -61,7 +64,7 @@ function Shell() {
               ))}
             </nav>
 
-            {(tab === 'home' || tab === 'control') && devices.length > 0 && <DeviceHeader />}
+            {(tab === 'home' || tab === 'control' || tab === 'history') && devices.length > 0 && <DeviceHeader />}
 
             <main className="px-3 pb-10 pt-2 sm:px-4">
               {tab === 'home' && <Dashboard onDevices={() => setTab('devices')} />}
@@ -74,6 +77,7 @@ function Shell() {
                 />
               )}
               {tab === 'control' && <Control />}
+              {tab === 'history' && <History />}
               {tab === 'settings' && <Settings />}
             </main>
           </>

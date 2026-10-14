@@ -165,7 +165,8 @@ const numOrNull = (v: unknown) => {
 
 /** item / enumMap arrive as {"0":"Off"} or [{key,val}] — normalize both. */
 function optionsOf(raw: any): CtrlField['options'] {
-  const src = raw?.item ?? raw?.enumMap;
+  let src = raw?.item ?? raw?.enumMap ?? raw?.options;
+  if(typeof src === "string"){try{src=JSON.parse(src);}catch{return undefined;}}
   if (!src) return undefined;
   if (Array.isArray(src)) {
     const o = src.map((i: any) => ({ key: str(i.key ?? i.value ?? i.id), val: str(i.val ?? i.name ?? i.label) })).filter((i) => i.key !== '');
@@ -316,20 +317,21 @@ export class CloudClient {
   async controlGroups(d: CloudDevice): Promise<{ groups: CtrlGroup[]; tried: string[] }> {
     const tried: string[] = [];
     const roles = [...new Set([d.role ?? 0, 0, 1])];
+    let batch:CtrlGroup[]=[];
 
     for (const role of roles) {
       try {
         const data = await this.call('GET', 'ppe/api/auth/web/batch/control/item/readBulkControl', { query: { ...this.ident(d), role } });
         const groups = extractGroups(data, 'batch');
         tried.push(`readBulkControl(role=${role}): ${groups.length ? `${groups.length} مجموعة` : describe(data)}`);
-        if (groups.length) return { groups, tried };
+        if (groups.length) {batch=groups;break;}
       } catch (e) {
         tried.push(`readBulkControl(role=${role}): ${(e as Error).message}`);
       }
     }
 
     const legacy: CtrlField[] = [];
-    const seen = new Set<string>();
+    const seen = new Set<string>(batch.flatMap(g=>g.fields.map(f=>f.id)));
     for (const [path, extra] of [
       ['ppe/api/auth/web/queryDeviceCtrlStrategy', { role: d.role ?? 0 }],
       ['ppe/api/auth/web/queryDeviceCtrl', {}],
@@ -347,7 +349,7 @@ export class CloudClient {
         tried.push(`${path.split('/').pop()}: ${(e as Error).message}`);
       }
     }
-    if (legacy.length) return { groups: groupLegacy(legacy), tried };
+    if (batch.length||legacy.length) return { groups:[...batch,...groupLegacy(legacy)], tried };
     return { groups: [], tried };
   }
 
@@ -378,6 +380,9 @@ export class CloudClient {
   }
 
   async setValue(d: CloudDevice, group: CtrlGroup, field: CtrlField, val: string): Promise<void> {
+    if(field.readOnly)throw new CloudError('هذا الإعداد متاح للقراءة فقط من السحابة');
+    if(field.options&&!field.options.some(o=>o.key===val))throw new CloudError('القيمة غير متاحة لهذا الموديل');
+    if(!field.options){const n=Number(val);if(!val.trim()||!Number.isFinite(n)||(field.min!=null&&n<field.min)||(field.max!=null&&n>field.max))throw new CloudError('قيمة خارج المدى المسموح');}
     if (group.mode === 'legacy') {
       await this.call('GET', 'ppe/api/auth/web/ctrlDevice', { query: { ...this.ident(d), id: field.id, val, datatype: field.datatype } });
       return;
@@ -416,13 +421,13 @@ function toField(p: any): CtrlField {
     options: optionsOf(p),
     min: numOrNull(p.minimum ?? p.min),
     max: numOrNull(p.maximum ?? p.max),
-    readOnly: /^(r|ro|read|readonly|read_only)$/i.test(str(p.readwrite)),
+    readOnly: p.readOnly===true || p.readOnly===1 || p.readOnly==='true' || p.readOnly==='1' || /^(r|ro|read|readonly|read_only)$/i.test(str(p.readwrite)),
     initial: p.val != null && p.val !== '' ? str(p.val) : p.displayValue != null && p.displayValue !== '' ? str(p.displayValue) : undefined,
   };
 }
 
 /** Finds every array of field-like objects anywhere in the response; its parent object is the group. */
-function extractGroups(data: unknown, mode: CtrlGroup['mode']): CtrlGroup[] {
+export function extractGroups(data: unknown, mode: CtrlGroup['mode']): CtrlGroup[] {
   const groups: CtrlGroup[] = [];
   const visit = (node: any, parent: any, depth: number) => {
     if (depth > 6 || node == null || typeof node !== 'object') return;
@@ -448,9 +453,10 @@ function extractGroups(data: unknown, mode: CtrlGroup['mode']): CtrlGroup[] {
     for (const v of Object.values(node)) visit(v, node, depth + 1);
   };
   visit(data, null, 0);
-  // Same group id twice (e.g. duplicated wrappers) → keep the first.
-  const seen = new Set<string>();
-  return groups.filter((g) => g.fields.length && !seen.has(g.id) && seen.add(g.id));
+  // Merge wrappers for the same group instead of silently dropping additional settings.
+  const merged=new Map<string,CtrlGroup>();
+  for(const group of groups){const previous=merged.get(group.id);if(!previous){merged.set(group.id,group);continue;}const ids=new Set(previous.fields.map(f=>f.id));previous.fields.push(...group.fields.filter(f=>!ids.has(f.id)&&ids.add(f.id)));}
+  return [...merged.values()].filter(group=>group.fields.length);
 }
 
 /** Legacy fields are flat — group them like SmartValue's tabs by name. */

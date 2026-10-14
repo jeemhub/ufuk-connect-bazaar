@@ -23,7 +23,7 @@ interface AppState {
   selected: CloudDevice | null;
   live: Record<string, LiveData>;
   summaries: Record<string, Summary>;
-  /** Samples this app recorded from its own polls, last 24h per inverter. */
+  /** Samples this app recorded from its own polls, last 90 days per inverter. */
   history: Record<string, Sample[]>;
   deviceErrors: Record<string, string>;
   syncing: boolean;
@@ -97,6 +97,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setNames(nm ?? {});
       setLive(Object.fromEntries(lives.map((l) => [l.deviceId, l])));
       setSelectedId(sel && list.some((d) => d.id === sel) ? sel : list[0]?.id ?? null);
+      setHistory(Object.fromEntries(await Promise.all(list.map(async d=>[d.id,await store.getSamples(d.id)] as const))));
       setReady(true);
     })();
   }, []);
@@ -104,6 +105,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const refreshDevices = useCallback(async () => {
     if (!client) return;
     const list = await client.listDevices();
+    const stored=Object.fromEntries(await Promise.all(list.map(async d=>[d.id,await store.getSamples(d.id)] as const)));
+    setHistory(h=>({...stored,...h}));
     refs.current.devices = list; // the poll loop runs before the next render
     setDevices(list);
     await store.setDevices(list);
@@ -111,12 +114,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [client]);
 
   const recordSample = useCallback(async (id: string, smp: Sample) => {
-    const prev = await store.getSamples(id);
-    const last = prev[prev.length - 1];
-    if (last && smp.ts - last.ts < 60_000) return; // one point per minute is plenty
-    const next = [...prev.filter((x) => x.ts > smp.ts - 24 * 3600_000), smp];
-    await store.putSamples(id, next);
-    setHistory((h) => ({ ...h, [id]: next }));
+    if(await store.appendSample(id,smp))setHistory(h=>({ ...h,[id]:[...(h[id]??[]).filter(s=>s.ts>smp.ts-90*86400000),smp]}));
   }, []);
 
   const refreshLive = useCallback(
@@ -137,7 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               if (refs.current.prefs.systemNotifications && a.level !== 'info') showSystemNotification(a);
             }
             setLive((all) => ({ ...all, [d.id]: entry }));
-            recordSample(d.id, { ts: entry.fetchedAt, pv: next.pvPower, load: next.loadPower, battV: next.battVoltage, battP: next.battPower });
+            recordSample(d.id, { ts: entry.fetchedAt, pv: next.pvPower, load: next.loadPower, battV: next.battVoltage, battP: next.battPower, soc:next.soc, gridConnected:next.gridConnected, faults:next.faults.map(f=>`${f.title}: ${f.val}`) }).catch(e=>pushToast({key:"history-save",level:"warning",title:"تعذر حفظ السجلات",body:(e as Error).message}));
             setDeviceErrors(({ [d.id]: _gone, ...rest }) => rest);
             store.putLive(entry);
           } catch (e) {
@@ -155,12 +153,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready || !client) return;
     let stopped = false;
+    let polling = false;
     let timer: ReturnType<typeof setTimeout>;
 
     const loop = async () => {
-      if (stopped) return;
+      if (stopped || polling) return;
+      polling=true;
       if (document.visibilityState === 'visible' && navigator.onLine) await refreshLive();
-      timer = setTimeout(loop, POLL_MS);
+      polling=false;
+      if(!stopped)timer = setTimeout(loop, POLL_MS);
     };
 
     (async () => {
