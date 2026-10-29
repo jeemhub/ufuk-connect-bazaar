@@ -1,3 +1,4 @@
+import { storageReference } from "@/lib/storageReferences";
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Camera, Loader2, Lock, Mail, Phone, Shield, User as UserIcon, LogOut, Monitor, CheckCircle2, XCircle, BadgeCheck, Package, CreditCard, DollarSign, Wallet } from "lucide-react";
@@ -217,8 +218,7 @@ export default function AccountPage() {
         cacheControl: "31536000",
       });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-      const url = pub.publicUrl;
+      const url = storageReference("avatars", path);
       const { error: updErr } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
       if (updErr) throw updErr;
       setAvatarUrl(url);

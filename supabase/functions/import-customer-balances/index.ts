@@ -1,3 +1,4 @@
+import { assertApprovedBackend } from "../_shared/migrationSafety.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
 
 import {
@@ -10,7 +11,7 @@ declare const Deno: {
   serve(handler: (req: Request) => Promise<Response>): void;
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+const supabaseUrl = assertApprovedBackend(Deno.env.get("SUPABASE_URL"));
 const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
 function userClient(token: string) {

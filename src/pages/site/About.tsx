@@ -1,9 +1,10 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import logo from "@/assets/logo.png";
-import { sanitizeHTML } from "@/components/admin/RichTextEditor";
+import { StorageRichText } from "@/components/site/StorageRichText";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
 
 type Page = {
@@ -78,7 +79,7 @@ export default function AboutPage() {
                   className="absolute -inset-8 rounded-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent blur-3xl"
                 />
                 <div className="relative flex h-64 w-64 items-center justify-center rounded-3xl border border-white/40 bg-white/70 p-6 shadow-[0_20px_60px_-20px_hsl(217_91%_32%/0.4)] backdrop-blur-xl md:h-80 md:w-80">
-                  <img src={logo} alt={t("brand")} className="h-full w-full object-contain" />
+                  <StorageImage src={logo} alt={t("brand")} className="h-full w-full object-contain" />
                 </div>
               </div>
             </div>
@@ -90,7 +91,7 @@ export default function AboutPage() {
       {page?.cover_url && (
         <section className="mx-auto max-w-6xl px-4 md:px-6">
           <div className="-mt-8 overflow-hidden rounded-2xl border shadow-elegant md:-mt-12">
-            <img src={page.cover_url} alt="" className="h-64 w-full object-cover md:h-96" />
+            <StorageImage src={page.cover_url} alt="" className="h-64 w-full object-cover md:h-96" />
           </div>
         </section>
       )}
@@ -105,10 +106,10 @@ export default function AboutPage() {
             <Skeleton className="h-4 w-4/6" />
           </div>
         ) : content && content.trim() !== "" ? (
-          <article
+          <StorageRichText
             dir={lang === "ar" ? "rtl" : "ltr"}
             className="prose prose-lg max-w-none text-foreground/90 [&_h1]:text-3xl [&_h2]:text-2xl [&_h3]:text-xl [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-primary [&_a]:underline [&_img]:rounded-xl [&_img]:my-6 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:ps-6 [&_ol]:ps-6"
-            dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }}
+            html={content}
           />
         ) : (
           <div className="rounded-xl border border-dashed py-16 text-center text-muted-foreground">

@@ -2,6 +2,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product, Brand, CategoryKey } from "@/data/mockData";
+import { collectCatalogPages } from "@/lib/catalogPagination";
 
 export interface DbProductRow {
   id: string;
@@ -71,16 +72,23 @@ export function useProducts(opts?: { activeOnly?: boolean }) {
 
   const refetch = async () => {
     setLoading(true);
-    const [{ data, error }, catMap] = await Promise.all([
-      supabase.from("products_public" as never).select("*").order("created_at", { ascending: false }),
-      fetchCategoryKeyMap(),
-    ]);
-    if (error) setError(error.message);
-    else {
-      const rows = (data as unknown as DbProductRow[]) ?? [];
+    setError(null);
+    try {
+      const [rows, catMap] = await Promise.all([
+        collectCatalogPages<DbProductRow>(async (after, limit) => {
+          let query = supabase.from("products_public" as never).select("*").order("id", { ascending: true }).limit(limit);
+          if (after) query = query.gt("id", after);
+          const result = await query;
+          return { data: result.data as unknown as DbProductRow[] | null, error: result.error };
+        }),
+        fetchCategoryKeyMap(),
+      ]);
       setProducts(rows.map((r) => dbToProduct(r, r.category_id ? catMap[r.category_id] : undefined)));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Catalog unavailable");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

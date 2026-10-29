@@ -1,3 +1,4 @@
+import { storageReference } from "@/lib/storageReferences";
 export type EnergyText = { ar: string; en: string };
 export type EnergyProduct = {
   id: string; model: string; choice: string; series: string; image: string; pdf?: string;
@@ -509,7 +510,7 @@ export const energyBatteries: EnergyProduct[] = [
     model: "MUST 51.2V · 300Ah",
     choice: "51.2V · 300Ah",
     series: "MUST (JOULE) · LiFePO₄",
-    image: "https://ecbbhathvpxrgvfztzeu.supabase.co/storage/v1/object/public/product-images/products/fb2b09c1-c901-41b2-9df6-c6f2c049b489.jpeg",
+    image: storageReference("product-images", "products/fb2b09c1-c901-41b2-9df6-c6f2c049b489.jpeg"),
     power: "300",
     unit: "Ah",
     summary: {

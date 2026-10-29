@@ -11,6 +11,9 @@ const state = vi.hoisted(() => ({
   uploads: [] as string[],
   removed: [] as string[],
   signed: [] as string[],
+  downloads: [] as string[],
+  downloadMissing: false,
+  downloadText: "%PDF-1.7 stored",
   respond: (_call: { table: string; ops: [string, unknown[]][] }): Record<string, unknown> => ({ data: null }),
 }));
 
@@ -18,6 +21,12 @@ vi.mock("./supabase", () => ({
   supabaseForUser: () => ({
     storage: {
       from: () => ({
+        download: async (path: string) => {
+          state.downloads.push(path);
+          if (state.downloadMissing) return { data: null, error: { message: "not found" } };
+          const bytes = new TextEncoder().encode(state.downloadText);
+          return { data: { size: bytes.length, arrayBuffer: async () => bytes.buffer }, error: null };
+        },
         upload: async (path: string) => {
           state.uploads.push(path);
           return { error: null };
@@ -82,6 +91,9 @@ beforeEach(() => {
   state.uploads = [];
   state.removed = [];
   state.signed = [];
+  state.downloads = [];
+  state.downloadMissing = false;
+  state.downloadText = "%PDF-1.7 stored";
   state.respond = () => ({ data: null });
 });
 
@@ -131,7 +143,7 @@ describe("list_catalog_taxonomy", () => {
 describe("set_product_datasheet", () => {
   const pdf = btoa("%PDF-1.4 test");
   const ID2 = "22222222-2222-2222-2222-222222222222";
-  const PUBLIC = "https://x.supabase.co/storage/v1/object/public/product-images/";
+  const PUBLIC = "https://hytdpmtahcmztezhbooc.supabase.co/storage/v1/object/public/product-images/";
   const OLD = "datasheets/old.pdf";
   const NEW = "datasheets/abc-spec.pdf";
   const has = (c: Call, op: string) => c.ops.some(([o]) => o === op);
@@ -186,7 +198,8 @@ describe("set_product_datasheet", () => {
     const res = (await run(setProductDatasheet, { id: ID, storage_path: NEW, file_name: "Spec.pdf" })) as {
       structuredContent: { product: { datasheetUrl: string; datasheetName: string } };
     };
-    expect(fetchMock).toHaveBeenCalledWith(PUBLIC + NEW, expect.anything());
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(state.downloads).toEqual([NEW]);
     expect(state.uploads).toHaveLength(0);
     expect(res.structuredContent.product.datasheetUrl).toBe(PUBLIC + NEW);
     expect(res.structuredContent.product.datasheetName).toBe("Spec.pdf");
@@ -194,9 +207,10 @@ describe("set_product_datasheet", () => {
 
   it("rejects a storage_path that was never uploaded or is not a PDF", async () => {
     state.respond = products([{ id: ID, datasheet_url: null }]);
-    fetchMock.mockImplementationOnce(async () => new Response("not found", { status: 400 }));
-    await expect(run(setProductDatasheet, { id: ID, storage_path: NEW })).rejects.toThrow("No uploaded file");
-    fetchMock.mockImplementationOnce(async () => new Response("<html>"));
+    state.downloadMissing = true;
+    await expect(run(setProductDatasheet, { id: ID, storage_path: NEW })).rejects.toThrow("unavailable");
+    state.downloadMissing = false;
+    state.downloadText = "<html>";
     await expect(run(setProductDatasheet, { id: ID, storage_path: NEW })).rejects.toThrow("not a PDF");
     expect(writes()).toHaveLength(0);
   });
@@ -266,7 +280,7 @@ describe("create_datasheet_upload", () => {
     expect(storage_path).toMatch(/^datasheets\/[0-9a-f-]{36}-indoor-fiber-patch-cord-v2\.pdf$/);
     expect(state.signed).toEqual([storage_path]);
     expect(upload_url).toContain("/object/upload/sign/product-images/" + storage_path);
-    expect(public_url).toBe(`https://x.supabase.co/storage/v1/object/public/product-images/${storage_path}`);
+    expect(public_url).toBe(`https://hytdpmtahcmztezhbooc.supabase.co/storage/v1/object/public/product-images/${storage_path}`);
     expect(curl).toBe(`curl -X PUT -H "Content-Type: application/pdf" --data-binary @"<local file>" "${upload_url}"`);
   });
 

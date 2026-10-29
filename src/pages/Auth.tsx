@@ -9,6 +9,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck } from "lucide-react";
+import { emailFeaturesEnabled, signupEnabled } from "@/lib/migrationFeatures";
 
 const loginSchema = z.object({
   email: z.string().trim().email().max(255),
@@ -71,6 +72,10 @@ export default function AuthPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if ((mode === "forgot" && !emailFeaturesEnabled) || (mode === "signup" && !signupEnabled)) {
+      toast.error(lang === "ar" ? "بريد الموقع واستعادة الدخول قيد التجهيز؛ تواصل مع الإدارة." : "Email and account recovery are being prepared; contact the site owner.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "forgot") {
@@ -190,7 +195,7 @@ export default function AuthPage() {
             <div>
               <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="password">{t("auth_password")}</Label>
-                {mode === "login" && (
+                {mode === "login" && emailFeaturesEnabled && (
                   <button
                     type="button"
                     onClick={() => { setMode("forgot"); setResetSent(false); setPassword(""); }}
@@ -249,7 +254,7 @@ export default function AuthPage() {
               >
                 {t("auth_back_to_login")}
               </button>
-            ) : (
+            ) : signupEnabled ? (
               <>
                 {mode === "login" ? t("auth_no_account") : t("auth_have_account")}{" "}
                 <button
@@ -260,6 +265,8 @@ export default function AuthPage() {
                   {t(mode === "login" ? "auth_title_signup" : "auth_title_login")}
                 </button>
               </>
+            ) : (
+              <p>{lang === "ar" ? "استعادة كلمة المرور والتسجيل الجديد قيد التجهيز. الحسابات الحالية محفوظة؛ تواصل مع الإدارة إذا تحتاج مساعدة بالدخول." : "Password recovery and new registration are being prepared. Existing accounts are preserved; contact the site owner for access help."}</p>
             )}
           </div>
         </div>

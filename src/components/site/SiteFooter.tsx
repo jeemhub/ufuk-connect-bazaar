@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { useCommerceSettings, safeHttps } from "@/hooks/useCommerceSettings";
 import { Link } from "react-router-dom";
 import { Mail, MapPin, Phone } from "lucide-react";
@@ -14,7 +15,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4 md:px-6">
         <div className="md:col-span-2">
           <div className="mb-3 flex items-center gap-3">
-            <img src={logo} alt={t("brand")} className="h-20 w-20 object-contain" />
+            <StorageImage src={logo} alt={t("brand")} className="h-20 w-20 object-contain" />
             <span className="text-lg font-bold">{t("brand")}</span>
           </div>
           <p className="max-w-md text-sm text-muted-foreground">{t("footer_about")}</p>
@@ -41,11 +42,11 @@ export function SiteFooter() {
           <h4 className="mb-3 text-sm font-bold">{t("footer_contact")}</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {settings.address}</li>
-            <li className="flex items-start gap-2"><Phone className="h-4 w-4 mt-1" /> <a href="tel:+9647716992955" dir="ltr">+964 771 699 2955</a></li>
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> <a href="mailto:sales@ufukbasra.com.iq">sales@ufukbasra.com.iq</a></li>
+            <li className="flex items-start gap-2"><Phone className="h-4 w-4 mt-1" /> <StorageLink href="tel:+9647716992955" dir="ltr">+964 771 699 2955</StorageLink></li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> <StorageLink href="mailto:sales@ufukbasra.com.iq">sales@ufukbasra.com.iq</StorageLink></li>
             {settings.hours && <li>{settings.hours}</li>}
-            {safeHttps(settings.mapUrl) && <li><a target="_blank" rel="noopener noreferrer" href={settings.mapUrl} className="text-primary underline">{ar ? "الموقع على الخريطة" : "Open map"}</a></li>}
-            {safeHttps(settings.reviewsUrl) && <li><a target="_blank" rel="noopener noreferrer" href={settings.reviewsUrl} className="text-primary underline">{ar ? "تقييمات العملاء" : "Customer reviews"}</a></li>}
+            {safeHttps(settings.mapUrl) && <li><StorageLink target="_blank" rel="noopener noreferrer" href={settings.mapUrl} className="text-primary underline">{ar ? "الموقع على الخريطة" : "Open map"}</StorageLink></li>}
+            {safeHttps(settings.reviewsUrl) && <li><StorageLink target="_blank" rel="noopener noreferrer" href={settings.reviewsUrl} className="text-primary underline">{ar ? "تقييمات العملاء" : "Customer reviews"}</StorageLink></li>}
           </ul>
         </div>
       </div>

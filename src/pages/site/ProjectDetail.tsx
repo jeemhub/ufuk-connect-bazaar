@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, MapPin, User, Calendar } from "lucide-react";
@@ -5,7 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
-import { sanitizeHTML } from "@/components/admin/RichTextEditor";
+import { StorageRichText } from "@/components/site/StorageRichText";
 
 type Project = {
   id: string;
@@ -116,15 +117,15 @@ export default function ProjectDetail() {
 
       {p.cover_url && (
         <div className="mt-8 overflow-hidden rounded-2xl border shadow-elegant">
-          <img src={p.cover_url} alt={title} className="h-72 w-full object-cover md:h-[440px]" />
+          <StorageImage src={p.cover_url} alt={title} className="h-72 w-full object-cover md:h-[440px]" />
         </div>
       )}
 
       {body && body.trim() !== "" && (
-        <article
+        <StorageRichText
           dir={lang === "ar" ? "rtl" : "ltr"}
           className="prose prose-lg mt-10 max-w-none text-foreground/90 [&_h1]:text-3xl [&_h2]:text-2xl [&_h3]:text-xl [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-primary [&_a]:underline [&_img]:rounded-xl [&_img]:my-6 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:ps-6 [&_ol]:ps-6"
-          dangerouslySetInnerHTML={{ __html: sanitizeHTML(body) }}
+          html={body}
         />
       )}
 
@@ -133,9 +134,9 @@ export default function ProjectDetail() {
           <h2 className="mb-4 text-2xl font-bold">{t("project_gallery")}</h2>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {p.gallery.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border bg-secondary">
-                <img src={url} alt="" className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              </a>
+              <StorageLink key={i} href={url} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border bg-secondary">
+                <StorageImage src={url} alt="" className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              </StorageLink>
             ))}
           </div>
         </section>

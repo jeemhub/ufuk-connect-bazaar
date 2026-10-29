@@ -1,3 +1,5 @@
+import { storageReference } from "@/lib/storageReferences";
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { Save, Upload, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,8 +48,8 @@ export default function AdminAbout() {
       const path = `about/${user?.id ?? "admin"}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("project-images").upload(path, file, { upsert: true, contentType: file.type, cacheControl: "31536000" });
       if (error) return toast.error(error.message);
-      const { data } = supabase.storage.from("project-images").getPublicUrl(path);
-      update({ cover_url: data.publicUrl });
+      const publicUrl = storageReference("project-images", path);
+      update({ cover_url: publicUrl });
     } finally {
       setUploading(false);
     }
@@ -104,7 +106,7 @@ export default function AdminAbout() {
           <div className="mt-2 flex items-center gap-3">
             <div className="h-20 w-32 shrink-0 overflow-hidden rounded border bg-secondary">
               {page.cover_url ? (
-                <img src={page.cover_url} alt="" className="h-full w-full object-cover" />
+                <StorageImage src={page.cover_url} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                   <ImageIcon className="h-5 w-5" />

@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -418,7 +419,7 @@ export function GlobalSearch() {
                               }`}
                             >
                               {suggestion.kind === "product" && suggestion.image ? (
-                                <img
+                                <StorageImage
                                   src={optimizedImage(suggestion.image, { width: 80 })}
                                   alt=""
                                   loading="lazy"

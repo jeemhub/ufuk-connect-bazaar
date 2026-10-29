@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useSelection } from "@/catalog/SelectionContext";
 import { useCartPrices } from "@/hooks/useCartPrices";
 import { Link } from "react-router-dom";
@@ -161,7 +162,7 @@ export function CartDrawer() {
                   {items.map((it) => (
                     <li key={it.id} className="flex flex-wrap gap-3 rounded-xl border border-border bg-card p-3">
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        {it.image && <img src={it.image} alt={it.name} className="h-full w-full object-cover" />}
+                        {it.image && <StorageImage src={it.image} alt={it.name} className="h-full w-full object-cover" />}
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col">
                         <div className="line-clamp-2 text-sm font-semibold">{it.name}</div>

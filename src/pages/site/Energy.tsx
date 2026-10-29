@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, BatteryCharging, Download, Sun, Zap } from "lucide-react";
@@ -23,7 +24,7 @@ function ProductExplorer({ id, number, title, lead, products, catalog, catalogLo
       <div className="energy-product-layout">
         <figure className="energy-product-art">
           <span className="energy-art-word" aria-hidden="true">{id === "inverters" ? "CONVERT" : id === "batteries" ? "STORE" : "PROTECT"}</span>
-          <img key={p.image} src={p.image} alt={`${id === "ups" ? "BlueStorm" : "MUST"} — ${p.series}`} width="1000" height="1000" loading="lazy" decoding="async" />
+          <StorageImage key={p.image} src={p.image} alt={`${id === "ups" ? "BlueStorm" : "MUST"} — ${p.series}`} width="1000" height="1000" loading="lazy" decoding="async" />
           <figcaption><span>{p.pdf ? (ar ? "صورة السلسلة من الداتا شيت" : "Series image from the datasheet") : (ar ? "صورة المنتج من المتجر" : "Product image from the catalog")}</span><bdi>{p.series}</bdi></figcaption>
         </figure>
         <div className="energy-product-info">
@@ -31,7 +32,7 @@ function ProductExplorer({ id, number, title, lead, products, catalog, catalogLo
           <div className="energy-selected" aria-live="polite" aria-atomic="true"><p className="energy-model"><bdi>{p.model}</bdi></p><p className="energy-power" dir="ltr"><strong>{p.power}</strong><span>{p.unit}</span></p><p className="energy-product-description">{p.summary[lang]}</p></div>
           <dl className="energy-specs">{p.specs.map(s => <div key={s.label.en}><dt>{s.label[lang]}</dt><dd><bdi>{s.value}</bdi></dd></div>)}</dl>
           <p className="energy-product-note">{p.note[lang]}</p>
-          <div className="energy-actions"><Link className="energy-button" to={`/products/${p.id}`}>{ar ? "السعر وتفاصيل المنتج" : "Price & product details"}<Arrow size={17} aria-hidden="true" /></Link>{p.pdf && <a className="energy-download" href={p.pdf} download><Download size={18} aria-hidden="true" />{ar ? "تحميل الداتا شيت" : "Download datasheet"}<span>PDF</span></a>}</div>
+          <div className="energy-actions"><Link className="energy-button" to={`/products/${p.id}`}>{ar ? "السعر وتفاصيل المنتج" : "Price & product details"}<Arrow size={17} aria-hidden="true" /></Link>{p.pdf && <StorageLink className="energy-download" href={p.pdf} download><Download size={18} aria-hidden="true" />{ar ? "تحميل الداتا شيت" : "Download datasheet"}<span>PDF</span></StorageLink>}</div>
           <Link className="energy-quote-link" to={`/quote?product=${p.id}`}>{ar ? "اطلب عرض سعر لهذا الموديل" : "Request a quote for this model"}</Link>
         </div>
       </div>
@@ -58,19 +59,19 @@ export default function Energy() {
   return <div className="energy-page" dir={ar ? "rtl" : "ltr"}>
     <Seo title={`${ar ? "حلول الطاقة | MUST وBlueStorm" : "Energy solutions | MUST & BlueStorm"} | ${SITE_NAME}`} description={ar ? "عواكس MUST الشمسية، بطاريات الليثيوم LiFePO4، وأجهزة BlueStorm UPS لدى أفق البصرة. قارن الموديلات واطلب عرض سعر." : "Explore MUST solar inverters, LiFePO4 batteries and BlueStorm UPS at UFUK AL-Basra. Compare models and request a quote."} path="/energy" image="/images/energy/campaign.webp" lang={lang} />
     <section className="energy-hero" aria-labelledby="energy-hero-title" dir="ltr">
-      <img className="energy-hero-image" src="/images/energy/campaign.webp" width="1672" height="941" alt={ar ? "حلول الطاقة من MUST وBlueStorm" : "MUST and BlueStorm energy solutions"} fetchPriority="high" />
+      <StorageImage className="energy-hero-image" src="/images/energy/campaign.webp" width="1672" height="941" alt={ar ? "حلول الطاقة من MUST وBlueStorm" : "MUST and BlueStorm energy solutions"} fetchPriority="high" />
       <div className="energy-hero-shade" aria-hidden="true" />
       <div className="energy-hero-copy" dir={ar ? "rtl" : "ltr"}>
         <p className="energy-hero-brands"><bdi>MUST <span>×</span> BlueStorm</bdi></p>
         <p className="energy-eyebrow">{ar ? "حلول الطاقة من أفق البصرة" : "ENERGY SOLUTIONS BY UFUK AL-BASRA"}</p>
         <h1 id="energy-hero-title">{ar ? <>طاقة تدير يومك.<br /><em>بكل ثقة.</em></> : <>Energy for your day.<br /><em>Confidence for tomorrow.</em></>}</h1>
         <p className="energy-hero-lead">{ar ? "من تحويل طاقة الشمس إلى تخزينها وإسناد أجهزتك. اكتشف العاكس والبطارية وUPS المناسب لاحتياجك." : "From solar conversion to storage and equipment backup. Discover the right inverter, battery and UPS for your needs."}</p>
-        <a className="energy-button" href="#energy-selection">{ar ? "استكشف المنتجات" : "Explore the range"}<ArrowDown size={18} aria-hidden="true" /></a>
+        <StorageLink className="energy-button" href="#energy-selection">{ar ? "استكشف المنتجات" : "Explore the range"}<ArrowDown size={18} aria-hidden="true" /></StorageLink>
       </div>
     </section>
     <section className="energy-selection energy-wrap" id="energy-selection" aria-labelledby="energy-selection-title">
       <div className="energy-section-heading"><div><span className="energy-eyebrow">{ar ? "توليد. تخزين. إسناد." : "CONVERT. STORE. PROTECT."}</span><h2 id="energy-selection-title">{ar ? "ثلاثة أدوار. اختيار أوضح." : "Three roles. A clearer choice."}</h2></div><p>{ar ? "ابدأ بالدور الذي تحتاجه، ثم اختر الموديل لتظهر مواصفاته ومنتجاته المتاحة." : "Start with the role you need, then select a model to see its specifications and available products."}</p></div>
-      <nav className="energy-category-nav" aria-label={ar ? "أقسام الطاقة" : "Energy categories"}>{sections.map(({ id, icon: Icon, title, subtitle }, i) => <a href={`#${id}`} key={id}><span className="energy-nav-top"><Icon size={26} strokeWidth={1.4} aria-hidden="true" /><span>0{i + 1}</span></span><h3>{title}</h3><span className="energy-nav-bottom">{subtitle}<Arrow size={20} aria-hidden="true" /></span></a>)}</nav>
+      <nav className="energy-category-nav" aria-label={ar ? "أقسام الطاقة" : "Energy categories"}>{sections.map(({ id, icon: Icon, title, subtitle }, i) => <StorageLink href={`#${id}`} key={id}><span className="energy-nav-top"><Icon size={26} strokeWidth={1.4} aria-hidden="true" /><span>0{i + 1}</span></span><h3>{title}</h3><span className="energy-nav-bottom">{subtitle}<Arrow size={20} aria-hidden="true" /></span></StorageLink>)}</nav>
     </section>
     <ProductExplorer id="inverters" number="01" title={ar ? "ابدأ من الشمس." : "Start with the sun."} lead={ar ? "سلاسل ECO وEXP وPRO. قدرات وخصائص مختلفة لتختار العاكس المناسب لمنظومتك." : "ECO, EXP and PRO series. Different outputs and features to match your solar system."} products={energyInverters} catalog={mustInverters} catalogLoading={catalogLoading} initial={2} />
     <ProductExplorer id="batteries" number="02" title={ar ? "خزّن اليوم. استفد لاحقًا." : "Store today. Use it later."} lead={ar ? "اختر بطارية الليثيوم المناسبة من الموديلات الموجودة في المتجر، بما فيها MUST بجهد 51.2 فولت وسعة 300Ah." : "Explore the lithium batteries in our catalog, including the MUST 51.2V 300Ah model."} products={energyBatteries} catalog={lithiumBatteries} catalogLoading={catalogLoading} initial={2} />

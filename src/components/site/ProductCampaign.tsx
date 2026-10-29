@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -23,7 +24,7 @@ export function ProductCampaign({ id, image, alt, label, title, description, act
   const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
   return (
     <section className={`product-campaign product-campaign-${brand}`} dir="ltr" aria-labelledby={`${id}-title`}>
-      <img className="product-campaign-image" src={image} alt={alt} width={1672} height={941} loading="lazy" decoding="async" />
+      <StorageImage className="product-campaign-image" src={image} alt={alt} width={1672} height={941} loading="lazy" decoding="async" />
       <div className="product-campaign-shade" aria-hidden="true" />
       <div className="product-campaign-copy" dir={lang === "ar" ? "rtl" : "ltr"}>
         <div className="product-campaign-label">{label}</div>

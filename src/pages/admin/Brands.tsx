@@ -1,3 +1,5 @@
+import { storageReference } from "@/lib/storageReferences";
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useRef, useState } from "react";
 import { Plus, Pencil, Trash2, Image as ImageIcon, Loader2, Upload, Eye, FileSpreadsheet } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -158,7 +160,7 @@ export default function AdminBrands() {
             <div key={b.id} className="surface-card group overflow-hidden">
               <div className="flex h-32 items-center justify-center border-b border-border/60 bg-secondary/40">
                 {b.logo_url ? (
-                  <img src={b.logo_url} alt={b.name} className="max-h-20 w-auto object-contain" />
+                  <StorageImage src={b.logo_url} alt={b.name} className="max-h-20 w-auto object-contain" />
                 ) : (
                   <div className="flex flex-col items-center gap-1 text-muted-foreground">
                     <ImageIcon className="h-6 w-6" />
@@ -295,8 +297,8 @@ function BrandEditor({
         .from("brand-logos")
         .upload(path, blob, { contentType: "image/jpeg", upsert: true, cacheControl: "31536000" });
       if (upErr) throw upErr;
-      const { data } = supabase.storage.from("brand-logos").getPublicUrl(path);
-      setForm((f) => ({ ...f, logo_url: data.publicUrl }));
+      const publicUrl = storageReference("brand-logos", path);
+      setForm((f) => ({ ...f, logo_url: publicUrl }));
       toast.success(t("saved"));
     } catch {
       toast.error(t("error_generic"));
@@ -454,7 +456,7 @@ function BrandEditor({
               <div className="rounded-xl border border-border/60 bg-gradient-to-b from-secondary/40 via-background to-secondary/30 p-6">
                 <div className="flex h-24 items-center justify-center rounded-lg border border-border/60 bg-card px-6 shadow-sm">
                   {form.logo_url ? (
-                    <img src={form.logo_url} alt={form.name || "logo"} className="max-h-16 w-auto object-contain" />
+                    <StorageImage src={form.logo_url} alt={form.name || "logo"} className="max-h-16 w-auto object-contain" />
                   ) : (
                     <span className="text-xl font-extrabold tracking-tight text-foreground/80">
                       {form.name || t("no_logo")}
@@ -471,7 +473,7 @@ function BrandEditor({
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("preview")}</div>
                 <div className="mt-2 flex h-20 w-full items-center justify-center rounded-lg border border-border/60 bg-card px-6">
                   {form.logo_url ? (
-                    <img src={form.logo_url} alt={form.name} className="max-h-12 w-auto object-contain opacity-90" />
+                    <StorageImage src={form.logo_url} alt={form.name} className="max-h-12 w-auto object-contain opacity-90" />
                   ) : (
                     <span className="font-extrabold text-xl text-foreground/80">{form.name || "—"}</span>
                   )}

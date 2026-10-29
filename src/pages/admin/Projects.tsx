@@ -1,3 +1,5 @@
+import { storageReference } from "@/lib/storageReferences";
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Edit, Trash2, Image as ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -109,8 +111,7 @@ export default function AdminProjects() {
       toast.error(error.message);
       return null;
     }
-    const { data } = supabase.storage.from("project-images").getPublicUrl(path);
-    return data.publicUrl;
+    return storageReference("project-images", path);
   };
 
   const onCover = async (file: File) => {
@@ -186,7 +187,7 @@ export default function AdminProjects() {
               <div key={p.id} className="flex items-center gap-4 p-4">
                 <div className="h-16 w-24 shrink-0 overflow-hidden rounded bg-secondary">
                   {p.cover_url ? (
-                    <img src={p.cover_url} alt="" className="h-full w-full object-cover" />
+                    <StorageImage src={p.cover_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                       <ImageIcon className="h-5 w-5" />
@@ -297,7 +298,7 @@ export default function AdminProjects() {
               <div className="mt-2 flex items-center gap-3">
                 <div className="h-20 w-32 shrink-0 overflow-hidden rounded border bg-secondary">
                   {form.cover_url ? (
-                    <img src={form.cover_url} alt="" className="h-full w-full object-cover" />
+                    <StorageImage src={form.cover_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                       <ImageIcon className="h-5 w-5" />
@@ -328,7 +329,7 @@ export default function AdminProjects() {
               <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                 {form.gallery.map((url, idx) => (
                   <div key={idx} className="group relative aspect-square overflow-hidden rounded border bg-secondary">
-                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <StorageImage src={url} alt="" className="h-full w-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeGallery(idx)}

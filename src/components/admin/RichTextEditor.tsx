@@ -1,3 +1,4 @@
+import { storageReference } from "@/lib/storageReferences";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
@@ -6,7 +7,8 @@ import {
   Link as LinkIcon, Image as ImageIcon, Undo2, Redo2,
   Palette, RemoveFormatting, Code,
 } from "lucide-react";
-import DOMPurify from "dompurify";
+import { sanitizeRichHtml as clean } from "@/lib/safeRichHtml";
+import { prepareStorageHtml, hydrateStorageHtml, serializeStorageHtml } from "@/lib/storageHtml";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,19 +23,6 @@ type Props = {
   bucket?: string; // storage bucket for inline images
 };
 
-const SANITIZE_OPTS = {
-  ADD_ATTR: ["target", "rel", "style"],
-  ALLOWED_TAGS: [
-    "p","br","b","strong","i","em","u","s","strike","span","div",
-    "h1","h2","h3","h4","h5","h6","blockquote","ul","ol","li",
-    "a","img","figure","figcaption","hr","pre","code",
-    "table","thead","tbody","tr","th","td",
-  ],
-} as const;
-
-const clean = (html: string): string =>
-  DOMPurify.sanitize(html, SANITIZE_OPTS as never) as unknown as string;
-
 export function RichTextEditor({
   value, onChange, dir = "ltr", placeholder, minHeight = 280, bucket = "project-images",
 }: Props) {
@@ -46,26 +35,33 @@ export function RichTextEditor({
   useEffect(() => {
     if (!ref.current) return;
     if (ref.current.innerHTML !== value) {
-      ref.current.innerHTML = value || "";
+      ref.current.innerHTML = prepareStorageHtml(value || "");
+      void hydrateStorageHtml(ref.current, user?.id ?? "anonymous");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => { if (ref.current) void hydrateStorageHtml(ref.current, user?.id ?? "anonymous"); }, 45_000);
+    return () => window.clearInterval(timer);
+  }, [user?.id]);
 
   const exec = useCallback((cmd: string, val?: string) => {
     ref.current?.focus();
     document.execCommand(cmd, false, val);
-    if (ref.current) onChange(clean(ref.current.innerHTML));
+    if (ref.current) onChange(serializeStorageHtml(ref.current));
   }, [onChange]);
 
   const handleInput = () => {
     if (!ref.current) return;
-    onChange(clean(ref.current.innerHTML));
+    onChange(serializeStorageHtml(ref.current));
   };
 
   const insertHTML = (html: string) => {
     ref.current?.focus();
-    document.execCommand("insertHTML", false, html);
-    if (ref.current) onChange(clean(ref.current.innerHTML));
+    document.execCommand("insertHTML", false, prepareStorageHtml(html));
+    if (ref.current) void hydrateStorageHtml(ref.current, user?.id ?? "anonymous");
+    if (ref.current) onChange(serializeStorageHtml(ref.current));
   };
 
   const onAddLink = () => {
@@ -78,7 +74,7 @@ export function RichTextEditor({
         a.setAttribute("target", "_blank");
         a.setAttribute("rel", "noopener noreferrer");
       });
-      if (ref.current) onChange(clean(ref.current.innerHTML));
+      if (ref.current) onChange(serializeStorageHtml(ref.current));
     }, 0);
   };
 
@@ -94,8 +90,7 @@ export function RichTextEditor({
         toast.error(error.message);
         return null;
       }
-      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-      return data.publicUrl;
+      return storageReference(bucket, path);
     } finally {
       setUploading(false);
     }
@@ -121,6 +116,8 @@ export function RichTextEditor({
         return;
       }
     }
+    const html = e.clipboardData.getData("text/html");
+    if (html) { e.preventDefault(); insertHTML(html); }
   };
 
   const setColor = () => {

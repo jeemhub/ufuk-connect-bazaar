@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { Link } from "react-router-dom";
 import { Download, ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -16,7 +17,7 @@ export default function Hikvision() {
       <section className="hik-selector hik-wrap" id="hik-products" aria-labelledby="hik-selection-title">
         <div className="hik-section-heading"><h2 id="hik-selection-title">{ar ? "كل مساحة، لها اختيارها." : "The right view for your space."}</h2><p>{ar ? "ابدأ بما تحتاج مراقبته، ثم تعرّف على الجهاز." : "Start with what you need to monitor, then explore the device."}</p></div>
         <nav className="hik-use-nav" aria-label={ar ? "اختيار جهاز المراقبة" : "Choose a surveillance device"}>
-          {hikvisionProducts.map(p => <a href={`#${p.slug}`} key={p.slug}><span>{p[lang].use}</span><strong>{p.family}</strong><Arrow size={19} aria-hidden="true" /></a>)}
+          {hikvisionProducts.map(p => <StorageLink href={`#${p.slug}`} key={p.slug}><span>{p[lang].use}</span><strong>{p.family}</strong><Arrow size={19} aria-hidden="true" /></StorageLink>)}
         </nav>
       </section>
       <div className="hik-products">
@@ -25,7 +26,7 @@ export default function Hikvision() {
             <div className="hik-product-inner hik-wrap">
               <figure className={`hik-product-art hik-art-${p.slug}`}>
                 <span className="hik-art-family" aria-hidden="true">{p.family}</span>
-                <img src={p.image} alt={`${p.family} — ${p.model}`} width={p.slug === "acusense" ? 500 : 800} height={p.slug === "acusense" ? 184 : 800} loading="lazy" decoding="async" />
+                <StorageImage src={p.image} alt={`${p.family} — ${p.model}`} width={p.slug === "acusense" ? 500 : 800} height={p.slug === "acusense" ? 184 : 800} loading="lazy" decoding="async" />
                 <figcaption><span className="hik-red-line" />{p.family}</figcaption>
               </figure>
               <div className="hik-product-copy">
@@ -34,7 +35,7 @@ export default function Hikvision() {
                 <p className="hik-body">{c.body}</p>
                 <dl className="hik-spec-grid">{c.specs.map(([label, value]) => <div key={label}><dt>{label}</dt><dd><bdi>{value}</bdi></dd></div>)}</dl>
                 <details className="hik-detail"><summary>{ar ? "تفاصيل تساعدك على الاختيار" : "More to help you choose"}<Plus size={17} aria-hidden="true" /></summary><p>{c.detail}</p></details>
-                <div className="hik-actions"><Link className="hik-button" to={`/products/${p.id}`}>{ar ? "السعر وتفاصيل المنتج" : "Price & product details"}<Arrow size={17} aria-hidden="true" /></Link><a className="hik-download" href={`/datasheets/hikvision/${p.pdf}`} target="_blank" rel="noopener noreferrer">{ar ? "الداتا شيت" : "Datasheet"}<Download size={18} aria-hidden="true" /><span className="sr-only">{ar ? "PDF — يفتح في نافذة جديدة" : "PDF — opens in a new tab"}</span></a></div>
+                <div className="hik-actions"><Link className="hik-button" to={`/products/${p.id}`}>{ar ? "السعر وتفاصيل المنتج" : "Price & product details"}<Arrow size={17} aria-hidden="true" /></Link><StorageLink className="hik-download" href={`/datasheets/hikvision/${p.pdf}`} target="_blank" rel="noopener noreferrer">{ar ? "الداتا شيت" : "Datasheet"}<Download size={18} aria-hidden="true" /><span className="sr-only">{ar ? "PDF — يفتح في نافذة جديدة" : "PDF — opens in a new tab"}</span></StorageLink></div>
                 <Link className="hik-quote-link" to={`/quote?product=${p.id}`}>{ar ? "اطلب عرض سعر لهذا الجهاز" : "Request a quote for this device"}</Link>
               </div>
             </div>

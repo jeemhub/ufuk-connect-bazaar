@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, Cable, ChevronDown, Network, Radio, Router, Search, Server, SlidersHorizontal, Wifi, X } from "lucide-react";
@@ -64,19 +65,19 @@ export function NetworkBrandLanding({ brand }: { brand: NetworkBrand }) {
     <Seo title={`${content.seo[lang]} | ${SITE_NAME}`} description={content.description[lang]} path={content.path} image={content.image} lang={lang} />
 
     <section className="network-brand-hero" dir="ltr" aria-labelledby={`${brand}-title`}>
-      <img src={content.image} alt={ar ? `عرض توضيحي لمعدات ${content.name} للشبكات` : `Illustrative ${content.name} network hardware`} width="1672" height="941" fetchPriority="high" />
+      <StorageImage src={content.image} alt={ar ? `عرض توضيحي لمعدات ${content.name} للشبكات` : `Illustrative ${content.name} network hardware`} width="1672" height="941" fetchPriority="high" />
       <div className="network-brand-hero-shade" aria-hidden="true" />
       <div className="network-brand-hero-copy" dir={ar ? "rtl" : "ltr"}>
         <span className="network-brand-name" dir="ltr">{content.name}{brand === "huawei" && <small>eKit</small>}</span>
         <h1 id={`${brand}-title`}>{content.hero[lang]}</h1>
         <p>{content.lead[lang]}</p>
-        <a href="#network-brand-products" className="network-brand-button">{ar ? "تصفح المنتجات" : "Browse products"}<ArrowDown size={18} aria-hidden="true" /></a>
+        <StorageLink href="#network-brand-products" className="network-brand-button">{ar ? "تصفح المنتجات" : "Browse products"}<ArrowDown size={18} aria-hidden="true" /></StorageLink>
       </div>
     </section>
 
     <section className="network-brand-overview" aria-labelledby={`${brand}-overview-title`}><div className="network-brand-inner">
       <div className="network-brand-overview-copy"><div><span className="network-brand-caption">{brand === "huawei" ? "HUAWEI eKIT" : "MIKROTIK"} / UFUK AL-BASRA</span><h2 id={`${brand}-overview-title`}>{content.intro[lang]}</h2></div><div><p>{content.introText[lang]}</p><strong className="network-brand-count" aria-live="polite">{loading ? "…" : total}<small>{ar ? "منتج في التشكيلة" : "products in the range"}</small></strong></div></div>
-      <nav className="network-brand-nav" aria-label={ar ? `فئات ${content.name}` : `${content.name} product categories`}>{categories.map(category => { const Icon = groupIcons[category.id]; return <a href={`#${brand}-${category.id}`} key={category.id}><Icon size={25} strokeWidth={1.5} aria-hidden="true" /><span>{category.title[lang]}</span><small>{loading ? "—" : groups[category.id].length}</small><Arrow size={16} aria-hidden="true" /></a>; })}</nav>
+      <nav className="network-brand-nav" aria-label={ar ? `فئات ${content.name}` : `${content.name} product categories`}>{categories.map(category => { const Icon = groupIcons[category.id]; return <StorageLink href={`#${brand}-${category.id}`} key={category.id}><Icon size={25} strokeWidth={1.5} aria-hidden="true" /><span>{category.title[lang]}</span><small>{loading ? "—" : groups[category.id].length}</small><Arrow size={16} aria-hidden="true" /></StorageLink>; })}</nav>
     </div></section>
 
     <section id="network-brand-products" className="network-brand-products" aria-labelledby={`${brand}-products-title`}><div className="network-brand-inner">

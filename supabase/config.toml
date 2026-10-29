@@ -1,15 +1,20 @@
-project_id = "ecbbhathvpxrgvfztzeu"
+# Target public JWKS is ES256. Each endpoint verifies Supabase Auth or the exact internal service key itself.
+# Email/push remain gated off; this file has NOT been deployed.
+project_id = "hytdpmtahcmztezhbooc"
 [functions.send-push]
 verify_jwt = false
 
 [functions.process-email-queue]
-verify_jwt = true
+verify_jwt = false
 
 [functions.import-products]
-verify_jwt = true
+verify_jwt = false
 
 [functions.image-search]
-verify_jwt = true
+verify_jwt = false
 
 [functions.import-customer-balances]
-verify_jwt = true
+verify_jwt = false
+
+[functions.mcp]
+verify_jwt = false

@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { mcpEnabled } from "@/lib/migrationFeatures";
+import { MigrationFeatureUnavailable } from "@/components/site/MigrationFeatureUnavailable";
 
 type OAuthNamespace = {
   getAuthorizationDetails: (id: string) => Promise<{ data: AuthorizationDetails | null; error: { message: string } | null }>;
@@ -23,6 +25,10 @@ function oauthNamespace(): OAuthNamespace {
 }
 
 export default function OAuthConsent() {
+  return mcpEnabled ? <EnabledOAuthConsent /> : <MigrationFeatureUnavailable feature="mcp" />;
+}
+
+function EnabledOAuthConsent() {
   const { lang } = useLanguage();
   const ar = lang === "ar";
   const [params] = useSearchParams();

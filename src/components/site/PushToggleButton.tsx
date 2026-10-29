@@ -4,11 +4,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "sonner";
+import { pushEnabled } from "@/lib/migrationFeatures";
 
 export function PushToggleButton() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { supported, enabled, loading, enable, disable, permission } = usePushSubscription();
 
+  if (!pushEnabled) {
+    const explanation = lang === "ar"
+      ? "تنبيهات المتصفح مؤجلة مؤقتاً؛ تنبيهات الحساب داخل الموقع تبقى متاحة."
+      : "Browser notifications are temporarily unavailable; in-app account notifications remain available.";
+    return <span title={explanation}><Button variant="ghost" size="icon" disabled aria-label={explanation}><BellOff className="h-5 w-5" /></Button></span>;
+  }
   if (!supported) return null;
 
   const handleClick = async () => {

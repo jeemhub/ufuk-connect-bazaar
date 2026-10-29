@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -138,7 +139,7 @@ export default function BlueStormCrimper({ professional = false }: { professiona
       />
 
       <section aria-labelledby="crimper-title" className="bs-crimper-campaign bs-crimper-landing relative isolate min-h-[760px] overflow-hidden bg-[#061831] text-white md:min-h-[640px]">
-        <img src={variant.image} alt={c.imageAlt} fetchPriority="high" width={1672} height={941} className="bs-crimper-image absolute inset-0 h-full w-full object-cover object-left" />
+        <StorageImage src={variant.image} alt={c.imageAlt} fetchPriority="high" width={1672} height={941} className="bs-crimper-image absolute inset-0 h-full w-full object-cover object-left" />
         <div aria-hidden="true" className="bs-crimper-shade absolute inset-0 bg-gradient-to-t from-[#061831] from-[18%] via-[#061831]/90 via-[48%] to-transparent md:bg-gradient-to-l md:from-[#061831] md:from-[8%] md:via-[#061831]/80 md:via-[39%] md:to-transparent" />
         <div className="bs-crimper-inner relative mx-auto flex min-h-[760px] max-w-7xl items-end px-5 pb-16 pt-[410px] md:min-h-[640px] md:items-center md:px-10 md:py-20">
           <div className="bs-crimper-copy ml-auto w-full max-w-[590px]">
@@ -172,7 +173,7 @@ export default function BlueStormCrimper({ professional = false }: { professiona
               ))}
             </div>
           </div>
-          <img src={variant.detailImage} alt={c.imageAlt} loading="lazy" decoding="async" width={1536} height={1024} className="w-full object-cover shadow-[0_24px_65px_rgba(7,30,60,0.16)]" />
+          <StorageImage src={variant.detailImage} alt={c.imageAlt} loading="lazy" decoding="async" width={1536} height={1024} className="w-full object-cover shadow-[0_24px_65px_rgba(7,30,60,0.16)]" />
         </div>
       </section>
 

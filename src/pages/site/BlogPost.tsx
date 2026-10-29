@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { Link, useParams } from "react-router-dom";
@@ -205,7 +206,7 @@ export default function BlogPostPage() {
       </Link>
 
       {post.cover_url && (
-        <img src={post.cover_url} alt={title} className="w-full aspect-video object-cover rounded-lg mb-6" />
+        <StorageImage src={post.cover_url} alt={title} className="w-full aspect-video object-cover rounded-lg mb-6" />
       )}
 
       <h1 className="text-3xl md:text-4xl font-extrabold leading-tight mb-3">{title}</h1>

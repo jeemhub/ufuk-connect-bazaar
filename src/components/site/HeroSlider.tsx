@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
@@ -61,7 +62,7 @@ export function HeroSlider() {
                   {/* Image side */}
                   <div className="relative md:col-span-7 overflow-hidden rounded-2xl md:m-3">
                     {p.cover_url ? (
-                      <img
+                      <StorageImage
                         src={optimizedImage(p.cover_url, { width: 900 }) ?? p.cover_url}
                         srcSet={optimizedSrcSet(p.cover_url, [600, 900, 1280])}
                         sizes="(max-width: 768px) 100vw, 60vw"

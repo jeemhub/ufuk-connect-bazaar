@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, DollarSign, FileWarning, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -106,7 +107,7 @@ export default function Dashboard() {
           <ul className="space-y-3">
             {products.slice(0, 5).map((p) => (
               <li key={p.id} className="flex items-center gap-3">
-                <img src={p.image} alt="" className="h-10 w-10 rounded-md border border-border object-cover" />
+                <StorageImage src={p.image} alt="" className="h-10 w-10 rounded-md border border-border object-cover" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{lang === "ar" ? p.nameAr : p.nameEn}</div>
                   <div className="text-xs text-muted-foreground">{p.brand}</div>
@@ -121,7 +122,7 @@ export default function Dashboard() {
       <div className="surface-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">{t("recent_orders")}</h2>
-          <a href="/admin/orders" className="text-xs font-semibold text-primary hover:underline">{t("view_all")}</a>
+          <StorageLink href="/admin/orders" className="text-xs font-semibold text-primary hover:underline">{t("view_all")}</StorageLink>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

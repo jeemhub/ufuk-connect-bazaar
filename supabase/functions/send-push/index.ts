@@ -1,3 +1,4 @@
+import { assertApprovedBackend, isServiceCaller } from "../_shared/migrationSafety.ts";
 // Edge function: send-push
 // Sends a Web Push notification to all subscriptions of a given user (or list of users).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -34,6 +35,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    if (Deno.env.get("UFUK_PUSH_ENABLED") !== "true") return new Response("Push disabled pending approved setup", { status: 503, headers: corsHeaders });
     if (!VAPID_PRIVATE) {
       return new Response(JSON.stringify({ error: "VAPID_PRIVATE_KEY not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -49,7 +51,8 @@ Deno.serve(async (req: Request) => {
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 
-    const isServiceRole = !!token && token === SERVICE_ROLE;
+    assertApprovedBackend(SUPABASE_URL);
+    const isServiceRole = isServiceCaller(req, SERVICE_ROLE);
 
     if (!isServiceRole) {
       // Verify user JWT and admin role

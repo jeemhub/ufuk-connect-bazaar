@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { Link, NavLink } from "react-router-dom";
 import { Languages, LogOut, ShieldCheck, User as UserIcon, Menu, X, BadgeCheck, ShoppingCart, Wrench } from "lucide-react";
 import { useCart } from "@/cart/CartContext";
@@ -61,7 +62,7 @@ export function SiteHeader() {
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
             <div className="relative">
               <div aria-hidden className="absolute inset-0 rounded-full bg-primary/20 blur-md" />
-              <img src={logo} alt={t("brand")} className="relative h-10 w-10 md:h-11 md:w-11 object-contain" />
+              <StorageImage src={logo} alt={t("brand")} className="relative h-10 w-10 md:h-11 md:w-11 object-contain" />
             </div>
             <div className="hidden sm:block leading-tight">
               <div className="text-sm font-bold tracking-tight">{t("brand")}</div>

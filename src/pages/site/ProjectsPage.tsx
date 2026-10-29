@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ArrowLeft, ImageIcon } from "lucide-react";
@@ -78,7 +79,7 @@ export default function ProjectsPage() {
               >
                 <div className="relative aspect-video w-full overflow-hidden bg-secondary">
                   {p.cover_url ? (
-                    <img
+                    <StorageImage
                       src={p.cover_url}
                       alt={title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

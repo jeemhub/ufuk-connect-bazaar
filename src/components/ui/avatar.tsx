@@ -2,6 +2,8 @@ import * as React from "react";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 
 import { cn } from "@/lib/utils";
+import { isApplicationStorage } from "@/lib/storageReferences";
+import { useSignedStorageUrl } from "@/components/site/StorageMedia";
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
@@ -15,10 +17,21 @@ const Avatar = React.forwardRef<
 ));
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
+const SignedAvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ src, ...props }, ref) => {
+  const { data } = useSignedStorageUrl(src!);
+  return <AvatarPrimitive.Image {...props} src={data} ref={ref} />;
+});
+SignedAvatarImage.displayName = "SignedAvatarImage";
+
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref) => isApplicationStorage(props.src) ? (
+  <SignedAvatarImage ref={ref} className={cn("aspect-square h-full w-full", className)} {...props} />
+) : (
   <AvatarPrimitive.Image ref={ref} className={cn("aspect-square h-full w-full", className)} {...props} />
 ));
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;

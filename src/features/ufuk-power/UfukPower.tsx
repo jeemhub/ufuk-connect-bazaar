@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useState, type ComponentType, type SVGProps } from 'react';
 import {History as HistoryIcon} from 'lucide-react';
 import {History} from './pages/History';
@@ -37,7 +38,7 @@ function Shell() {
       <Toasts />
       <div className="mx-auto max-w-3xl">
         <div className="flex items-center gap-3 px-4 pt-5">
-          <img src={logo} alt="أفق البصرة" className="h-10 w-auto" />
+          <StorageImage src={logo} alt="أفق البصرة" className="h-10 w-auto" />
           <div>
             <div className="text-lg font-extrabold leading-tight tracking-tight text-slate-900">UFUK POWER</div>
             <div className="text-xs text-slate-500">مراقبة والتحكم بعواكس MUST عبر حساب SmartValue</div>

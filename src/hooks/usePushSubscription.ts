@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
+import { pushEnabled } from "@/lib/migrationFeatures";
 
 // Public VAPID key (safe to expose). Private key is stored as a server secret.
 const VAPID_PUBLIC_KEY = "BFz5sdAQts-WBOFV17OebqvvpkruP_EflR5pq2mZ_6oYKRKEGd-N6xxYXp3mxj9wa4JgvUnhXdlm3BlcbxsKv6s";
@@ -22,7 +23,7 @@ export function usePushSubscription() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const ok = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    const ok = pushEnabled && typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
     setSupported(ok);
     if (ok) setPermission(Notification.permission);
   }, []);

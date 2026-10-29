@@ -1,3 +1,4 @@
+import { StorageLink } from "@/components/site/StorageMedia";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Eye, Phone, MapPin, Package2, Trash2, Copy } from "lucide-react";
@@ -248,7 +249,7 @@ export default function Orders() {
                 </div>
                 <div>
                   <div className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{ar ? "الهاتف" : "Phone"}</div>
-                  <a href={`tel:${current.customer_phone}`} className="mt-1 block font-mono text-sm font-semibold text-primary hover:underline">{current.customer_phone}</a>
+                  <StorageLink href={`tel:${current.customer_phone}`} className="mt-1 block font-mono text-sm font-semibold text-primary hover:underline">{current.customer_phone}</StorageLink>
                 </div>
                 <div className="sm:col-span-2">
                   <div className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{ar ? "العنوان" : "Address"}</div>

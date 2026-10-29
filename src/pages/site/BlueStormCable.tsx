@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ArrowDown, Download, ShieldCheck, Sun, Cable } from "lucide-react";
@@ -74,7 +75,7 @@ export default function BlueStormCable() {
     <div className="bs-cable">
       <Seo title={`BlueStorm CAT6 SFTP Outdoor | ${SITE_NAME}`} description={c.description} path="/bluestorm/cat6-sftp-outdoor" image={banner} type="product" lang={lang} jsonLd={{ "@context": "https://schema.org", "@type": "Product", name: "BlueStorm CAT6 SFTP Outdoor Cable 305m", sku: "BS-OSFTP6-305M", brand: { "@type": "Brand", name: "BlueStorm" }, image: `https://ufukalbasra.com${banner}`, description: c.description }} />
       <section className="bs-cable-hero" aria-labelledby="cable-title">
-        <img src={banner} alt={c.reelAlt} width={1672} height={941} fetchPriority="high" className="bs-cable-hero-image" />
+        <StorageImage src={banner} alt={c.reelAlt} width={1672} height={941} fetchPriority="high" className="bs-cable-hero-image" />
         <div className="bs-cable-hero-shade" aria-hidden="true" />
         <div className="bs-cable-hero-inner">
           <div className="bs-cable-hero-copy">
@@ -85,7 +86,7 @@ export default function BlueStormCable() {
               <Link className="bs-button" to={productPath}>{c.product}<Arrow size={17} aria-hidden="true" /></Link>
               <Link className="bs-button bs-button-outline" to={`/quote?product=${productId}`}>{c.quote}</Link>
             </div>
-            <a href="#cable-construction" className="bs-discover">{c.discover}<ArrowDown size={16} aria-hidden="true" /></a>
+            <StorageLink href="#cable-construction" className="bs-discover">{c.discover}<ArrowDown size={16} aria-hidden="true" /></StorageLink>
           </div>
         </div>
       </section>
@@ -105,7 +106,7 @@ export default function BlueStormCable() {
           </div>
         </div>
         <figure className="bs-cutaway bs-reveal">
-          <div className="bs-cutaway-frame"><img src="/images/bluestorm-feature/cable-cutaway.jpg" alt={c.cutawayAlt} loading="lazy" decoding="async" width={1536} height={1024} /></div>
+          <div className="bs-cutaway-frame"><StorageImage src="/images/bluestorm-feature/cable-cutaway.jpg" alt={c.cutawayAlt} loading="lazy" decoding="async" width={1536} height={1024} /></div>
           <figcaption>{c.illustration}</figcaption>
         </figure>
       </section>
@@ -118,7 +119,7 @@ export default function BlueStormCable() {
       </section>
 
       <section className="bs-specs bs-section bs-reveal" aria-labelledby="cable-specs-title">
-        <div><p className="bs-eyebrow"><bdi>BS-OSFTP6-305M</bdi></p><h2 id="cable-specs-title">{c.specTitle}</h2><p className="bs-muted bs-intro">{c.specIntro}</p><a className="bs-button" href={datasheet} target="_blank" rel="noopener noreferrer">{c.download}<Download size={17} aria-hidden="true" /></a><p className="bs-source">{c.source}</p></div>
+        <div><p className="bs-eyebrow"><bdi>BS-OSFTP6-305M</bdi></p><h2 id="cable-specs-title">{c.specTitle}</h2><p className="bs-muted bs-intro">{c.specIntro}</p><StorageLink className="bs-button" href={datasheet} target="_blank" rel="noopener noreferrer">{c.download}<Download size={17} aria-hidden="true" /></StorageLink><p className="bs-source">{c.source}</p></div>
         <table><caption className="sr-only">{c.specIntro}</caption><tbody>{c.specs.map(([key, value]) => <tr key={key}><th scope="row">{key}</th><td><bdi>{value}</bdi></td></tr>)}</tbody></table>
       </section>
 

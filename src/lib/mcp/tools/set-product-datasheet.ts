@@ -1,3 +1,4 @@
+import { storageReference } from "@/lib/storageReferences";
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { jsonResult, requireAdmin } from "../admin";
@@ -65,8 +66,11 @@ export default defineTool({
     if (storage_path) {
       // Uploaded earlier through create_datasheet_upload: read it back from its public link to verify it.
       newPath = storage_path;
-      datasheetUrl = bucket.getPublicUrl(storage_path).data.publicUrl;
-      const bytes = await downloadPdf(datasheetUrl, `No uploaded file found at ${storage_path}`);
+      datasheetUrl = storageReference(DATASHEET_BUCKET, storage_path);
+      const { data: blob, error: downloadError } = await bucket.download(storage_path);
+      if (downloadError || !blob) throw new ToolError("Uploaded PDF is unavailable");
+      if (blob.size > DATASHEET_MAX_BYTES) throw new ToolError("PDF is larger than 10 MB");
+      const bytes = new Uint8Array(await blob.arrayBuffer());
       if (!isPdf(bytes)) throw new ToolError("The file at storage_path is not a PDF");
       datasheetName = file_name ?? fileNameFromPath(storage_path);
     } else if (!remove) {
@@ -81,7 +85,7 @@ export default defineTool({
         cacheControl: "31536000",
       });
       if (uploadError) throw new ToolError(`Upload failed: ${uploadError.message}`);
-      datasheetUrl = bucket.getPublicUrl(uploadedPath).data.publicUrl;
+      datasheetUrl = storageReference(DATASHEET_BUCKET, uploadedPath);
       datasheetName = file_name ?? (pdf_url ? fileNameFromPath(new URL(pdf_url).pathname) : "datasheet.pdf");
     }
 

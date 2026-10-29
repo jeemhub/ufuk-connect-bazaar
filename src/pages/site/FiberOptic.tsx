@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, Cable, ChevronDown, CircleDot, Gauge, Network, Search, Wrench, X } from "lucide-react";
@@ -44,13 +45,13 @@ export default function FiberOptic() {
       path="/fiber-optic" image="/images/fiber/campaign.webp" lang={lang} />
 
     <section className="fiber-hero" dir="ltr" aria-labelledby="fiber-title">
-      <img className="fiber-hero-image" src="/images/fiber/campaign.webp" alt={ar ? "عرض توضيحي لمعدات الألياف الضوئية" : "Illustrative display of optical fiber equipment"} width="1672" height="941" fetchPriority="high" />
+      <StorageImage className="fiber-hero-image" src="/images/fiber/campaign.webp" alt={ar ? "عرض توضيحي لمعدات الألياف الضوئية" : "Illustrative display of optical fiber equipment"} width="1672" height="941" fetchPriority="high" />
       <div className="fiber-hero-shade" aria-hidden="true" />
       <div className="fiber-hero-copy" dir={ar ? "rtl" : "ltr"}>
         <span className="fiber-eyebrow">OPTICAL FIBER / UFUK AL-BASRA</span>
         <h1 id="fiber-title">{ar ? <>كل ما يلزم<br /><em>لوصلة أبعد.</em></> : <>Everything for<br /><em>a longer connection.</em></>}</h1>
         <p>{ar ? "من أول متر كيبل إلى آخر منفذ ضوئي. مجموعة واسعة من المنتجات الموجودة في كتالوجنا، مرتبة حسب دورها في الشبكة." : "From the first meter of cable to the final optical port. Explore our live catalog, organized by each product's role in the network."}</p>
-        <a href="#fiber-range" className="fiber-primary-button">{ar ? "تصفح المجموعة" : "Browse the range"}<ArrowDown size={18} aria-hidden="true" /></a>
+        <StorageLink href="#fiber-range" className="fiber-primary-button">{ar ? "تصفح المجموعة" : "Browse the range"}<ArrowDown size={18} aria-hidden="true" /></StorageLink>
       </div>
       <div className="fiber-hero-index" aria-hidden="true">01 — 06 <span>FIBER SOLUTIONS</span></div>
     </section>
@@ -61,7 +62,7 @@ export default function FiberOptic() {
         <div className="fiber-intro-aside"><p>{ar ? "ابدأ بالكيبل، ثم اختر الوصلات ووسائل التوزيع والوحدات المناسبة، وأكملها بأدوات الفحص. اضغط على أي منتج لعرض صوره وتفاصيله وسعره الحالي." : "Start with cable, choose the connections, distribution and modules that fit, then finish with test tools. Open any product for images, details and its current price."}</p><span className="fiber-live-count" aria-live="polite">{loading ? "…" : total}<small>{ar ? "منتج ضمن المجموعة" : "products in the range"}</small></span></div>
         <nav className="fiber-path" aria-label={ar ? "فئات منتجات الفايبر" : "Fiber product categories"}>{fiberCategories.map(category => {
           const Icon = icons[category.id];
-          return <a href={`#fiber-${category.id}`} key={category.id}><span className="fiber-path-icon"><Icon size={23} strokeWidth={1.6} aria-hidden="true" /></span><span className="fiber-path-number">{category.number} / {category.code}</span><strong>{category.title[lang]}</strong><span className="fiber-path-count">{loading ? "—" : groups[category.id].length}</span></a>;
+          return <StorageLink href={`#fiber-${category.id}`} key={category.id}><span className="fiber-path-icon"><Icon size={23} strokeWidth={1.6} aria-hidden="true" /></span><span className="fiber-path-number">{category.number} / {category.code}</span><strong>{category.title[lang]}</strong><span className="fiber-path-count">{loading ? "—" : groups[category.id].length}</span></StorageLink>;
         })}</nav>
       </div>
     </section>

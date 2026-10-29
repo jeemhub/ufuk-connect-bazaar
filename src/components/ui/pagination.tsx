@@ -1,3 +1,4 @@
+import { StorageLink } from "@/components/site/StorageMedia";
 import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
@@ -32,7 +33,7 @@ type PaginationLinkProps = {
   React.ComponentProps<"a">;
 
 const PaginationLink = ({ className, isActive, size = "icon", ...props }: PaginationLinkProps) => (
-  <a
+  <StorageLink
     aria-current={isActive ? "page" : undefined}
     className={cn(
       buttonVariants({

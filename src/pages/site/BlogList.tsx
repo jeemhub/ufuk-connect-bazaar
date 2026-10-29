@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
@@ -45,7 +46,7 @@ export default function BlogList() {
               className="surface-card group overflow-hidden transition-all hover:-translate-y-1 hover:shadow-elegant">
               <div className="aspect-video w-full overflow-hidden bg-secondary">
                 {p.cover_url ? (
-                  <img src={optimizedImage(p.cover_url, { width: 600 }) ?? p.cover_url}
+                  <StorageImage src={optimizedImage(p.cover_url, { width: 600 }) ?? p.cover_url}
                     srcSet={optimizedSrcSet(p.cover_url, [400, 600, 900])}
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     alt={lang === "ar" ? p.title_ar : p.title_en}

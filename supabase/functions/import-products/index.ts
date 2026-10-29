@@ -1,3 +1,4 @@
+import { assertApprovedBackend } from "../_shared/migrationSafety.ts";
 // Edge function: import-products
 // Applies a bulk Excel-driven update to the products table. UPDATE ONLY -
 // rows whose id doesn't exist are reported as skipped, never inserted.
@@ -57,7 +58,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_URL = assertApprovedBackend(Deno.env.get("SUPABASE_URL"));
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 

@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -79,7 +80,7 @@ export function BlueStormScrollSection() {
     return (
       <section ref={sectionRef} aria-label="BlueStorm LAN" className="bg-[#081d3b] px-5 py-16 text-white md:py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2">
-          <img src="/models/bluestorm-lan-reel.png" alt={lang === "ar" ? "بكرة كيبل BlueStorm مع نهاية كيبل مكشوفة" : "BlueStorm cable reel with exposed cable end"} className="mx-auto w-full max-w-xl" loading="lazy" />
+          <StorageImage src="/models/bluestorm-lan-reel.png" alt={lang === "ar" ? "بكرة كيبل BlueStorm مع نهاية كيبل مكشوفة" : "BlueStorm cable reel with exposed cable end"} className="mx-auto w-full max-w-xl" loading="lazy" />
           <div>
             <p className="mb-4 text-sm font-semibold text-[#9cc7f6]">BlueStorm LAN</p>
             <h2 id="bluestorm-title" className="text-4xl font-bold leading-tight md:text-5xl">{stages[0].title}</h2>
@@ -100,7 +101,7 @@ export function BlueStormScrollSection() {
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/15" />
 
         <div aria-hidden className={`pointer-events-none absolute top-[14%] h-[55%] w-full md:top-[3%] md:h-[93%] md:w-[67%] ${lang === "ar" ? "md:left-0" : "md:right-0"}`}>
-          <img
+          <StorageImage
             src="/models/bluestorm-lan-reel.png"
             alt=""
             className={`absolute inset-0 h-full w-full object-contain ${ready && !failed ? "opacity-0" : "opacity-100"}`}

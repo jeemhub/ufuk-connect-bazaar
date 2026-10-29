@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { SiteContextMenu } from "./SiteContextMenu";
 import { ProductActions } from "./ProductActions";
 import { productName, unstablePriceMessage } from "@/lib/catalog";
@@ -34,7 +35,7 @@ export function ProductCard({ product, imageFit = "cover" }: { product: Product;
     >
       {/* Image area */}
       <Link to={`/products/${product.id}`} className="relative block aspect-square overflow-hidden bg-gradient-to-br from-secondary/60 via-secondary/30 to-background">
-        {imageError ? <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground"><Package className="h-12 w-12 opacity-40" strokeWidth={1.4} /><span className="text-xs">{lang === "ar" ? "صورة المنتج غير متاحة" : "Product image unavailable"}</span></div> : <img
+        {imageError ? <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground"><Package className="h-12 w-12 opacity-40" strokeWidth={1.4} /><span className="text-xs">{lang === "ar" ? "صورة المنتج غير متاحة" : "Product image unavailable"}</span></div> : <StorageImage
           src={optimizedImage(product.image, { width: 600 }) ?? product.image}
           srcSet={optimizedSrcSet(product.image, [300, 450, 600, 900])}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"

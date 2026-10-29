@@ -1,3 +1,4 @@
+import { StorageLink } from "@/components/site/StorageMedia";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Cable, ShieldCheck, Sun, Truck, Zap, Star, Award, Users, Wrench, Globe2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -178,7 +179,7 @@ const Home = () => {
 
           {/* Inline rating / trust */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 animate-fade-in-up [animation-delay:480ms] text-base text-muted-foreground">
-            {safeHttps(settings.reviewsUrl) && settings.rating && <a href={settings.reviewsUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">{settings.rating} / 5 - {lang === "ar" ? "اقرأ تقييمات العملاء" : "Read customer reviews"}</a>}
+            {safeHttps(settings.reviewsUrl) && settings.rating && <StorageLink href={settings.reviewsUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">{settings.rating} / 5 - {lang === "ar" ? "اقرأ تقييمات العملاء" : "Read customer reviews"}</StorageLink>}
             <div className="h-4 w-px bg-border" />
             <div>{lang === "ar" ? "+5,000 عميل سعيد" : "5,000+ happy customers"}</div>
             <div className="h-4 w-px bg-border" />

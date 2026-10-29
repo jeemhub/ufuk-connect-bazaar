@@ -1,3 +1,5 @@
+import { storageReference } from "@/lib/storageReferences";
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { Plus, Edit, Trash2, Image as ImageIcon, Star, Crop, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -89,8 +91,8 @@ export default function AdminBlog() {
         .from("blog-images")
         .upload(path, blob, { upsert: true, contentType: "image/jpeg", cacheControl: "31536000" });
       if (error) { toast.error(error.message); return; }
-      const { data } = supabase.storage.from("blog-images").getPublicUrl(path);
-      setForm((f) => ({ ...f, cover_url: data.publicUrl }));
+      const publicUrl = storageReference("blog-images", path);
+      setForm((f) => ({ ...f, cover_url: publicUrl }));
     } finally {
       setUploading(false);
     }
@@ -150,7 +152,7 @@ export default function AdminBlog() {
             {posts.map((p) => (
               <div key={p.id} className="flex items-center gap-4 p-4">
                 <div className="h-16 w-24 shrink-0 overflow-hidden rounded bg-secondary">
-                  {p.cover_url ? <img src={p.cover_url} alt="" className="h-full w-full object-cover" /> :
+                  {p.cover_url ? <StorageImage src={p.cover_url} alt="" className="h-full w-full object-cover" /> :
                     <div className="h-full w-full flex items-center justify-center text-muted-foreground"><ImageIcon className="h-5 w-5" /></div>}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -285,7 +287,7 @@ export default function AdminBlog() {
                   </div>
                   <div className="grid md:grid-cols-12 gap-0 items-stretch min-h-[260px]">
                     <div className="relative md:col-span-7 overflow-hidden">
-                      <img
+                      <StorageImage
                         src={form.cover_url}
                         alt=""
                         className="h-48 md:h-full w-full object-cover"

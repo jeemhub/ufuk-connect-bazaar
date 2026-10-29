@@ -1,3 +1,4 @@
+import { StorageLink } from "@/components/site/StorageMedia";
 import { useEffect, useState } from "react";
 import { Mail, Phone, Building2, Loader2, Paperclip, Trash2 } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -102,15 +103,15 @@ export default function Quotes() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> <a href={`tel:${q.phone}`} className="font-medium hover:text-primary">{q.phone}</a></div>
-                {q.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /> <a href={`mailto:${q.email}`} className="font-medium hover:text-primary">{q.email}</a></div>}
+                <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> <StorageLink href={`tel:${q.phone}`} className="font-medium hover:text-primary">{q.phone}</StorageLink></div>
+                {q.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /> <StorageLink href={`mailto:${q.email}`} className="font-medium hover:text-primary">{q.email}</StorageLink></div>}
                 {q.company && <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-muted-foreground" /> {q.company}</div>}
                 {q.product_name && <div className="rounded-md bg-secondary/60 p-2 text-xs"><span className="font-semibold">{t("nav_products")}:</span> {q.product_name}</div>}
                 {q.message && <p className="rounded-md border border-border p-3 text-sm text-foreground/80">{q.message}</p>}
                 {q.attachments && q.attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-1">
                     {q.attachments.map((url, i) => (
-                      <a
+                      <StorageLink
                         key={i}
                         href={url}
                         target="_blank"
@@ -119,7 +120,7 @@ export default function Quotes() {
                       >
                         <Paperclip className="h-3 w-3" />
                         {`#${i + 1}`}
-                      </a>
+                      </StorageLink>
                     ))}
                   </div>
                 )}

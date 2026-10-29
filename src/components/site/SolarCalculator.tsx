@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useRef, useState } from "react";
 import { Battery, Bolt, CheckCircle2, ChevronLeft, ChevronRight, CircuitBoard, Download, Gauge, HelpCircle, Lightbulb, Lightbulb as Bulb, RefreshCw, Sun, TriangleAlert, Wrench, XCircle, Zap } from "lucide-react";
 import logoUrl from "@/assets/logo.png";
@@ -469,7 +470,7 @@ export default function SolarCalculator() {
             <div className="space-y-5 reveal-up">
               <div ref={reportRef} dir="rtl" className="space-y-5 bg-white p-3">
                 <div className="flex items-center justify-between rounded-xl border-2 border-amber-500/40 bg-amber-50 p-6">
-                  <img src={logoUrl} alt="افق البصرة" className="h-24 w-auto" crossOrigin="anonymous" />
+                  <StorageImage src={logoUrl} alt="افق البصرة" className="h-24 w-auto" crossOrigin="anonymous" />
                   <div className="text-left">
                     <div className="text-2xl font-extrabold text-amber-700">افق البصرة | Ufuk Albasra</div>
                     <div className="text-base font-semibold text-slate-700 mt-1">تقرير حاسبة الطاقة الشمسية</div>

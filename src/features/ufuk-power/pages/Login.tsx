@@ -1,3 +1,4 @@
+import { StorageLink } from "@/components/site/StorageMedia";
 import { useState } from 'react';
 import { useAuth } from '@/auth/AuthProvider';
 import { Sheet } from '../components/Sheet';
@@ -119,7 +120,7 @@ export function Login() {
               <p className="mt-1.5 text-xs leading-relaxed text-sky-800">
                 يمكنك إنشاء حساب جديد مجاناً وبسرعة على خادم Smart Value الرسمي عبر الرابط أدناه واضافة العاكس ، ثم العودة لتسجيل الدخول هنا:
               </p>
-              <a
+              <StorageLink
                 href="https://www.valueclouds.com/#/entry"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -129,21 +130,21 @@ export function Login() {
                 <svg className="size-3.5 ms-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </a>
+              </StorageLink>
             </div>
 
             {error && (
               <div className="rounded-2xl bg-red-50 p-4 text-xs text-red-800 space-y-2 border border-red-200">
                 <p className="font-bold">{error}</p>
                 <p>يرجى التأكد من إنشاء حسابك على موقع Smart Value الرسمي أولاً:</p>
-                <a
+                <StorageLink
                   href="https://www.valueclouds.com/#/entry"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 font-bold text-red-700 underline"
                 >
                   افتح موقع Smart Value لإنشاء الحساب ↗
-                </a>
+                </StorageLink>
               </div>
             )}
           </div>
@@ -215,14 +216,14 @@ export function Login() {
               {error && (
                 <div className="rounded-xl bg-red-50 p-3 text-xs text-red-700 space-y-2">
                   <p>{error}</p>
-                  <a
+                  <StorageLink
                     href="https://www.valueclouds.com/#/entry"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 font-bold text-red-700 underline"
                   >
                     انقر هنا لإنشاء أو إعادة ضبط الحساب في Smart Value ↗
-                  </a>
+                  </StorageLink>
                 </div>
               )}
 
@@ -259,14 +260,14 @@ export function Login() {
           {modalError && (
             <div className="rounded-xl bg-red-50 p-3 text-xs text-red-700 space-y-1.5">
               <p>{modalError}</p>
-              <a
+              <StorageLink
                 href="https://www.valueclouds.com/#/entry"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 font-bold text-red-700 underline"
               >
                 انتقل لموقع Smart Value لإنشاء الحساب ↗
-              </a>
+              </StorageLink>
             </div>
           )}
 

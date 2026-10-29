@@ -621,6 +621,20 @@ var delete_product_default = defineTool13({
   }
 });
 
+// src/lib/storageReferences.ts
+var TARGET_PROJECT = "hytdpmtahcmztezhbooc";
+var TARGET_ORIGIN = `https://${TARGET_PROJECT}.supabase.co`;
+var APPROVED_HOSTS = /* @__PURE__ */ new Set([`${TARGET_PROJECT}.supabase.co`, "ecbbhathvpxrgvfztzeu.supabase.co"]);
+var STORAGE_BUCKETS = /* @__PURE__ */ new Set(["product-images", "brand-logos", "blog-images", "project-images", "avatars", "quote-attachments"]);
+function validateObject(bucket, path) {
+  if (!STORAGE_BUCKETS.has(bucket) || !path || path.includes("\\") || /[\u0000-\u001f\u007f]/.test(path) || path.split("/").some((p) => !p || p === "." || p === "..")) throw new Error("Invalid application Storage reference");
+  return { bucket, path };
+}
+function storageReference(bucket, path) {
+  validateObject(bucket, path);
+  return `${TARGET_ORIGIN}/storage/v1/object/public/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
+}
+
 // src/lib/mcp/tools/set-product-datasheet.ts
 import { defineTool as defineTool14, ToolError as ToolError16 } from "npm:@lovable.dev/mcp-js@3.0.1";
 import { z as z14 } from "npm:zod@^3.25.76";
@@ -726,8 +740,11 @@ var set_product_datasheet_default = defineTool14({
     let uploadedPath = null;
     if (storage_path) {
       newPath = storage_path;
-      datasheetUrl = bucket.getPublicUrl(storage_path).data.publicUrl;
-      const bytes = await downloadPdf(datasheetUrl, `No uploaded file found at ${storage_path}`);
+      datasheetUrl = storageReference(DATASHEET_BUCKET, storage_path);
+      const { data: blob, error: downloadError } = await bucket.download(storage_path);
+      if (downloadError || !blob) throw new ToolError16("Uploaded PDF is unavailable");
+      if (blob.size > DATASHEET_MAX_BYTES) throw new ToolError16("PDF is larger than 10 MB");
+      const bytes = new Uint8Array(await blob.arrayBuffer());
       if (!isPdf(bytes)) throw new ToolError16("The file at storage_path is not a PDF");
       datasheetName = file_name ?? fileNameFromPath(storage_path);
     } else if (!remove) {
@@ -741,7 +758,7 @@ var set_product_datasheet_default = defineTool14({
         cacheControl: "31536000"
       });
       if (uploadError) throw new ToolError16(`Upload failed: ${uploadError.message}`);
-      datasheetUrl = bucket.getPublicUrl(uploadedPath).data.publicUrl;
+      datasheetUrl = storageReference(DATASHEET_BUCKET, uploadedPath);
       datasheetName = file_name ?? (pdf_url ? fileNameFromPath(new URL(pdf_url).pathname) : "datasheet.pdf");
     }
     const { data, error } = await supabase.from("products").update({ datasheet_url: datasheetUrl, datasheet_name: datasheetName }).in("id", ids).select(PRODUCT_COLUMNS);
@@ -781,7 +798,7 @@ var create_datasheet_upload_default = defineTool15({
     const storagePath = `${DATASHEET_FOLDER}/${crypto.randomUUID()}-${safePdfName(file_name)}`;
     const { data, error } = await supabase.storage.from(DATASHEET_BUCKET).createSignedUploadUrl(storagePath);
     if (error || !data) throw new ToolError17(`Could not create upload URL: ${error?.message ?? "no data"}`);
-    const publicUrl = supabase.storage.from(DATASHEET_BUCKET).getPublicUrl(storagePath).data.publicUrl;
+    const publicUrl = storageReference(DATASHEET_BUCKET, storagePath);
     const curl = `curl -X PUT -H "Content-Type: application/pdf" --data-binary @"<local file>" "${data.signedUrl}"`;
     return jsonResult(`Upload URL ready for ${storagePath}. PUT the PDF to upload_url, then call set_product_datasheet with storage_path.`, {
       upload_url: data.signedUrl,
@@ -1215,7 +1232,7 @@ var update_project_default = defineTool27({
 });
 
 // src/lib/mcp/index.ts
-var projectRef = "ecbbhathvpxrgvfztzeu";
+var projectRef = "hytdpmtahcmztezhbooc";
 var mcp_default = defineMcp({
   name: "ufuk-al-basra",
   title: "UFUK AL-Basra",

@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Package, Pause, Play } from "lucide-react";
@@ -43,7 +44,7 @@ const brandKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, ""
 function BrandVisual({ name, url }: { name: string; url: string | null }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   if (!url || failedUrl === url) return <span className="brand-constellation-wordmark" dir="auto">{name}</span>;
-  return <img src={optimizedImage(url, { width: 220 }) || url}
+  return <StorageImage src={optimizedImage(url, { width: 220 }) || url}
     srcSet={optimizedSrcSet(url, [120, 180, 220, 320])} sizes="(max-width: 700px) 68px, 110px"
     alt="" loading="lazy" decoding="async" width={120} height={56}
     onError={() => setFailedUrl(url)} />;
@@ -52,7 +53,7 @@ function BrandVisual({ name, url }: { name: string; url: string | null }) {
 function ProductVisual({ product, lang }: { product: Product; lang: "ar" | "en" }) {
   const [failed, setFailed] = useState(false);
   const name = (lang === "ar" ? product.nameAr : product.nameEn) || product.nameData || product.nameEn;
-  return failed ? <Package size={62} strokeWidth={1.2} aria-hidden="true" /> : <img src={optimizedImage(product.image, { width: 560 }) || product.image} alt={name} loading="eager" decoding="async" width={360} height={280} onError={() => setFailed(true)} />;
+  return failed ? <Package size={62} strokeWidth={1.2} aria-hidden="true" /> : <StorageImage src={optimizedImage(product.image, { width: 560 }) || product.image} alt={name} loading="eager" decoding="async" width={360} height={280} onError={() => setFailed(true)} />;
 }
 
 export function BrandStrip({ products }: { products: Product[] }) {
@@ -140,7 +141,7 @@ export function BrandStrip({ products }: { products: Product[] }) {
           <line key={active.id} x1="500" y1="280" x2={point.x * 10} y2={point.y * 5.6} className="brand-constellation-line-active" />
           <circle cx={point.x * 10} cy={point.y * 5.6} r="5" className="brand-constellation-endpoint" />
         </svg>
-        <div className="brand-constellation-hub"><img className="brand-constellation-hub-logo" src={logo} alt={ar ? "شعار أفق البصرة" : "UFUK AL-Basra logo"} width={158} height={124} /></div>
+        <div className="brand-constellation-hub"><StorageImage className="brand-constellation-hub-logo" src={logo} alt={ar ? "شعار أفق البصرة" : "UFUK AL-Basra logo"} width={158} height={124} /></div>
         {displayBrands.map((brand, index) => <button key={brand.id} type="button" className={`brand-constellation-node ${index === selectedIndex ? "is-active" : ""}`} style={{ "--node-x": `${positions[index].x}%`, "--node-y": `${positions[index].y}%`, "--node-index": index } as CSSProperties} aria-label={ar ? `اختر علامة ${brand.name}` : `Select ${brand.name}`} aria-pressed={index === selectedIndex} onClick={() => chooseBrand(index)}><span className="brand-constellation-node-logo"><BrandVisual name={brand.name} url={brand.logo_url} /></span><span className="brand-constellation-node-name" dir="auto">{brand.name}</span></button>)}
       </div>
 

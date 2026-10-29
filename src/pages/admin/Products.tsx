@@ -1,3 +1,5 @@
+import { storageReference } from "@/lib/storageReferences";
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { ProductsPdfButton } from "@/components/admin/ProductsPdfButton";
 import { PricingModeSettings } from "@/components/admin/PricingModeSettings";
 import { ParallelPrice } from "@/components/admin/ParallelPrice";
@@ -191,7 +193,7 @@ export default function Products() {
       contentType: blob.type, upsert: false, cacheControl: "31536000",
     });
     if (error) { toast.error(error.message); return null; }
-    return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+    return storageReference("product-images", path);
   }
 
   const [searchParams] = useSearchParams();
@@ -428,7 +430,7 @@ export default function Products() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                      <img src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" />
+                      <StorageImage src={p.image} alt="" className="h-12 w-12 rounded-md border border-border object-cover" />
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -725,7 +727,7 @@ export default function Products() {
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start rounded-md border border-dashed border-input p-3">
                   <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-secondary">
-                    {imageSrc ? <img src={imageSrc} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-8 w-8 text-muted-foreground" />}
+                    {imageSrc ? <StorageImage src={imageSrc} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-8 w-8 text-muted-foreground" />}
                   </div>
                   <div className="flex flex-1 flex-col gap-2">
                     <div className="flex flex-wrap gap-2">
@@ -777,9 +779,9 @@ export default function Products() {
               <Label htmlFor="datasheet">{t("datasheet")}</Label>
               {datasheet ? (
                 <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2">
-                  <a href={datasheet.url} target="_blank" rel="noreferrer" className="flex min-w-0 items-center gap-2 text-sm text-primary hover:underline">
+                  <StorageLink href={datasheet.url} target="_blank" rel="noreferrer" className="flex min-w-0 items-center gap-2 text-sm text-primary hover:underline">
                     <FileText className="h-4 w-4 shrink-0" /><span className="truncate">{datasheet.name}</span>
-                  </a>
+                  </StorageLink>
                   <Button type="button" variant="ghost" size="icon" onClick={() => setDatasheet(null)} className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive" aria-label={t("datasheet_remove")}>
                     <X className="h-4 w-4" />
                   </Button>
@@ -822,7 +824,7 @@ export default function Products() {
                 onClick={() => setSuggestPick(s.url)}
                 className={`overflow-hidden rounded-md border-2 transition ${suggestPick === s.url ? "border-primary" : "border-border"}`}
               >
-                <img src={s.thumb} alt={s.credit} className="h-24 w-full object-cover" loading="lazy" />
+                <StorageImage src={s.thumb} alt={s.credit} className="h-24 w-full object-cover" loading="lazy" />
                 <span className="block truncate px-1 py-0.5 text-[10px] text-muted-foreground">{s.credit}</span>
               </button>
             ))}

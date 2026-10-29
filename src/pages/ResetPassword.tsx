@@ -8,6 +8,8 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck } from "lucide-react";
+import { emailFeaturesEnabled } from "@/lib/migrationFeatures";
+import { MigrationFeatureUnavailable } from "@/components/site/MigrationFeatureUnavailable";
 
 const schema = z
   .object({
@@ -20,6 +22,10 @@ const schema = z
 const LINK_TIMEOUT_MS = 6000;
 
 export default function ResetPasswordPage() {
+  return emailFeaturesEnabled ? <EnabledResetPasswordPage /> : <MigrationFeatureUnavailable feature="recovery" />;
+}
+
+function EnabledResetPasswordPage() {
   const { t, lang, toggle } = useLanguage();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");

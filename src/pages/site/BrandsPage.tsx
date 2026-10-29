@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
@@ -176,7 +177,7 @@ export default function BrandsPage() {
 
                 <div className="relative flex h-20 w-full items-center justify-center">
                   {b.logo_url ? (
-                    <img src={b.logo_url} alt={b.name} loading="lazy" className="max-h-16 w-auto object-contain transition-all duration-500 group-hover:scale-110 group-hover:-rotate-2" />
+                    <StorageImage src={b.logo_url} alt={b.name} loading="lazy" className="max-h-16 w-auto object-contain transition-all duration-500 group-hover:scale-110 group-hover:-rotate-2" />
                   ) : (
                     <span className="text-2xl font-extrabold tracking-tight text-foreground/80 transition-colors duration-500 group-hover:text-primary">{b.name}</span>
                   )}

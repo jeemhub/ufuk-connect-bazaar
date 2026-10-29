@@ -1,3 +1,4 @@
+import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { unstablePriceMessage } from "@/lib/catalog";
 import { SiteContextMenu } from "@/components/site/SiteContextMenu";
 import { ProductInformation } from "@/components/site/ProductInformation";
@@ -114,7 +115,7 @@ export default function ProductDetail() {
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="group relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-secondary/40 via-background to-secondary/20 shadow-sm">
               <div className="aspect-square">
-                <img
+                <StorageImage
                   src={product.image}
                   alt={name}
                   className="h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-105"
@@ -257,10 +258,10 @@ export default function ProductDetail() {
                     </Button>
                     {product.datasheetUrl && (
                       <Button asChild size="lg" variant="outline" className="flex-1">
-                        <a href={product.datasheetUrl} target="_blank" rel="noopener noreferrer" download={product.datasheetName}>
+                        <StorageLink href={product.datasheetUrl} target="_blank" rel="noopener noreferrer" download={product.datasheetName}>
                           <Download className="me-2 h-4 w-4" />
                           <span translate="no" dir="ltr" className="notranslate">{t("download_datasheet")}</span>
-                        </a>
+                        </StorageLink>
                       </Button>
                     )}
                   </div>

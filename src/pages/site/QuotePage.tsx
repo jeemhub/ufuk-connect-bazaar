@@ -1,3 +1,5 @@
+import { storageReference } from "@/lib/storageReferences";
+import { StorageLink } from "@/components/site/StorageMedia";
 import { unstablePriceMessage } from "@/lib/catalog";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -81,8 +83,7 @@ export default function QuotePage() {
         cacheControl: "31536000",
       });
       if (error) throw error;
-      const { data } = supabase.storage.from("quote-attachments").getPublicUrl(path);
-      urls.push(data.publicUrl);
+      urls.push(storageReference("quote-attachments", path));
     }
     return urls;
   }
@@ -132,7 +133,7 @@ export default function QuotePage() {
           <p className="mt-4 text-xs leading-6">{lang === "ar" ? "هذه قائمة طلب عرض سعر وليست عرضًا نهائيًا أو فاتورة. الأسعار والتوفر والتوصيل تُؤكَّد من المبيعات." : "This is a quote request list, not a final quote or invoice. Sales confirms pricing, availability and delivery."}</p>
         </div>
         <div className="mt-4 space-y-3">{quoteProducts.map(p=><div key={p.id} className="flex flex-wrap items-center gap-2"><Label htmlFor={`quote-qty-${p.id}`} className="min-w-0 flex-1 text-sm">{productName(p,lang)}</Label><Input id={`quote-qty-${p.id}`} type="number" min={1} max={999} className="w-20" value={quantity(p.id)} onChange={e=>setQuoteQty(p.id, Math.max(1,Number(e.target.value)||1))} /><Button type="button" variant="ghost" onClick={()=>{setQuoteQty(p.id,0);if(productId===p.id){const next=new URLSearchParams(params);next.delete("product");setParams(next);}}}>{lang === "ar" ? "إزالة" : "Remove"}</Button></div>)}</div>
-        <div className="mt-4 flex flex-wrap gap-3"><Button type="button" variant="outline" disabled={pdfBusy || productsLoading || !!productsError || quoteProducts.length!==ids.length} onClick={async()=>{if(!summaryRef.current)return;setPdfBusy(true);try{await downloadQuoteSummary(summaryRef.current);}catch{toast.error(lang === "ar" ? "تعذر تنزيل الملف" : "Download failed");}finally{setPdfBusy(false);}}}>{lang === "ar" ? "تنزيل ملخص الطلب PDF" : "Download summary PDF"}</Button><Button asChild variant="outline"><a href="/products">{lang === "ar" ? "إضافة منتجات أخرى" : "Add more products"}</a></Button></div>
+        <div className="mt-4 flex flex-wrap gap-3"><Button type="button" variant="outline" disabled={pdfBusy || productsLoading || !!productsError || quoteProducts.length!==ids.length} onClick={async()=>{if(!summaryRef.current)return;setPdfBusy(true);try{await downloadQuoteSummary(summaryRef.current);}catch{toast.error(lang === "ar" ? "تعذر تنزيل الملف" : "Download failed");}finally{setPdfBusy(false);}}}>{lang === "ar" ? "تنزيل ملخص الطلب PDF" : "Download summary PDF"}</Button><Button asChild variant="outline"><StorageLink href="/products">{lang === "ar" ? "إضافة منتجات أخرى" : "Add more products"}</StorageLink></Button></div>
       </section>}
 
       {done ? (

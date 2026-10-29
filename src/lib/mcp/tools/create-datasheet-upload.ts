@@ -1,3 +1,4 @@
+import { storageReference } from "@/lib/storageReferences";
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { jsonResult, requireAdmin } from "../admin";
@@ -27,7 +28,7 @@ export default defineTool({
     const { data, error } = await supabase.storage.from(DATASHEET_BUCKET).createSignedUploadUrl(storagePath);
     if (error || !data) throw new ToolError(`Could not create upload URL: ${error?.message ?? "no data"}`);
 
-    const publicUrl = supabase.storage.from(DATASHEET_BUCKET).getPublicUrl(storagePath).data.publicUrl;
+    const publicUrl = storageReference(DATASHEET_BUCKET, storagePath);
     const curl = `curl -X PUT -H "Content-Type: application/pdf" --data-binary @"<local file>" "${data.signedUrl}"`;
 
     return jsonResult(`Upload URL ready for ${storagePath}. PUT the PDF to upload_url, then call set_product_datasheet with storage_path.`, {

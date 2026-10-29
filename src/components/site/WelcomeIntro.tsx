@@ -1,3 +1,4 @@
+import { StorageImage } from "@/components/site/StorageMedia";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -41,7 +42,7 @@ export function WelcomeIntro({ onComplete }: { onComplete: () => void }) {
       <div className="ufuk-welcome-content">
         <div className="ufuk-welcome-emblem">
           <span className="ufuk-welcome-orbit" aria-hidden="true" />
-          <div className="ufuk-welcome-logo"><img src={logo} width={100} height={100} alt="" /></div>
+          <div className="ufuk-welcome-logo"><StorageImage src={logo} width={100} height={100} alt="" /></div>
         </div>
         <p className="ufuk-welcome-kicker">{lang === "ar" ? "أهلاً بك في" : "WELCOME TO"}</p>
         <h2 id="welcome-title">{lang === "ar" ? "أُفُق البصرة" : "UFUK AL-Basra"}</h2>
