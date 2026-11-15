@@ -19,7 +19,7 @@ const schema = z
   .refine((d) => d.password === d.confirm, { path: ["confirm"], message: "mismatch" });
 
 /** How long to wait for the client to turn the emailed link into a session. */
-const LINK_TIMEOUT_MS = 6000;
+const LINK_TIMEOUT_MS = 15000;
 
 export default function ResetPasswordPage() {
   return emailFeaturesEnabled ? <EnabledResetPasswordPage /> : <MigrationFeatureUnavailable feature="recovery" />;
@@ -56,12 +56,12 @@ function EnabledResetPasswordPage() {
 
     // detectSessionInUrl consumes the link asynchronously; it may land before or
     // after this component mounts, so watch both the event and the current session.
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      if (event === "PASSWORD_RECOVERY" || s) accept();
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (s) accept();
     });
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       if (s) accept();
-    });
+    }).catch(()=>{if(!settled){settled=true;setStatus("invalid");}});
 
     const timer = setTimeout(() => {
       if (!settled) {
@@ -71,6 +71,7 @@ function EnabledResetPasswordPage() {
     }, LINK_TIMEOUT_MS);
 
     return () => {
+      settled=true;
       sub.subscription.unsubscribe();
       clearTimeout(timer);
     };
@@ -156,7 +157,7 @@ function EnabledResetPasswordPage() {
                 {t("auth_reset_invalid")}
               </p>
               <Button asChild className="w-full bg-gradient-brand">
-                <Link to="/auth">{t("auth_reset_request_new")}</Link>
+                <Link to="/auth?mode=forgot">{t("auth_reset_request_new")}</Link>
               </Button>
             </div>
           )}

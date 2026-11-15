@@ -1,0 +1,14 @@
+import {beforeEach,afterEach,expect,it,vi} from 'vitest';import {act,cleanup,render,screen,fireEvent,waitFor} from '@testing-library/react';import {MemoryRouter,Routes,Route} from 'react-router-dom';import {translations} from '@/i18n/translations';import ResetPassword from './ResetPassword';
+const sdk=vi.hoisted(()=>({getSession:vi.fn(),onAuthStateChange:vi.fn(),updateUser:vi.fn(),signOut:vi.fn()}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:sdk}}));vi.mock('@/lib/migrationFeatures',()=>({emailFeaturesEnabled:true}));vi.mock('@/i18n/LanguageContext',()=>({useLanguage:()=>({lang:'ar',t:(key:string)=>translations.ar[key as keyof typeof translations.ar]??key,toggle:vi.fn()})}));vi.mock('sonner',()=>({toast:{success:vi.fn(),error:vi.fn()}}));
+beforeEach(()=>{vi.clearAllMocks();window.history.replaceState(null,'','/auth/reset');sdk.getSession.mockResolvedValue({data:{session:null}});sdk.onAuthStateChange.mockReturnValue({data:{subscription:{unsubscribe:vi.fn()}}});sdk.updateUser.mockResolvedValue({error:null});sdk.signOut.mockResolvedValue({error:null});});afterEach(()=>{cleanup();vi.useRealTimers();window.history.replaceState(null,'','/');});
+const mount=()=>render(<MemoryRouter initialEntries={['/auth/reset']}><Routes><Route path='/auth/reset' element={<ResetPassword/>}/><Route path='/auth' element={<p>تسجيل الدخول بعد الاستعادة</p>}/></Routes></MemoryRouter>);
+it('accepts a verified recovery session, changes the password and ends the session',async()=>{
+ sdk.getSession.mockResolvedValueOnce({data:{session:{user:{id:'synthetic'}}}});mount();await screen.findByLabelText('كلمة المرور الجديدة');fireEvent.change(screen.getByLabelText('كلمة المرور الجديدة'),{target:{value:'NewStrong#123'}});fireEvent.change(screen.getByLabelText('تأكيد كلمة المرور'),{target:{value:'NewStrong#123'}});fireEvent.click(screen.getByRole('button',{name:'حفظ كلمة المرور'}));await waitFor(()=>expect(sdk.updateUser).toHaveBeenCalledWith({password:'NewStrong#123'}));await screen.findByText('تسجيل الدخول بعد الاستعادة');expect(sdk.signOut).toHaveBeenCalledOnce();
+});
+it('shows expired links with a direct link to request another email',()=>{
+ window.history.replaceState(null,'','/auth/reset#error=access_denied&error_code=otp_expired');mount();expect(screen.getByText(translations.ar.auth_reset_invalid)).toBeInTheDocument();expect(screen.getByRole('link',{name:'طلب رابط جديد'})).toHaveAttribute('href','/auth?mode=forgot');expect(sdk.updateUser).not.toHaveBeenCalled();
+});
+it('does not allow password updates without a session',async()=>{
+ vi.useFakeTimers();mount();await act(async()=>{await vi.advanceTimersByTimeAsync(15000);});expect(screen.queryByLabelText('كلمة المرور الجديدة')).not.toBeInTheDocument();expect(screen.getByText(translations.ar.auth_reset_invalid)).toBeInTheDocument();expect(sdk.updateUser).not.toHaveBeenCalled();
+});

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,15 @@ export default function AuthPage() {
   const { t, lang, toggle } = useLanguage();
   const { session, loading } = useAuth();
   const location = useLocation();
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [params,setParams]=useSearchParams();
+  const requestedMode=params.get("mode");
+  const mode=requestedMode==="signup"&&signupEnabled?"signup":requestedMode==="forgot"&&emailFeaturesEnabled?"forgot":"login";
+  const [formError,setFormError]=useState("");
+  const [signupSent,setSignupSent]=useState(false);
+  const setMode=(next:"login"|"signup"|"forgot")=>{
+    setParams(previous=>{const nextParams=new URLSearchParams(previous);if(next==="login")nextParams.delete("mode");else nextParams.set("mode",next);return nextParams;},{replace:true});
+    setPassword("");setConfirm("");setResetSent(false);setSignupSent(false);setFormError("");
+  };
   const [resetSent, setResetSent] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -72,6 +80,8 @@ export default function AuthPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if(busy)return;
+    setFormError("");
     if ((mode === "forgot" && !emailFeaturesEnabled) || (mode === "signup" && !signupEnabled)) {
       toast.error(lang === "ar" ? "بريد الموقع واستعادة الدخول قيد التجهيز؛ تواصل مع الإدارة." : "Email and account recovery are being prepared; contact the site owner.");
       return;
@@ -81,11 +91,17 @@ export default function AuthPage() {
       if (mode === "forgot") {
         const parsed = loginSchema.pick({ email: true }).safeParse({ email });
         if (!parsed.success) { toast.error(t("auth_invalid")); return; }
-        // Errors here are deliberately not surfaced: telling the caller whether a
-        // reset succeeded would confirm which addresses have accounts.
-        await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+        // The success message does not reveal whether this address has an account.
+        // Operational failures must still be shown, rather than falsely claiming delivery.
+        const {error}=await supabase.auth.resetPasswordForEmail(parsed.data.email, {
           redirectTo: `${window.location.origin}/auth/reset`,
         });
+        if(error){
+          const message=error.status===429||/rate|too many/i.test(error.message)
+            ? (lang==="ar"?"طلبات كثيرة. انتظر قليلًا ثم أعد المحاولة.":"Too many requests. Please try again shortly.")
+            : (lang==="ar"?"تعذر إرسال رابط الاستعادة الآن. حاول لاحقًا أو تواصل مع الشركة.":"Unable to send the reset link. Try later or contact us.");
+          setFormError(message);toast.error(message);return;
+        }
         setResetSent(true);
         toast.success(t("auth_forgot_sent"));
         return;
@@ -100,11 +116,11 @@ export default function AuthPage() {
           return;
         }
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email:parsed.data.email,
+          password:parsed.data.password,
           options: {
             emailRedirectTo: `${window.location.origin}${safeNext ?? "/"}`,
-            data: { full_name: fullName, phone },
+            data: { full_name: parsed.data.fullName, phone:parsed.data.phone },
           },
         });
         if (error) {
@@ -123,10 +139,11 @@ export default function AuthPage() {
         }
         toast.success(t("auth_signup_success"));
         setMode("login");
+        setSignupSent(true);
       } else {
         const parsed = loginSchema.safeParse({ email, password });
         if (!parsed.success) { toast.error(t("auth_invalid")); return; }
-        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+        const { error, data } = await supabase.auth.signInWithPassword({email:parsed.data.email,password:parsed.data.password});
         if (error) {
           await supabase.from("login_activity").insert({
             user_id: null, email, event: "login", success: false, user_agent: navigator.userAgent,
@@ -141,8 +158,9 @@ export default function AuthPage() {
         }
         toast.success(t("auth_login_success"));
       }
-    } catch (err) {
-      toast.error(t("auth_invalid"));
+    } catch {
+      const message=mode==="forgot"?(lang==="ar"?"تعذر الاتصال بخدمة البريد. حاول مجددًا.":"Unable to reach the email service. Please try again."):t("auth_invalid");
+      setFormError(message);toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -168,13 +186,18 @@ export default function AuthPage() {
             <span>{t("brand_tagline")}</span>
           </div>
 
+          {signupEnabled&&mode!=="forgot"&&<div role="tablist" aria-label={lang==="ar"?"خيارات الحساب":"Account options"} className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
+            {(["login","signup"] as const).map(value=><Button key={value} type="button" role="tab" id={`auth-tab-${value}`} aria-selected={mode===value} tabIndex={mode===value?0:-1} onKeyDown={e=>{if(["ArrowLeft","ArrowRight","Home","End"].includes(e.key)){e.preventDefault();const next=e.key==="Home"?"login":e.key==="End"?"signup":value==="login"?"signup":"login";setMode(next);requestAnimationFrame(()=>document.getElementById(`auth-tab-${next}`)?.focus());}}} aria-controls="auth-panel" disabled={busy} variant={mode===value?"default":"ghost"} onClick={()=>setMode(value)}>{t(value==="login"?"auth_title_login":"auth_title_signup")}</Button>)}
+          </div>}
           <h1 className="mb-2 text-2xl font-bold">{t(titleKey)}</h1>
           {mode === "forgot" && (
             <p className="mb-6 text-sm text-muted-foreground">{t("auth_forgot_hint")}</p>
           )}
           {mode !== "forgot" && <div className="mb-6" />}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {signupSent&&<p role="status" className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">{t("auth_signup_success")}</p>}
+          {formError&&<p role="alert" className="mb-4 text-sm text-destructive">{formError}</p>}
+          <form id="auth-panel" role={mode!=="forgot"&&signupEnabled?"tabpanel":undefined} aria-labelledby={mode!=="forgot"&&signupEnabled?`auth-tab-${mode}`:undefined} onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <>
                 <div>
@@ -199,7 +222,8 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => { setMode("forgot"); setResetSent(false); setPassword(""); }}
-                    className="text-xs font-medium text-primary hover:underline"
+                    disabled={busy}
+                    className="min-h-10 text-sm font-semibold text-primary hover:underline"
                   >
                     {t("auth_forgot_link")}
                   </button>
@@ -240,7 +264,7 @@ export default function AuthPage() {
           </form>
 
           {mode === "forgot" && resetSent && (
-            <p className="mt-4 rounded-md border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
+            <p role="status" className="mt-4 rounded-md border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
               {t("auth_forgot_sent")}
             </p>
           )}
@@ -254,18 +278,7 @@ export default function AuthPage() {
               >
                 {t("auth_back_to_login")}
               </button>
-            ) : signupEnabled ? (
-              <>
-                {mode === "login" ? t("auth_no_account") : t("auth_have_account")}{" "}
-                <button
-                  type="button"
-                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                  className="font-semibold text-primary hover:underline"
-                >
-                  {t(mode === "login" ? "auth_title_signup" : "auth_title_login")}
-                </button>
-              </>
-            ) : (
+            ) : signupEnabled ? null : (
               <p>{lang === "ar" ? "استعادة كلمة المرور والتسجيل الجديد قيد التجهيز. الحسابات الحالية محفوظة؛ تواصل مع الإدارة إذا تحتاج مساعدة بالدخول." : "Password recovery and new registration are being prepared. Existing accounts are preserved; contact the site owner for access help."}</p>
             )}
           </div>
