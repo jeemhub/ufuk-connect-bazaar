@@ -34,8 +34,8 @@ export function useCommerceSettings() {
   return { ...query, settings: query.data ?? defaultCommerce };
 }
 export interface ProductDetails { specs?: Record<string, string>; warranty?: string; manualUrl?: string }
-export function useProductDetails() {
-  return useQuery({ queryKey: ["product-details"], staleTime: 60_000, queryFn: async () => {
+export function useProductDetails(enabled = true) {
+  return useQuery({ queryKey: ["product-details"], enabled, staleTime: 300_000, retry: false, queryFn: async () => {
     const { data, error } = await supabase.from("site_pages").select("content_ar").eq("key", "product-details").maybeSingle();
     if (error) throw error;
     try {

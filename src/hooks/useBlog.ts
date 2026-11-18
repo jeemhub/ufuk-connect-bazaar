@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,39 +21,25 @@ export type BlogPost = {
   updated_at: string;
 };
 
+const SUMMARY_COLUMNS = "id,slug,title_en,title_ar,excerpt_en,excerpt_ar,cover_url,status,is_featured,featured_sort,view_count,published_at,created_at,updated_at";
 export function usePublishedPosts() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("blog_posts")
-      .select("*")
-      .eq("status", "published")
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
-    setPosts((data ?? []) as BlogPost[]);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { refresh(); }, [refresh]);
-  return { posts, loading, refresh };
+  const query = useQuery({ queryKey: ["blog", "published"], staleTime: 300_000, retry: false, queryFn: async () => {
+    const { data, error } = await supabase.from("blog_posts").select(SUMMARY_COLUMNS).eq("status", "published")
+      .order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as BlogPost[];
+  } });
+  return { posts: query.data ?? [], loading: query.isPending, refresh: query.refetch };
 }
 
 export function useFeaturedPosts() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  useEffect(() => {
-    supabase
-      .from("blog_posts")
-      .select("*")
-      .eq("status", "published")
-      .eq("is_featured", true)
-      .order("featured_sort", { ascending: true })
-      .limit(10)
-      .then(({ data }) => setPosts((data ?? []) as BlogPost[]));
-  }, []);
-  return posts;
+  const query = useQuery({ queryKey: ["blog", "featured"], staleTime: 300_000, retry: false, queryFn: async () => {
+    const { data, error } = await supabase.from("blog_posts").select(SUMMARY_COLUMNS).eq("status", "published")
+      .eq("is_featured", true).order("featured_sort", { ascending: true }).limit(10);
+    if (error) throw error;
+    return (data ?? []) as BlogPost[];
+  } });
+  return query.data ?? [];
 }
 
 export function usePost(slug: string | undefined) {

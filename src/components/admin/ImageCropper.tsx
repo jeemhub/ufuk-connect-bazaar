@@ -22,12 +22,13 @@ async function getCroppedDataUrl(src: string, area: Area): Promise<string> {
     i.src = src;
   });
   const canvas = document.createElement("canvas");
-  canvas.width = area.width;
-  canvas.height = area.height;
+  const scale = Math.min(1, 1280 / Math.max(area.width, area.height));
+  canvas.width = Math.max(1, Math.round(area.width * scale));
+  canvas.height = Math.max(1, Math.round(area.height * scale));
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas not supported");
-  ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, area.width, area.height);
-  return canvas.toDataURL("image/jpeg", 0.9);
+  ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/webp", 0.82);
 }
 
 export function ImageCropper({ open, src, onClose, onCropped, aspect = 1 }: ImageCropperProps) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/i18n/LanguageContext";
 import { categories } from "@/data/mockData";
 import { ProductCard } from "@/components/site/ProductCard";
-import { useProducts } from "@/hooks/useProducts";
+import { useCatalogPage, useCatalogIndex, useCategoryKeys, dbToProduct, type DbProductRow } from "@/hooks/useProducts";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useBrands } from "@/hooks/useBrands";
 import { Seo, SITE_NAME } from "@/components/seo/Seo";
 import { titleSpecs } from "@/lib/catalog";
@@ -27,8 +28,8 @@ export default function ProductsPage() {
   const subcategory = params.get("subcategory") || "all";
   const minimum = params.get("min") || "";
   const maximum = params.get("max") || "";
-  const [page,setPage] = useState(1);
-  const { data: details = {} } = useProductDetails();
+  const [pagination, setPagination] = useState({ key: "", page: 1 });
+  const { data: details = {}, isPending: detailsPending, error: detailsError } = useProductDetails(category !== "all");
   const specFields = useMemo(() => category === "networking" ? ["ports","poe","wifi"] : category === "solar" || category === "ups" ? ["power","capacity"] : [], [category]);
   const specLabels: Record<string,string> = lang === "ar" ? {ports:"عدد المنافذ",poe:"PoE",wifi:"جيل Wi-Fi",power:"القدرة",capacity:"سعة البطارية"} : {ports:"Ports",poe:"PoE",wifi:"Wi-Fi generation",power:"Power",capacity:"Battery capacity"};
   const setFilter = (key: string, value: string) => { const next = new URLSearchParams(params); if (!value || value === "all") next.delete(key); else next.set(key,value); setParams(next,{replace:true}); };
@@ -50,52 +51,55 @@ export default function ProductsPage() {
     setSearch("");
     setSort("newest");
   };
-  const { products, loading, error } = useProducts({ activeOnly: true });
+  const index = useCatalogIndex();
+  const categoryKeys = useCategoryKeys();
+  const indexed = useMemo(() => (index.data ?? []).map(row => dbToProduct(row as DbProductRow, row.category_id ? categoryKeys.data?.[row.category_id] : undefined)), [index.data, categoryKeys.data]);
   const { brands } = useBrands({ activeOnly: true });
   const brandNames = useMemo(
     () => ["all", ...Array.from(new Set((brands ?? []).map((b) => b.name).filter(Boolean)))],
     [brands]
   );
 
-  const scoped = products.filter(p => category === "all" || p.category === category);
-  const subcategories = [...new Set(scoped.map(p=>p.subcategory).filter(Boolean))];
-  const specsFor = useCallback((p: typeof products[number]) => details[p.id]?.specs ?? titleSpecs(p), [details]);
+  const scoped = indexed.filter(p => category === "all" || p.category === category);
+  const subcategories = [...new Set(scoped.map(p => p.subcategory).filter(Boolean))];
+  const specsFor = (p: typeof indexed[number]) => details[p.id]?.specs ?? titleSpecs(p);
   const qParam = params.get("q") ?? "";
   useEffect(() => { setSearch(qParam); }, [qParam]);
-
   useEffect(() => { document.title = `${t("nav_shop")} · ${t("brand")}`; }, [t]);
-
-  const filtered = useMemo(() => {
-    const searchTerms = search ? expandTokens(searchTokens(search)) : [];
-    let list = products.filter((p) => {
-      if (stock === "in" && p.stock <= 0 || stock === "out" && p.stock > 0) return false;
-      if (subcategory !== "all" && p.subcategory !== subcategory) return false;
-      if ((minimum || maximum) && p.priceIqd <= 0) return false;
-      if (minimum && p.priceIqd < Number(minimum) || maximum && p.priceIqd > Number(maximum)) return false;
-      if (specFields.some(key=>params.get(key) && specsFor(p)[key] !== params.get(key))) return false;
-      if (category !== "all" && p.category !== category) return false;
-      if (brand !== "all" && p.brand !== brand) return false;
-      if (searchTerms.length) {
-        const catMeta = categories.find((c) => c.key === p.category);
-        const hay = normalizeSearchText(
-          [p.nameAr, p.nameEn, p.nameData, p.brand, catMeta ? `${catMeta.ar} ${catMeta.en}` : p.category, p.subcategory, p.sku]
-            .filter(Boolean)
-            .join(" ")
-        );
-        return matchesAllTokens(hay, searchTerms);
-      }
-      return true;
-    });
-    if (sort === "price_low") list = [...list].sort((a, b) => (a.priceIqd || Infinity) - (b.priceIqd || Infinity));
-    if (sort === "price_high") list = [...list].sort((a, b) => (b.priceIqd || -Infinity) - (a.priceIqd || -Infinity));
-    return list;
-  }, [search, brand, category, sort, products, stock, subcategory, minimum, maximum, params, specFields, specsFor]);
-
+  const debouncedSearch = useDebouncedValue(search);
+  const debouncedMinimum = useDebouncedValue(minimum);
+  const debouncedMaximum = useDebouncedValue(maximum);
+  const selectedSpecs = Object.fromEntries(specFields.filter(key => params.get(key)).map(key => [key, params.get(key)!]));
+  const matchingIds = useMemo(() => {
+    if (!debouncedSearch.trim() && !Object.keys(selectedSpecs).length) return undefined;
+    const terms = expandTokens(searchTokens(debouncedSearch));
+    return scoped.filter(p => {
+      const specs = details[p.id]?.specs ?? titleSpecs(p);
+      if (Object.entries(selectedSpecs).some(([key, value]) => specs[key] !== value)) return false;
+      const c = categories.find(c => c.key === p.category);
+      return matchesAllTokens(normalizeSearchText([p.nameAr, p.nameEn, p.nameData, p.brand, c?.ar, c?.en, p.subcategory, p.sku].filter(Boolean).join(" ")), terms);
+    }).map(p => p.id);
+  // The URL holds all spec selections; scoped depends on the shared index, not page cards.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index.data, categoryKeys.data, category, details, debouncedSearch, params]);
+  const categoryId = Object.keys(categoryKeys.data ?? {}).find(id => categoryKeys.data?.[id] === category);
+  const filter = { categoryId, brand: brand === "all" ? undefined : brand, stock,
+    subcategory: subcategory === "all" ? undefined : subcategory,
+    minimum: debouncedMinimum ? Number(debouncedMinimum) : undefined,
+    maximum: debouncedMaximum ? Number(debouncedMaximum) : undefined, sort, ids: category !== "all" && !categoryId ? [] : matchingIds ?? (sort === "price_low" ? scoped.map(p => p.id) : undefined) };
+  const filterKey = JSON.stringify(filter);
+  const page = pagination.key === filterKey ? pagination.page : 1;
+  const setPage = (next: number) => setPagination({ key: filterKey, page: next });
+  const needsSpecs = Object.keys(selectedSpecs).length > 0;
+  const ready = !index.isPending && !categoryKeys.isPending && (!needsSpecs || !detailsPending);
+  const listing = useCatalogPage(filter, page, 24, ready);
+  const products = listing.products;
+  const loading = !ready || listing.loading;
+  const error = index.error?.message ?? categoryKeys.error?.message ?? (needsSpecs ? detailsError?.message : null) ?? listing.error;
   const hasFilters = params.size > 0 || !!search || sort !== "newest";
-  useEffect(()=>setPage(1),[search, brand, category, sort, stock, subcategory, minimum, maximum, params]);
-  const pages = Math.max(1, Math.ceil(filtered.length / 24));
-  const currentPage = Math.min(page,pages);
-
+  const pages = Math.max(1, Math.ceil(listing.total / 24));
+  const currentPage = Math.min(page, pages);
+  useEffect(() => { if (!loading && !error && page > pages) setPagination({ key: filterKey, page: pages }); }, [page, pages, loading, error, filterKey]);
 
   // ---- SEO: title/description reflect the active category & brand ----
   const catMeta = categories.find((c) => c.key === category);
@@ -219,8 +223,8 @@ export default function ProductsPage() {
         {/* Results meta */}
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            <span className="font-bold text-foreground">{filtered.length}</span>{" "}
-            {lang === "ar" ? "منتج" : filtered.length === 1 ? "product" : "products"}
+            <span className="font-bold text-foreground">{listing.total}</span>{" "}
+            {lang === "ar" ? "منتج" : listing.total === 1 ? "product" : "products"}
           </div>
         </div>
 
@@ -237,7 +241,7 @@ export default function ProductsPage() {
               </div>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : listing.total === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-16 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
               <Search className="h-6 w-6 text-muted-foreground" />
@@ -251,10 +255,10 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.slice((currentPage-1)*24,currentPage*24).map((p) => <ProductCard key={p.id} product={p} />)}
+            {products.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         )}
-        {pages>1 && <nav aria-label={lang === "ar" ? "صفحات المنتجات" : "Product pages"} className="mt-8 flex items-center justify-center gap-4"><Button variant="outline" disabled={currentPage===1} onClick={()=>{setPage(currentPage-1);window.scrollTo({top:300,behavior:"smooth"});}}>{lang === "ar" ? "السابق" : "Previous"}</Button><span aria-live="polite">{currentPage} / {pages}</span><Button variant="outline" disabled={currentPage===pages} onClick={()=>{setPage(currentPage+1);window.scrollTo({top:300,behavior:"smooth"});}}>{lang === "ar" ? "التالي" : "Next"}</Button></nav>}
+        {pages>1 && <nav aria-label={lang === "ar" ? "صفحات المنتجات" : "Product pages"} className="mt-8 flex items-center justify-center gap-4"><Button variant="outline" disabled={loading || currentPage===1} onClick={()=>{setPage(currentPage-1);window.scrollTo({top:300,behavior:"smooth"});}}>{lang === "ar" ? "السابق" : "Previous"}</Button><span aria-live="polite">{currentPage} / {pages}</span><Button variant="outline" disabled={loading || currentPage===pages} onClick={()=>{setPage(currentPage+1);window.scrollTo({top:300,behavior:"smooth"});}}>{lang === "ar" ? "التالي" : "Next"}</Button></nav>}
       </div>
     </div>
   );

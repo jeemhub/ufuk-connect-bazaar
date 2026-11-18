@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product, Brand, CategoryKey } from "@/data/mockData";
 import { collectCatalogPages } from "@/lib/catalogPagination";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CARD_COLUMNS, fetchCategoryKeys, fetchCatalogIndex, fetchCatalogPage, type CatalogFilter } from "@/lib/catalogRequests";
 
 export interface DbProductRow {
   id: string;
@@ -53,72 +55,70 @@ export function dbToProduct(r: DbProductRow, categoryKey?: string): Product {
   };
 }
 
-async function fetchCategoryKeyMap(): Promise<Record<string, string>> {
-  const { data } = await supabase.from("categories").select("id,key");
-  const m: Record<string, string> = {};
-  (data ?? []).forEach((c: { id: string; key: string }) => { m[c.id] = c.key; });
-  return m;
+export function useCategoryKeys() {
+  return useQuery({ queryKey: ["catalog", "categories"], queryFn: fetchCategoryKeys, staleTime: 300_000, retry: false });
 }
 
-/**
- * Customer-facing product list: reads from products_public view
- * which exposes eligible price tiers and masks all prices for unstable brands.
- */
-export function useProducts(opts?: { activeOnly?: boolean }) {
-  const { pricingTier, user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function useCatalogScope() {
+  const { pricingTier, user, loading, isBlocked } = useAuth();
+  return { scope: [user?.id ?? "anonymous", pricingTier, !!isBlocked], ready: !loading };
+}
 
-  const refetch = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [rows, catMap] = await Promise.all([
-        collectCatalogPages<DbProductRow>(async (after, limit) => {
-          let query = supabase.from("products_public" as never).select("*").order("id", { ascending: true }).limit(limit);
-          if (after) query = query.gt("id", after);
-          const result = await query;
-          return { data: result.data as unknown as DbProductRow[] | null, error: result.error };
-        }),
-        fetchCategoryKeyMap(),
-      ]);
-      setProducts(rows.map((r) => dbToProduct(r, r.category_id ? catMap[r.category_id] : undefined)));
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Catalog unavailable");
-    } finally {
-      setLoading(false);
-    }
-  };
+export function useCatalogIndex(enabled = true) {
+  const { scope, ready } = useCatalogScope();
+  return useQuery({ queryKey: ["catalog", "index", ...scope], queryFn: fetchCatalogIndex,
+    enabled: enabled && ready, staleTime: 300_000, gcTime: 600_000, retry: false });
+}
 
-  useEffect(() => {
-    refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opts?.activeOnly, pricingTier, user?.id]);
+export function useCatalogPage(filter: CatalogFilter, page = 1, pageSize = 24, enabled = true) {
+  const { scope, ready } = useCatalogScope();
+  const categories = useCategoryKeys();
+  const query = useQuery({ queryKey: ["catalog", "page", ...scope, filter, page, pageSize],
+    queryFn: () => fetchCatalogPage(filter, page, pageSize), enabled: ready && enabled,
+    staleTime: 60_000, gcTime: 300_000, retry: false });
+  return { products: (query.data?.rows ?? []).map(row => dbToProduct(row, row.category_id ? categories.data?.[row.category_id] : undefined)),
+    total: query.data?.total ?? 0, loading: enabled && (!ready || query.isPending || categories.isPending),
+    error: query.error?.message ?? categories.error?.message ?? null, refetch: query.refetch };
+}
 
-  return { products, loading, error, refetch };
+// Shared cache is scoped by account and pricing tier; never reuse another account's prices.
+export function useProducts(opts?: { activeOnly?: boolean; ids?: string[]; category?: string; brand?: string; limit?: number; inStock?: boolean; featured?: boolean; excludeId?: string; enabled?: boolean }) {
+  const { scope, ready } = useCatalogScope();
+  const categories = useCategoryKeys();
+  const categoryId = Object.keys(categories.data ?? {}).find(id => categories.data?.[id] === opts?.category);
+  const enabled = opts?.enabled !== false && ready && (!opts?.category || !!categoryId);
+  const query = useQuery({ queryKey: ["catalog", "products", ...scope, opts], enabled,
+    staleTime: 60_000, gcTime: 300_000, retry: false,
+    queryFn: async () => {
+      if (opts?.ids?.length === 0) return [];
+      if (opts?.limit || opts?.ids) return (await fetchCatalogPage({ ids: opts.ids, categoryId, brand: opts?.brand,
+        stock: opts?.inStock ? "in" : undefined, featured: opts?.featured, excludeId: opts?.excludeId }, 1, opts?.limit ?? opts?.ids?.length ?? 24)).rows;
+      return collectCatalogPages<DbProductRow>(async (after, limit) => {
+        let request = supabase.from("products_public" as never).select(CARD_COLUMNS).order("id").limit(limit);
+        if (categoryId) request = request.eq("category_id", categoryId);
+        if (opts?.brand) request = request.eq("brand", opts.brand);
+        if (after) request = request.gt("id", after);
+        const { data, error } = await request;
+        return { data: data as unknown as DbProductRow[] | null, error };
+      });
+    } });
+  return { products: (query.data ?? []).map(row => dbToProduct(row, row.category_id ? categories.data?.[row.category_id] : undefined)),
+    loading: opts?.enabled !== false && (!ready || query.isPending || categories.isPending),
+    error: query.error?.message ?? categories.error?.message ?? null, refetch: query.refetch };
 }
 
 export function useProduct(id: string | undefined) {
-  const { pricingTier, user } = useAuth();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!id) { setLoading(false); return; }
-    (async () => {
-      setLoading(true);
-      const [{ data }, catMap] = await Promise.all([
-        supabase.from("products_public" as never).select("*").eq("id", id).maybeSingle(),
-        fetchCategoryKeyMap(),
-      ]);
-      const row = data as unknown as DbProductRow | null;
-      setProduct(row ? dbToProduct(row, row.category_id ? catMap[row.category_id] : undefined) : null);
-      setLoading(false);
-    })();
-  }, [id, pricingTier, user?.id]);
-
-  return { product, loading };
+  const { scope, ready } = useCatalogScope();
+  const categories = useCategoryKeys();
+  const query = useQuery({ queryKey: ["catalog", "product", ...scope, id], enabled: !!id && ready,
+    staleTime: 60_000, gcTime: 300_000, retry: false, queryFn: async () => {
+      const { data, error } = await supabase.from("products_public" as never).select("*").eq("id", id!).maybeSingle();
+      if (error) throw error;
+      return data as unknown as DbProductRow | null;
+    } });
+  const row = query.data;
+  return { product: row ? dbToProduct(row, row.category_id ? categories.data?.[row.category_id] : undefined) : null,
+    loading: !!id && (!ready || query.isPending || categories.isPending), error: query.error?.message ?? null };
 }
 
 /**
@@ -130,6 +130,7 @@ export interface AdminProductRow extends DbProductRow {
 }
 
 export function useAdminProducts() {
+  const cache = useQueryClient();
   const [rows, setRows] = useState<AdminProductRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -150,6 +151,7 @@ export function useAdminProducts() {
       if (chunk.length < pageSize) break;
     }
     setRows(all);
+    void cache.invalidateQueries({ queryKey: ["catalog"] });
     setLoading(false);
   };
 

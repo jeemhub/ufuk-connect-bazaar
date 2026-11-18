@@ -14,7 +14,7 @@ export function GlobalPriceSettings() {
   const save=useMutation({mutationFn:async(enabled:boolean)=>{
     const {data,error}=await supabase.from("site_pages").update({content_ar:String(enabled)}).eq("key","global-price-visibility").select("key").single();
     if(error || !data) throw error || new Error("Price setting update failed"); return enabled;
-  },onSuccess:enabled=>{client.setQueryData(key,enabled);toast.success(ar ? "تم تحديث عرض أسعار الموقع" : "Site pricing updated");},onError:()=>toast.error(ar ? "تعذر تحديث عرض الأسعار" : "Failed to update pricing")});
+  },onSuccess:enabled=>{client.setQueryData(key,enabled);void client.invalidateQueries({queryKey:["catalog"]});toast.success(ar ? "تم تحديث عرض أسعار الموقع" : "Site pricing updated");},onError:()=>toast.error(ar ? "تعذر تحديث عرض الأسعار" : "Failed to update pricing")});
   return <section className="surface-card p-5">
     <h2 className="font-semibold">{ar ? "عرض أسعار الموقع" : "Site price visibility"}</h2>
     <div className="mt-4 flex items-center justify-between gap-3">

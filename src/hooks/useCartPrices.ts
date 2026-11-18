@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { dbToProduct, type DbProductRow } from "./useProducts";
+import { CARD_COLUMNS } from "@/lib/catalogRequests";
 import { applicablePrice } from "@/lib/catalog";
 
 type CartPrice = { price: number; unstable: boolean };
@@ -22,7 +23,7 @@ export function useCartPrices(ids: string[], open: boolean) {
       try {
         const productIds: string[] = JSON.parse(idsKey);
         if (productIds.length === 0) { if (!cancelled) setResult({ key, prices: {} }); return; }
-        const { data, error } = await supabase.from("products_public" as never).select("*").in("id", productIds);
+        const { data, error } = await supabase.from("products_public" as never).select(CARD_COLUMNS).in("id", productIds);
         if (error) { if (!cancelled) setResult({ key, prices: {} }); return; }
         const prices: Record<string, CartPrice> = {};
         for (const row of (data ?? []) as unknown as DbProductRow[]) {

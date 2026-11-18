@@ -22,7 +22,7 @@ export default function ProductDetail() {
   const { t, lang } = useLanguage();
   const { pricingTier } = useAuth();
   const { product, loading } = useProduct(id);
-  const { products } = useProducts({ activeOnly: true });
+  const { products } = useProducts({ activeOnly: true, category: product?.category, inStock: true, excludeId: id, limit: 4, enabled: !!product });
 
   const rawName = product ? (lang === "ar" ? product.nameAr : product.nameEn) : "";
   const isFallbackName = product ? !rawName?.trim() && !!product.nameData?.trim() : false;

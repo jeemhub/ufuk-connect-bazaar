@@ -28,7 +28,7 @@ import { GlobalSearch } from "@/components/site/GlobalSearch";
 const Home = () => {
   const { t, lang } = useLanguage();
   const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
-  const { products } = useProducts({ activeOnly: true });
+  const { products } = useProducts({ activeOnly: true, featured: true, limit: 8 });
   const featured = products.filter(p => p.stock > 0 && p.priceIqd > 0).slice(0, 8);
   const { settings } = useCommerceSettings();
 

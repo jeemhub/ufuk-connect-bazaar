@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const state = vi.hoisted(() => ({ scope: "user-a", deny: false, calls: [] as string[][], switchDuringSign: false }));
+const state = vi.hoisted(() => ({ scope: "user-a", deny: false, calls: [] as string[][], switchDuringSign: false, ttl: 0 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   auth: { getSession: async () => ({ data: { session: state.scope === "anonymous" ? null : { user: { id: state.scope } } }, error: null }) },
-  storage: { from: () => ({ createSignedUrls: async (paths: string[]) => {
+  storage: { from: () => ({ createSignedUrls: async (paths: string[], ttl: number) => {
+    state.ttl = ttl;
     state.calls.push(paths);
     if (state.switchDuringSign) state.scope = "user-b";
     return state.deny ? { data: null, error: { message: "denied" } } : { data: paths.map(path => ({ path, signedUrl: `https://target.test/signed/${path}?token=TEST_ONLY` })), error: null };
   } }) },
 } }));
-import { signStorageReference } from "./storageSigning";
+import { signStorageReference, mediaTiming } from "./storageSigning";
 import { storageReference } from "./storageReferences";
 beforeEach(() => { state.scope = "user-a"; state.deny = false; state.calls = []; state.switchDuringSign = false; });
 describe("private media signing", () => {
@@ -26,6 +27,14 @@ describe("private media signing", () => {
     await expect(signStorageReference(value, "other-user")).rejects.toThrow();expect(state.calls).toHaveLength(0);
     state.switchDuringSign = true;
     await expect(signStorageReference(value, "user-a")).rejects.toThrow();
+  });
+  it("reduces catalogue refreshes without extending private file access", async () => {
+    const publicMedia = storageReference("product-images", "products/photo.webp");
+    await signStorageReference(publicMedia, "user-a"); expect(state.ttl).toBe(3600);
+    expect(mediaTiming(publicMedia).refresh).toBe(55 * 60_000);
+    await signStorageReference(storageReference("quote-attachments", "user-a/private.pdf"), "user-a");
+    expect(state.ttl).toBe(60);
+    expect(mediaTiming(storageReference("avatars", "user-a/photo.webp")).refresh).toBe(45_000);
   });
   it("keeps static and external assets independent from storage authorization", async () => {
     expect(await signStorageReference("/images/logo.png", "anonymous")).toBe("/images/logo.png");expect(state.calls).toHaveLength(0);

@@ -37,11 +37,11 @@ export default function QuotePage() {
   const [params,setParams] = useSearchParams();
   const productId = params.get("product");
   const { product } = useProduct(productId ?? undefined);
-  const { products, loading: productsLoading, error: productsError } = useProducts({activeOnly:true});
   const { quote, setQuoteQty, clearQuote } = useSelection();
   const summaryRef = useRef<HTMLDivElement>(null);
   const [pdfBusy,setPdfBusy] = useState(false);
   const ids = [...new Set([...Object.keys(quote), ...(productId ? [productId] : [])])];
+  const { products, loading: productsLoading, error: productsError } = useProducts({activeOnly:true, ids});
   const quoteProducts = ids.map(id => products.find(p => p.id === id)).filter(p => !!p);
   const quantity = (id: string) => quote[id] ?? 1;
   const estimatedTotal = quoteProducts.reduce((sum,p)=>sum+Math.max(0,applicablePrice(p,pricingTier))*quantity(p.id),0);

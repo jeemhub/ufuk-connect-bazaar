@@ -6,7 +6,10 @@ import { SIGNED_MEDIA_STALE_MS, SIGNED_MEDIA_REFRESH_MS } from "@/lib/storageSig
 type Props = Omit<HTMLAttributes<HTMLElement>, "children" | "dangerouslySetInnerHTML"> & { html: string };
 function SignedRichText({ html, ...props }: Props) {
   const { user, loading } = useAuth();const scope = user?.id ?? "anonymous";
-  const { data } = useQuery({ queryKey: ["private-storage-html", scope, html], queryFn: () => resolvedStorageHtml(html, scope), enabled: !loading, staleTime: SIGNED_MEDIA_STALE_MS, gcTime: SIGNED_MEDIA_REFRESH_MS, refetchInterval: SIGNED_MEDIA_REFRESH_MS, retry: false });
+  const personal = /\/(avatars|quote-attachments)\//.test(html);
+  const stale = personal ? SIGNED_MEDIA_STALE_MS : 50 * 60_000;
+  const refresh = personal ? SIGNED_MEDIA_REFRESH_MS : 55 * 60_000;
+  const { data } = useQuery({ queryKey: ["private-storage-html", scope, html], queryFn: () => resolvedStorageHtml(html, scope), enabled: !loading, staleTime: stale, gcTime: refresh, refetchInterval: refresh, retry: false });
   return <article {...props} dangerouslySetInnerHTML={{ __html: data ?? html }} />;
 }
 export function StorageRichText({ html, ...props }: Props) {

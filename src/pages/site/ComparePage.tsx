@@ -13,7 +13,7 @@ import { AddToCartButton } from "@/components/site/AddToCartButton";
 import { Seo } from "@/components/seo/Seo";
 
 export default function ComparePage() {
-  const { compare, toggleCompare } = useSelection(); const { products, loading, error } = useProducts({ activeOnly: true });
+  const { compare, toggleCompare } = useSelection(); const { products, loading, error } = useProducts({ activeOnly: true, ids: compare });
   const { lang } = useLanguage(); const ar = lang === "ar"; const { pricingTier } = useAuth();
   const { data: details = {} } = useProductDetails();
   const selected = compare.map(id => products.find(p => p.id === id)).filter(p => !!p);

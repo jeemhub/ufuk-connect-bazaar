@@ -1,3 +1,4 @@
+import { OptimizeProductImages } from "@/components/admin/OptimizeProductImages";
 import { storageReference } from "@/lib/storageReferences";
 import { StorageImage, StorageLink } from "@/components/site/StorageMedia";
 import { ProductsPdfButton } from "@/components/admin/ProductsPdfButton";
@@ -340,6 +341,7 @@ export default function Products() {
         </div>
         <div className="flex flex-wrap gap-2">
           <ProductsPdfButton products={filtered} brand={brand} category={cat} search={search} loading={loading} />
+          {isAdmin && <OptimizeProductImages rows={rows} onComplete={refetch} />}
           <DropdownMenu dir={lang === "ar" ? "rtl" : "ltr"}>
             <DropdownMenuTrigger asChild><Button variant="outline" className="gap-2" disabled={exporting}><FileSpreadsheet className="h-4 w-4" />{lang === "ar" ? "استيراد وتصدير" : "Import and export"}<ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">

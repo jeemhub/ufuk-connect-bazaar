@@ -14,6 +14,7 @@ function stage(root: ParentNode) {
       const object = storageObject(raw);
       if (!object) continue;
       const canonical = storageReference(object.bucket, object.path);
+      if (node.tagName === "IMG") { node.setAttribute("loading", "lazy"); node.setAttribute("decoding", "async"); }
       if (node.getAttribute(REF) === canonical && node.hasAttribute(SCOPE)) continue;
       node.setAttribute(REF, canonical);node.setAttribute(ATTR, attr);node.removeAttribute(attr);node.removeAttribute("srcset");
     } catch { node.removeAttribute(attr);node.removeAttribute("srcset"); }

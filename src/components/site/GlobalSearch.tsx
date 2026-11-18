@@ -16,7 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useProducts } from "@/hooks/useProducts";
+import { useProducts, useCatalogIndex, useCategoryKeys, dbToProduct, type DbProductRow } from "@/hooks/useProducts";
+import { useBrands } from "@/hooks/useBrands";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { optimizedImage } from "@/lib/img";
 import { categories } from "@/data/mockData";
 import { expandTokens, foldSearchText, matchesAllTokens, normalizeSearchText, searchTokens } from "@/lib/search";
@@ -93,9 +95,14 @@ export function GlobalSearch() {
   const ar = lang === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
   const navigate = useNavigate();
-  const { products, loading } = useProducts({ activeOnly: true });
 
   const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q);
+  const index = useCatalogIndex(!!debouncedQ.trim());
+  const keys = useCategoryKeys();
+  const products = useMemo(() => (index.data ?? []).map(row => dbToProduct(row as DbProductRow, row.category_id ? keys.data?.[row.category_id] : undefined)), [index.data, keys.data]);
+  const loading = !!debouncedQ.trim() && index.isPending;
+  const { brands } = useBrands({ activeOnly: true });
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const [active, setActive] = useState(-1);
@@ -104,9 +111,8 @@ export function GlobalSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Filtering runs over the whole catalogue on every keystroke; deferring it keeps
-  // typing responsive on large lists.
-  const deferredQ = useDeferredValue(q);
+  // Delay name-index requests until typing settles; reuse it across searches.
+  const deferredQ = useDeferredValue(debouncedQ);
   const tokens = useMemo(() => searchTokens(deferredQ), [deferredQ]);
   const matchTokens = useMemo(() => expandTokens(tokens), [tokens]);
 
@@ -174,7 +180,7 @@ export function GlobalSearch() {
   }, [products, ar]);
 
   const brandSuggestions = useMemo(() => {
-    const names = Array.from(new Set(products.map((p) => p.brand).filter(Boolean)));
+    const names = (brands ?? []).map(b => b.name);
     return names.map((name) => ({
       suggestion: {
         kind: "brand" as const,
@@ -185,7 +191,7 @@ export function GlobalSearch() {
       } satisfies Suggestion,
       haystack: normalizeSearchText(name),
     }));
-  }, [products, ar]);
+  }, [brands, ar]);
 
   const results: Suggestion[] = useMemo(() => {
     if (!tokens.length) return [];
@@ -204,7 +210,6 @@ export function GlobalSearch() {
         key: `product:${p.id}`,
         label: (ar ? p.nameAr || p.nameEn : p.nameEn || p.nameAr) || p.nameData || p.sku,
         sub: [p.brand, p.subcategory].filter(Boolean).join(" · "),
-        image: p.image,
         to: `/products/${p.id}`,
       }));
 
@@ -221,6 +226,9 @@ export function GlobalSearch() {
       ),
     ];
   }, [tokens, matchTokens, indexedProducts, categorySuggestions, brandSuggestions, pages, ar]);
+
+  const thumbnailIds = results.filter(result => result.kind === "product").map(result => result.key.slice("product:".length));
+  const { products: thumbnails } = useProducts({ ids: thumbnailIds, enabled: !!debouncedQ.trim(), limit: 6 });
 
   /** Grouped for display, carrying the flat index each row has for keyboard nav. */
   const groups = useMemo(() => {
@@ -403,6 +411,7 @@ export function GlobalSearch() {
                     <div>
                       {group.items.map(({ suggestion, index }) => {
                         const Icon = KIND_ICON[suggestion.kind];
+                        const image = suggestion.kind === "product" ? thumbnails.find(p => `product:${p.id}` === suggestion.key)?.image : undefined;
                         const isActive = index === active;
                         return (
                             <button
@@ -418,9 +427,9 @@ export function GlobalSearch() {
                                 isActive ? "bg-accent" : "hover:bg-accent/60"
                               }`}
                             >
-                              {suggestion.kind === "product" && suggestion.image ? (
+                              {suggestion.kind === "product" && image ? (
                                 <StorageImage
-                                  src={optimizedImage(suggestion.image, { width: 80 })}
+                                  src={optimizedImage(image, { width: 80 })}
                                   alt=""
                                   loading="lazy"
                                   className="h-10 w-10 shrink-0 rounded-lg border border-border bg-background object-contain"

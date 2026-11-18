@@ -1,3 +1,4 @@
+import { optimizeUpload } from "@/lib/optimizeUpload";
 import { storageReference } from "@/lib/storageReferences";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
@@ -83,6 +84,7 @@ export function RichTextEditor({
   const uploadImage = async (file: File) => {
     setUploading(true);
     try {
+      file = await optimizeUpload(file);
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${user?.id ?? "admin"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false, contentType: file.type, cacheControl: "31536000" });

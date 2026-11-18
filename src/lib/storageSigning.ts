@@ -3,7 +3,14 @@ import { storageObject, type StorageObject } from "./storageReferences";
 
 type Pending = { object: StorageObject; resolve: (url: string) => void; reject: (error: Error) => void };
 const pending = new Map<string, Pending[]>();
-const TTL = 60;
+// Only storefront media gets longer-lived links. Personal files keep the original
+// one-minute authorization window; no bucket policy or file visibility changes.
+const CATALOG_BUCKETS = new Set(["product-images", "brand-logos", "blog-images", "project-images"]);
+export function mediaTiming(value: string) {
+  let catalog = false;
+  try { catalog = CATALOG_BUCKETS.has(storageObject(value)?.bucket ?? ""); } catch { /* Deny in signer. */ }
+  return catalog ? { ttl: 3600, stale: 50 * 60_000, refresh: 55 * 60_000 } : { ttl: 60, stale: 30_000, refresh: 45_000 };
+}
 
 async function currentScope(): Promise<string> {
   const { data, error } = await supabase.auth.getSession();
@@ -21,7 +28,7 @@ async function flush(key: string, scope: string, bucket: string) {
     // Coalesce media mounted in one render into bounded native signing batches.
     await Promise.all(Array.from({ length: Math.ceil(paths.length / 100) }, async (_, i) => {
       const chunk = paths.slice(i * 100, (i + 1) * 100);
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrls(chunk, TTL);
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrls(chunk, CATALOG_BUCKETS.has(bucket) ? 3600 : 60);
       if (error) throw new Error("Storage access denied or unavailable");
       for (const item of data ?? []) if (item.path && item.signedUrl && !item.error) urls.set(item.path, item.signedUrl);
     }));
