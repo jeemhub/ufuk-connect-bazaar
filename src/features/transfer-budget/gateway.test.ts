@@ -53,6 +53,16 @@ describe('shared server transfer protection', () => {
     expect(JSON.parse(reserve[1].body as string)).toMatchObject({ p_bytes: 4099, p_essential: false });
     expect(fetcher.mock.calls.filter(([url]) => url.includes('ufuk_transfer_finish'))).toHaveLength(1);
   });
+  it('streams a large original without exceeding the buffered function response limit', async () => {
+    const fetcher = vi.fn(async (url: string, init: RequestInit) => {
+      if (url.includes('/rpc/')) return Response.json(state);
+      return new Response(init.method === 'HEAD' ? null : new Uint8Array(4_100_000), { headers: { 'Content-Length': '4100000', 'Content-Type': 'image/png' } });
+    });
+    vi.stubGlobal('fetch', fetcher);
+    const res = { ...response(), write: vi.fn(() => true) };
+    await mediaHandler({ method: 'GET', query: { bucket: 'product-images', path: 'large.png' }, headers: {} }, res);
+    expect(res.code).toBe(200); expect(res.write.mock.calls.length).toBeGreaterThan(1); expect(res.body).toBeUndefined();
+  });
   it('preserves the customer JWT, counts essential catalogue data and forwards the exact total', async () => {
     const fetcher = vi.fn(async (url: URL | string, init: RequestInit) => {
       if (String(url).includes('/rpc/')) return Response.json({ ...state, usedBytes: 130_000_000 });

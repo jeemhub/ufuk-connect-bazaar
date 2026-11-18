@@ -1,3 +1,4 @@
+import { once } from 'node:events';
 import { PROJECT_ORIGIN, IMAGE_BUCKETS, OVERHEAD, configuration, reserve, finish, annotate, boundedBody, unavailable } from '../server/transfer.js';
 export function mediaTarget(bucket, path) {
   if (typeof bucket !== 'string' || !IMAGE_BUCKETS.has(bucket) || typeof path !== 'string' || path.length > 2000 || /[\\\x00-\x1f\x7f]/.test(path)) return null;
@@ -39,6 +40,14 @@ export default async function handler(req, res) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     // Only catalogue media which passed anonymous RLS is cached; never user files.
     res.setHeader('Cache-Control', 'public, max-age=3300, s-maxage=3300');
+    if (result.body.length > 4_000_000) {
+      // Stream large originals rather than hitting Vercel's buffered payload limit.
+      res.status(200);
+      for (let offset = 0; offset < result.body.length; offset += 64 * 1024) {
+        if (!res.write(result.body.subarray(offset, offset + 64 * 1024))) await once(res, 'drain');
+      }
+      return res.end();
+    }
     return res.status(200).send(result.body);
-  } catch { return unavailable(res); }
+  } catch { if (res.headersSent) return res.end(); return unavailable(res); }
 }
