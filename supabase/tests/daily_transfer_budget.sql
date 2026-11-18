@@ -1,0 +1,35 @@
+BEGIN;
+UPDATE public.ufuk_transfer_settings SET guard_sha256=encode(extensions.digest('TEST_ONLY_TRANSACTION_GUARD','sha256'),'hex'),limit_bytes=1000000,enabled=true WHERE id;
+INSERT INTO public.ufuk_transfer_days(day,used_bytes) VALUES((now() AT TIME ZONE 'Asia/Baghdad')::date,990000) ON CONFLICT(day) DO UPDATE SET used_bytes=990000;
+DO $tests$
+DECLARE s jsonb; a uuid:=gen_random_uuid(); b uuid:=gen_random_uuid(); c uuid:=gen_random_uuid(); denied boolean:=false;
+BEGIN
+ UPDATE public.ufuk_transfer_settings SET limit_bytes=10000000 WHERE id;
+ UPDATE public.ufuk_transfer_days SET used_bytes=8000000 WHERE day=(now() AT TIME ZONE 'Asia/Baghdad')::date;
+ s:=public.ufuk_transfer_reserve('TEST_ONLY_TRANSACTION_GUARD',a,600000,false);
+ IF (s->>'allowed')::boolean THEN RAISE EXCEPTION 'Large image not reduced at 80 percent'; END IF;
+ UPDATE public.ufuk_transfer_settings SET limit_bytes=1000000 WHERE id;
+ UPDATE public.ufuk_transfer_days SET used_bytes=990000 WHERE day=(now() AT TIME ZONE 'Asia/Baghdad')::date;
+ s:=public.ufuk_transfer_reserve('TEST_ONLY_TRANSACTION_GUARD',a,20000,false);
+ IF (s->>'allowed')::boolean THEN RAISE EXCEPTION 'Image admission exceeded allowance'; END IF;
+ s:=public.ufuk_transfer_reserve('TEST_ONLY_TRANSACTION_GUARD',b,20000,true);
+ IF NOT (s->>'allowed')::boolean OR (s->>'usedBytes')::bigint<>1010000 THEN RAISE EXCEPTION 'Essential read or reservation accounting failed'; END IF;
+ s:=public.ufuk_transfer_reserve('TEST_ONLY_TRANSACTION_GUARD',b,20000,true);
+ IF (s->>'usedBytes')::bigint<>1010000 THEN RAISE EXCEPTION 'Reservation was double charged'; END IF;
+ s:=public.ufuk_transfer_finish('TEST_ONLY_TRANSACTION_GUARD',b,1000);
+ IF (s->>'usedBytes')::bigint<>991000 THEN RAISE EXCEPTION 'Settlement failed'; END IF;
+ s:=public.ufuk_transfer_finish('TEST_ONLY_TRANSACTION_GUARD',b,1000);
+ IF (s->>'usedBytes')::bigint<>991000 THEN RAISE EXCEPTION 'Settlement was applied twice'; END IF;
+ BEGIN PERFORM public.ufuk_transfer_reserve('INVALID_TEST_GUARD',c,1000,false); EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Unauthenticated counter mutation allowed'; END IF;
+ denied:=false;
+ BEGIN PERFORM public.ufuk_transfer_admin(999,false); EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Unsigned admin change allowed'; END IF;
+ UPDATE public.ufuk_transfer_settings SET enabled=false WHERE id;
+ s:=public.ufuk_transfer_reserve('TEST_ONLY_TRANSACTION_GUARD',c,20000,false);
+ IF NOT (s->>'allowed')::boolean THEN RAISE EXCEPTION 'Disabled protection still blocked image'; END IF;
+ IF (s->>'day')::date<>(now() AT TIME ZONE 'Asia/Baghdad')::date THEN RAISE EXCEPTION 'Wrong day boundary'; END IF;
+END;
+$tests$;
+ROLLBACK;
+SELECT 'budget SQL checks passed; all test changes rolled back' AS result;

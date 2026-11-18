@@ -1,3 +1,4 @@
+import { catalogueMedia } from "@/features/transfer-budget/client";
 import { supabase } from "@/integrations/supabase/client";
 import { storageObject, type StorageObject } from "./storageReferences";
 
@@ -46,6 +47,12 @@ async function flush(key: string, scope: string, bucket: string) {
 export function signStorageReference(value: string, scope: string): Promise<string> {
   const object = storageObject(value);
   if (!object) return Promise.resolve(value);
+  if (import.meta.env.PROD && CATALOG_BUCKETS.has(object.bucket)) {
+    return currentScope().then(current => {
+      if (current !== scope) throw new Error("Storage session changed");
+      return catalogueMedia(object.bucket, object.path);
+    });
+  }
   const key = `${scope}:${object.bucket}`;
   return new Promise((resolve, reject) => {
     const queue = pending.get(key);

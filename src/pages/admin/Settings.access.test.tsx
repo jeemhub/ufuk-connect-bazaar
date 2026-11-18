@@ -10,6 +10,7 @@ vi.mock("@/components/admin/GlassThemeSettings",()=>({GlassThemeSettings:()=> <p
 vi.mock("@/components/admin/CommerceSettings",()=>({CommerceSettings:()=> <p>إعدادات المتجر العامة</p>}));
 vi.mock("@/components/admin/ProductDetailsSettings",()=>({ProductDetailsSettings:()=>null}));
 vi.mock("@/components/admin/PricingModeSettings",()=>({PricingModeSettings:()=> <p>طريقة حساب السعر الأحمر</p>}));
+vi.mock("@/features/transfer-budget/DailyTransferSettings",()=>({DailyTransferSettings:()=> <p>حماية الاستهلاك اليومي</p>}));
 beforeEach(cleanup);
 it("lets sales employees access personal settings without admin controls",()=>{
   state.isAdmin=false;render(<Settings/>);
@@ -17,11 +18,13 @@ it("lets sales employees access personal settings without admin controls",()=>{
   expect(screen.getByText("طريقة حساب السعر الأحمر")).toBeInTheDocument();
   expect(screen.queryByText("السعر غير مستقر لكل الموقع")).not.toBeInTheDocument();
   expect(screen.queryByText("إعدادات المتجر العامة")).not.toBeInTheDocument();
+  expect(screen.queryByText("حماية الاستهلاك اليومي")).not.toBeInTheDocument();
   expect(screen.queryByRole("button",{name:"حذف الكل"})).not.toBeInTheDocument();
 });
 it("shows global pricing controls for the administrator",()=>{
   state.isAdmin=true;render(<Settings/>);
   expect(screen.getByText("السعر غير مستقر لكل الموقع")).toBeInTheDocument();
+  expect(screen.getByText("حماية الاستهلاك اليومي")).toBeInTheDocument();
   expect(screen.getByText("حركة الفأرة الشخصية")).toBeInTheDocument();
   expect(screen.getByText("طريقة حساب السعر الأحمر")).toBeInTheDocument();
 });

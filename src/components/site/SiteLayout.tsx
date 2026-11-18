@@ -1,3 +1,4 @@
+import { TransferNotice } from "@/features/transfer-budget/TransferNotice";
 import { SiteContextMenu } from "./SiteContextMenu";
 import { SelectionBar } from "./ProductActions";
 import { Outlet } from "react-router-dom";
@@ -21,6 +22,7 @@ export default function SiteLayout() {
     {welcome && <WelcomeIntro onComplete={finishWelcome} />}
     <SiteContextMenu><div ref={contentRef} aria-hidden={welcome || undefined} className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
+      <TransferNotice />
       <main className="flex-1">
         <Outlet />
       </main>

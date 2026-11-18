@@ -1,3 +1,4 @@
+import { DailyTransferSettings } from "@/features/transfer-budget/DailyTransferSettings";
 import { useAuth } from "@/auth/AuthProvider";
 import { PricingModeSettings } from "@/components/admin/PricingModeSettings";
 import { PointerSettings } from "@/components/admin/PointerSettings";
@@ -48,6 +49,7 @@ export default function Settings() {
       <PointerSettings />
       <PricingModeSettings />
       {isAdmin && <>
+      <DailyTransferSettings />
       <GlobalPriceSettings />
 
       <CommerceSettings />
